@@ -21,7 +21,8 @@
     "method-override": "^3.0.0",
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^7.0.3",
-    "mongoose-plugin-autoinc": "^1.1.9"
+    "mongoose-plugin-autoinc": "^1.1.9",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
