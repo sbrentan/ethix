@@ -31,6 +31,7 @@ contract Charity {
         address donor;
         address receiver;
         uint256 balance;
+        uint256 deposit;
         Token[] tokens;
     }
 
@@ -100,9 +101,8 @@ contract Charity {
         string calldata _imgUrl, 
         uint256 _deadline,
         uint256 _tokenCounts,
-        uint256 _tokenPrice,
         address _receiver
-    ) public onlyVerifiedOrganization { 
+    ) public payable onlyVerifiedOrganization { 
         // generate a unique ID for the campaign
         bytes32 campaignId = generateCampaignId(msg.sender, _receiver, _title, _description);
 
@@ -120,11 +120,12 @@ contract Charity {
         campaign.isLive = true;
         campaign.donor = msg.sender;
         campaign.receiver = _receiver;
+        campaign.deposit = msg.value;
 
         // create tokens for the campaign
         for (uint i = 0; i < _tokenCounts; i++) {
             bytes32 tokenId = generateTokenId(campaignId, i);
-            campaign.tokens.push(Token(tokenId, false, _tokenPrice));
+            campaign.tokens.push(Token(tokenId, false, msg.value / _tokenCounts));
         }
 
         // increment the campaign count
@@ -156,6 +157,7 @@ contract Charity {
 
         // transfer the balance to the receiver
         payable(campaign.receiver).transfer(campaign.balance);
+        payable(msg.sender).transfer(campaign.deposit - campaign.balance);
 
         emit DonationMade(msg.sender, campaign.receiver, campaign.balance);
     }
