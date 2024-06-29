@@ -35,48 +35,30 @@ contract Charity {
         Token[] tokens;
     }
 
-    // keep track of admins
-    mapping(address => bool) public verifiedAdmins;
-
     // keep track of verified organizations
     mapping(address => bool) public verifiedOrganizations;
 
     // keep track of created campaigns using a unique ID
     mapping(bytes32 => Campaign) public campaigns;
 
-    function addAdmin(address _admin) public {
-        verifiedAdmins[_admin] = true;
-        emit AdminAdded(_admin);
-    }
-
-    function removeAdmin(address _admin) public {
-        verifiedAdmins[_admin] = false;
-        emit AdminRemoved(_admin);
-    }
-
-    // modifier to check if a user is an admin
-    modifier onlyAdmin() {
-        require(verifiedAdmins[msg.sender], "Only admins can perform this action");
-        _;
-    }
-
-    function verifyOrganization(address _organization) public onlyAdmin {
+    // only admin can verify or revoke organizations
+    function verifyOrganization(address _organization) public {
         verifiedOrganizations[_organization] = true;
         emit OrganizationVerified(_organization);
     }
 
-    function revokeOrganization(address _organization) public onlyAdmin {
+    function revokeOrganization(address _organization) public {
         verifiedOrganizations[_organization] = false;
         emit OrganizationRevoked(_organization);
     }
 
     // modifier to check if an organization is verified
     modifier onlyVerifiedOrganization() {
-        require(verifiedOrganizations[msg.sender], "Only verified organizations can start a campaign");
+        require(verifiedOrganizations[msg.sender], "Only verified organizations can perform this action");
         _;
     }
 
-    // generate a unique ID for a campaign from it's title, descrition and creator address
+    // generate a unique ID for a campaign from its title, description and creator address
     function generateCampaignId(
         address _donor, 
         address _receiver,
@@ -86,7 +68,7 @@ contract Charity {
         return keccak256(abi.encodePacked(_title, _description, _donor, _receiver));
     }
 
-    // generate a unique ID for a token from it's campaign ID and index
+    // generate a unique ID for a token from its campaign ID and index
     function generateTokenId(
         bytes32 _campaignId, 
         uint256 _index
@@ -175,7 +157,7 @@ contract Charity {
     }
 
     // allow users to reedem the tokens they bought
-    function reedemToken(bytes32 campaignId, bytes32 tokenId) public {
+    function redeemToken(bytes32 campaignId, bytes32 tokenId) public {
 
         // retrieve the campaign with the given ID
         Campaign storage campaign = campaigns[campaignId];
