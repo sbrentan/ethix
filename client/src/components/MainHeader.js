@@ -29,28 +29,28 @@ const userMenu = [
 	},
 ];
 
-const associationMenu = [
+const beneficiaryMenu = [
 	{
 		label: (<Link to='/home'>Home</Link>),
 		key: "home",
 		icon: <HomeOutlined />,
 	},
     {
-		label: (<Link to='/association/dashboard'>Dashboard</Link>),
+		label: (<Link to='/beneficiary/dashboard'>Dashboard</Link>),
 		key: "dashboard",
 		icon: <BarChartOutlined />,
 	},
 ];
 
 
-const companyMenu = [
+const donorMenu = [
 	{
 		label: (<Link to='/home'>Home</Link>),
 		key: "home",
 		icon: <HomeOutlined />,
 	},
     {
-		label: (<Link to='/company/dashboard'>Dashboard</Link>),
+		label: (<Link to='/donor/dashboard'>Dashboard</Link>),
 		key: "dashboard",
 		icon: <BarChartOutlined />,
 	},
@@ -82,15 +82,15 @@ const adminMenu = [
 
 
 const MainHeader = () => {
-    const { isUser, isCompany, isAssociation, isAdmin } = useAuth()
+    const { isUser, isDonor, isBeneficiary, isAdmin } = useAuth()
 
     let selectedMenu = null
     if (isUser) {
         selectedMenu = userMenu
-    } else if (isCompany) {
-        selectedMenu = associationMenu
-    } else if (isAssociation) {
-        selectedMenu = companyMenu
+    } else if (isDonor) {
+        selectedMenu = beneficiaryMenu
+    } else if (isBeneficiary) {
+        selectedMenu = donorMenu
     } else if (isAdmin) {
         selectedMenu = adminMenu
     }
