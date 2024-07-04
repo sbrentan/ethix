@@ -11,7 +11,7 @@ router
 	.route("/")
 	.get(
 		verifyRoles(ROLES_LIST.admin),
-		usersController.getAllUSers
+		usersController.getAllUsers
 	)
 	.post(
 		verifyRoles(ROLES_LIST.admin),

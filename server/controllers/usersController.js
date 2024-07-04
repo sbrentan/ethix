@@ -6,7 +6,7 @@ const ROLES_LIST = require("../config/roles_list");
 // @desc Get all users
 // @route GET /users
 // @access Private: manager, admin
-const getAllUSers = asyncHandler(async (req, res) => {
+const getAllUsers = asyncHandler(async (req, res) => {
 	const users = await User.find().select("-password").lean();
 	if (!users?.length) {
 		return res.status(400).json({ message: "No users found" });
@@ -138,7 +138,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-	getAllUSers,
+	getAllUsers,
 	createNewUser,
 	updateUser,
 	deleteUser,
