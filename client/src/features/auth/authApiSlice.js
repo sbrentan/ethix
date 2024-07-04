@@ -17,6 +17,13 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 body: { ...newCredentials }
             })
         }),
+        registerDonorBeneficiary: builder.mutation({
+            query: newCredentials => ({
+                url: '/auth/register/thirdParts',
+                method: 'POST',
+                body: { ...newCredentials }
+            })
+        }),
         sendLogout: builder.mutation({
             query: () => ({
                 url: '/auth/logout',
@@ -57,4 +64,5 @@ export const {
     useRegisterMutation,
     useSendLogoutMutation,
     useRefreshMutation,
+    useRegisterDonorBeneficiaryMutation,
 } = authApiSlice

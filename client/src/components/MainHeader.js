@@ -40,6 +40,11 @@ const beneficiaryMenu = [
 		key: "/beneficiary/dashboard",
 		icon: <BarChartOutlined />,
 	},
+    {
+		label: (<Link to='/beneficiary/profile'>Profile</Link>),
+		key: "/beneficiary/profile",
+		icon: <UserOutlined />,
+	},
 ];
 
 
@@ -53,6 +58,11 @@ const donorMenu = [
 		label: (<Link to='/donor/dashboard'>Dashboard</Link>),
 		key: "/donor/dashboard",
 		icon: <BarChartOutlined />,
+	},
+    {
+		label: (<Link to='/donor/profile'>Profile</Link>),
+		key: "/donor/profile",
+		icon: <UserOutlined />,
 	},
 ];
 
@@ -69,8 +79,8 @@ const adminMenu = [
 		icon: <BarChartOutlined />,
 	},
     {
-		label: (<Link to='/admin/request'>Richieste</Link>),
-		key: "/admin/request",
+		label: (<Link to='/admin/requests'>Richieste</Link>),
+		key: "/admin/requests",
 		icon: <AuditOutlined />,
 	},
     {
@@ -111,9 +121,9 @@ const MainHeader = () => {
     if (isUser) {
         selectedMenu = userMenu
     } else if (isDonor) {
-        selectedMenu = beneficiaryMenu
-    } else if (isBeneficiary) {
         selectedMenu = donorMenu
+    } else if (isBeneficiary) {
+        selectedMenu = beneficiaryMenu
     } else if (isAdmin) {
         selectedMenu = adminMenu
     }
