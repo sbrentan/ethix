@@ -53,25 +53,25 @@ function App() {
                             </Route>
                         </Route>
 
-                        {/* Company Routes */}
+                        {/* Donor Routes */}
                         <Route
                             element={
-                                <RequireAuth allowedRoles={[ROLES.Company]} />
+                                <RequireAuth allowedRoles={[ROLES.Donor]} />
                             }
                         >
-                            <Route path="company">
-                                <Route index element={<>Company</>} />
+                            <Route path="donor">
+                                <Route index element={<>Donor</>} />
                             </Route>
                         </Route>
 
-                        {/* Association Routes */}
+                        {/* Beneficiary Routes */}
                         <Route
                             element={
-                                <RequireAuth allowedRoles={[ROLES.Association]} />
+                                <RequireAuth allowedRoles={[ROLES.Beneficiary]} />
                             }
                         >
-                            <Route path="association">
-                                <Route index element={<>Association</>} />
+                            <Route path="beneficiary">
+                                <Route index element={<>Beneficiary</>} />
                             </Route>
                         </Route>
 

@@ -131,9 +131,9 @@ const UsersList = () => {
 			key: "role",
 			render: (action, record) => {
                 let color = 'geekblue'
-                if (record.role === ROLES.Association) {
+                if (record.role === ROLES.Beneficiary) {
                     color = 'green'
-                } else if (record.role === ROLES.Company) {
+                } else if (record.role === ROLES.Donor) {
                     color = 'purple'
                 } else if (record.role === ROLES.Admin) {
                     color = 'volcano'
@@ -145,6 +145,12 @@ const UsersList = () => {
 				</Tag>)
             },
 		},
+        {
+            title: "Verificato",
+            dataIndex: "verified",
+            key: "verified",
+            render: (verified) => (verified ? "Verificato" : "Non Verificato")
+        },
 		{
 			title: "Action",
 			dataIndex: "action",

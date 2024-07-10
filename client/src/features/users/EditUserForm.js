@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useUpdateUserMutation, useDeleteUserMutation } from "./usersApiSlice"
 import { useNavigate } from "react-router-dom"
 import { ROLES } from "../../config/roles"
-import { Form, Input, Select, Row, Col, Button, Popconfirm, message, Space, Switch, Typography } from "antd"
+import { Form, Input, Select, Row, Col, Button, Popconfirm, message, Space, Switch, Typography, Tooltip } from "antd"
 import { useDispatch } from "react-redux"
 
 const { Option } = Select
@@ -23,6 +23,7 @@ const options = Object.values(ROLES).map(role => {
 // The result of operations are shown as message.
 const EditUserForm = ({ user }) => {
     const [form] = Form.useForm();
+    const [switchValue, setSwitchValue] = useState(user.verified);
 
     // for antd message
 	const [messageApi, contextHolder] = message.useMessage();
@@ -89,15 +90,21 @@ const EditUserForm = ({ user }) => {
         navigate(-1)
     };
 
+    // for changing verified field
+    const handleSwitchChange = (value) => {
+        setSwitchValue(value);
+    }
+
 
     // quando premo invio - Save User
 	const onFinish = async (values) => {
         const { username, password, role } = values
+        const verified = switchValue
 
         if (password) {
-            await updateUser({ id: user.id, username, password, role })
+            await updateUser({ id: user.id, username, password, role, verified })
         } else {
-            await updateUser({ id: user.id, username, role })
+            await updateUser({ id: user.id, username, role, verified })
         }
 	};
 
@@ -155,6 +162,17 @@ const EditUserForm = ({ user }) => {
                                     >{options}</Select>
                             </Form.Item>
                         </Col>
+                        <Col lg={24} xs={24}>
+                            <p>Verificato:</p>
+                            <div style={{ margin: 10, textAlign: "center" }}>
+                                <Space direction="horizontal" align="center" size={30}>
+                                    <Tooltip title="Utilizza questa funzione solo se necessario. Il bottone diventa rosso se modifichi il valore, successivamente premi conferma!">
+                                        <Switch checked={switchValue} onChange={handleSwitchChange} style={switchValue !== user.verified ? { backgroundColor: 'red' } : {}}/>
+                                    </Tooltip>
+                                </Space>
+                            </div>
+                        </Col>
+                        
                         <Col>
                             <Button htmlType="button" onClick={handleCancel}>
                                 Cancella

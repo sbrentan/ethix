@@ -63,7 +63,7 @@ const createNewUser = asyncHandler(async (req, res) => {
 // @route PATCH /users
 // @access Private: manager, admin
 const updateUser = asyncHandler(async (req, res) => {
-	const { id, username, role, password } = req.body;
+	const { id, username, role, password, verified } = req.body;
 
 	// Confirm data
 	if (!id) {
@@ -96,6 +96,11 @@ const updateUser = asyncHandler(async (req, res) => {
 			// check role valid
 			return res.status(409).json({ message: "Invalid role" });
 		user.role = role;
+	}
+
+    // we dont want the user to send for each update the active
+	if (typeof verified === 'boolean') {
+		user.verified = verified;
 	}
 
 	// we dont want the user to send for each update the password

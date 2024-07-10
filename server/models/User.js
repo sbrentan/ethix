@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema(
 			enum: Object.values(ROLES_LIST),
 			default: ROLES_LIST.user,
 		},
+		verified: {
+			type: Boolean,
+			default: false,
+		},
 	},
     {
 		timestamps: true,

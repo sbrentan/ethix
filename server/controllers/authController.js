@@ -27,8 +27,11 @@ const register = asyncHandler(async (req, res) => {
 
     // Role is ALWAYS User when registring
     const role = ROLES_LIST.user
+    
+    // User should be verified, while beneficiary and donors should have it as default false. waiting for an admin approval
+    const verified = true
 
-    const user = await User.create({ username, "password": hashedPwd, role })
+    const user = await User.create({ username, "password": hashedPwd, role, verified })
 
     if (!user) {
         return res.status(500).json({ message: 'Something went wrong' })
@@ -58,12 +61,19 @@ const login = asyncHandler(async (req, res) => {
     const match = await bcrypt.compare(password, foundUser.password)
 
     if (!match) return res.status(401).json({ message: 'Unauthorized' })
+    
+    // Here we can block the not verified account to login - in our case we can still allow them to enter the 
+    // private area of the website and instead block the request for creating campaings etc..
+    // if (!foundUser.verified) {
+    //     return res.status(422).json({ message: 'Account is not verified' })
+    // }
 
     const accessToken = jwt.sign(
         {
             "UserInfo": {
                 "username": foundUser.username,
-                "role": foundUser.role
+                "role": foundUser.role,
+                "verified": foundUser.verified,
             }
         },
         process.env.ACCESS_TOKEN_SECRET,
@@ -114,7 +124,8 @@ const refresh = (req, res) => {
                 {
                     "UserInfo": {
                         "username": foundUser.username,
-                        "role": foundUser.role
+                        "role": foundUser.role,
+                        "verified": foundUser.verified,
                     }
                 },
                 process.env.ACCESS_TOKEN_SECRET,

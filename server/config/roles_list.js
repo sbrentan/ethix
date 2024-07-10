@@ -1,7 +1,7 @@
 const ROLES_LIST = {
     user: 'User',
-    company: 'Company',
-    association: 'Association',
+    donor: 'Donor',
+    beneficiary: 'Beneficiary',
     admin: 'Admin',
 }
 

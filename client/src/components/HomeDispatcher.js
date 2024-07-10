@@ -3,15 +3,15 @@ import useAuth from '../hooks/useAuth'
 import { Navigate } from 'react-router-dom'
 
 const HomeDispatcher = () => {
-    const { isUser, isCompany, isAssociation, isAdmin } = useAuth()
+    const { isUser, isDonor, isBeneficiary, isAdmin } = useAuth()
 
     let path = ""
     if (isUser) {
         path='/user'
-    } else if (isCompany) {
-        path='/company'
-    }else if (isAssociation) {
-        path='/association'
+    } else if (isDonor) {
+        path='/donor'
+    }else if (isBeneficiary) {
+        path='/beneficiary'
     } else if (isAdmin) {
         path='/admin'
     } else {
