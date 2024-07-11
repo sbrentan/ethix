@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Layout, Typography, Menu, Button } from "antd";
 import { AuditOutlined, BarChartOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import logo from "../logo.svg";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
 const { Header } = Layout;
@@ -11,7 +11,7 @@ const { Title } = Typography;
 const defaultMenu = [
 	{
 		label: (<Link to='/home'>Home</Link>),
-		key: "home",
+		key: "/home",
 		icon: <HomeOutlined />,
 	},
 ];
@@ -19,12 +19,12 @@ const defaultMenu = [
 const userMenu = [
 	{
 		label: (<Link to='/home'>Home</Link>),
-		key: "home",
+		key: "/home",
 		icon: <HomeOutlined />,
 	},
     {
 		label: (<Link to='/user/dashboard'>Dashboard</Link>),
-		key: "dashboard",
+		key: "/user/dashboard",
 		icon: <BarChartOutlined />,
 	},
 ];
@@ -32,13 +32,18 @@ const userMenu = [
 const beneficiaryMenu = [
 	{
 		label: (<Link to='/home'>Home</Link>),
-		key: "home",
+		key: "/home",
 		icon: <HomeOutlined />,
 	},
     {
 		label: (<Link to='/beneficiary/dashboard'>Dashboard</Link>),
-		key: "dashboard",
+		key: "/beneficiary/dashboard",
 		icon: <BarChartOutlined />,
+	},
+    {
+		label: (<Link to='/beneficiary/profile'>Profile</Link>),
+		key: "/beneficiary/profile",
+		icon: <UserOutlined />,
 	},
 ];
 
@@ -46,13 +51,18 @@ const beneficiaryMenu = [
 const donorMenu = [
 	{
 		label: (<Link to='/home'>Home</Link>),
-		key: "home",
+		key: "/home",
 		icon: <HomeOutlined />,
 	},
     {
 		label: (<Link to='/donor/dashboard'>Dashboard</Link>),
-		key: "dashboard",
+		key: "/donor/dashboard",
 		icon: <BarChartOutlined />,
+	},
+    {
+		label: (<Link to='/donor/profile'>Profile</Link>),
+		key: "/donor/profile",
+		icon: <UserOutlined />,
 	},
 ];
 
@@ -60,37 +70,60 @@ const donorMenu = [
 const adminMenu = [
 	{
 		label: (<Link to='/home'>Home</Link>),
-		key: "home",
+		key: "/home",
 		icon: <HomeOutlined />,
 	},
     {
 		label: (<Link to='/admin/dashboard'>Dashboard</Link>),
-		key: "dashboard",
+		key: "/admin/dashboard",
 		icon: <BarChartOutlined />,
 	},
     {
-		label: (<Link to='/admin/request'>Richieste</Link>),
-		key: "request",
+		label: (<Link to='/admin/requests'>Richieste</Link>),
+		key: "/admin/requests",
 		icon: <AuditOutlined />,
 	},
     {
 		label: (<Link to='/admin/users'>Utenti</Link>),
-		key: "users",
+		key: "/admin/users",
 		icon: <UserOutlined />,
 	},
 ];
 
 
 const MainHeader = () => {
+    let location = useLocation()
+
+    // for dynamic update of the menu based on location
+    const [current, setCurrent] = useState(
+        location.pathname === "/" || location.pathname === ""
+            ? "/home"
+            : location.pathname,
+    );
+
+    // keeps the current updated
+    useEffect(() => {
+        if (location) {
+            if(current !== location.pathname) {
+                setCurrent(location.pathname);
+            }
+        }
+    }, [location, current]);
+
+    // when I click set the right key, might be not needed since the location will change due the Link component
+    function handleClick(e) {
+        setCurrent(e.key);
+    }
+
     const { isUser, isDonor, isBeneficiary, isAdmin } = useAuth()
 
     let selectedMenu = null
     if (isUser) {
         selectedMenu = userMenu
     } else if (isDonor) {
-        selectedMenu = beneficiaryMenu
-    } else if (isBeneficiary) {
         selectedMenu = donorMenu
+    } else if (isBeneficiary) {
+        selectedMenu = beneficiaryMenu
     } else if (isAdmin) {
         selectedMenu = adminMenu
     }
@@ -115,7 +148,7 @@ const MainHeader = () => {
 				    <h1 style={{ margin: 0 }}>CharityChain</h1>
                 </Link>
 			</div>
-			{selectedMenu !== null && <Menu mode="horizontal" style={{ borderBottom: "none" }} items={selectedMenu} />}
+			{selectedMenu !== null && <Menu onClick={handleClick} selectedKeys={[current]} mode="horizontal" style={{ borderBottom: "none" }} items={selectedMenu} />}
 			{/* <Menu mode="horizontal" style={{ borderBottom: "none" }}>
 				<Menu.Item key="login">
 					<Button type="primary" icon={<LoginOutlined />}>
@@ -125,7 +158,7 @@ const MainHeader = () => {
 			</Menu> */}
 
 			{selectedMenu !== null ?
-            <Link to="logout/">
+            <Link to="/logout">
 				<Button type="primary" icon={<LogoutOutlined />}>
 					Logout
 				</Button>

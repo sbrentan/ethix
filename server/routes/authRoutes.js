@@ -10,5 +10,6 @@ router.route("/refresh").get(authController.refresh);
 router.route("/logout").post(authController.logout);
 
 router.route("/register").post(authController.register);
+router.route("/register/thirdParts").post(authController.registerDonorBeneficiary);
 
 module.exports = router;

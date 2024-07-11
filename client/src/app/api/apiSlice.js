@@ -1,8 +1,14 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { setCredentials } from '../../features/auth/authSlice'
 
+const getBeURL = () => {
+    const URL = process.env.REACT_APP_BACKEND_URL
+    if (!URL) throw new Error("No Backend URL found")
+    return URL
+}
+
 const baseQuery = fetchBaseQuery({
-    baseUrl: process.env.REACT_APP_BACKEND_URL,
+    baseUrl: getBeURL(),
     credentials: 'include',
     prepareHeaders: (headers, { getState }) => {
         const token = getState().auth.token
@@ -49,6 +55,6 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 
 export const apiSlice = createApi({
     baseQuery: baseQueryWithReauth,
-    tagTypes: ['User'],
+    tagTypes: ['User', 'ProfileRequest'],
     endpoints: builder => ({})
 })

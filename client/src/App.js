@@ -11,6 +11,9 @@ import Logout from "./components/Logout";
 import UsersList from "./features/users/UsersList";
 import EditUser from "./features/users/EditUser";
 import NewUserForm from "./features/users/NewUserForm";
+import Register from "./features/auth/Register";
+import ProfileRequestsList from "./features/requests/ProfileRequestsList";
+import MyProfileRequest from "./features/requests/MyProfileRequest";
 
 function App() {
 	return (
@@ -38,6 +41,7 @@ function App() {
                     } />
                     <Route path="login" element={<Login />} />
                     <Route path="logout" element={<Logout />}/>
+                    <Route path="register" element={<Register />}/>
 
                     {/* Protected Routes */}
 					<Route element={<PersistLogin />}>
@@ -61,6 +65,14 @@ function App() {
                         >
                             <Route path="donor">
                                 <Route index element={<>Donor</>} />
+                                <Route
+                                    path="dashboard"
+                                    element={<p>dashboard</p>}
+                                />
+                                <Route
+                                    path="profile"
+                                    element={<MyProfileRequest />}
+                                />
                             </Route>
                         </Route>
 
@@ -72,6 +84,14 @@ function App() {
                         >
                             <Route path="beneficiary">
                                 <Route index element={<>Beneficiary</>} />
+                                <Route
+                                    path="dashboard"
+                                    element={<p>dashboard</p>}
+                                />
+                                <Route
+                                    path="profile"
+                                    element={<MyProfileRequest />}
+                                />
                             </Route>
                         </Route>
 
@@ -93,6 +113,17 @@ function App() {
                                         path="new"
                                         element={<NewUserForm />}
                                     /> 
+                                </Route>
+                                <Route path="requests">
+                                    <Route index element={<ProfileRequestsList />} />
+                                    {/* /* <Route
+                                        path=":id"
+                                        element={<EditUser />}
+                                    />
+                                    <Route
+                                        path="new"
+                                        element={<NewUserForm />}
+                                    />  */}
                                 </Route>
                             </Route>
                         </Route>
