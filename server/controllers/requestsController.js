@@ -48,6 +48,14 @@ const updateUser = asyncHandler(async (req, res) => {
 		).exec();
 		user.verified = true;
 		const updatedUser = await user.save();
+	} else {
+		const user = await User.findById(
+			updatedRequest.user._id.toString()
+		).exec();
+		if (user && user.verified){
+			user.verified = false;
+			const updatedUser = await user.save();
+		}
 	}
 
 	res.json({ message: `Request updated` });
