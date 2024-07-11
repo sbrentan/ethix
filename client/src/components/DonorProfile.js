@@ -9,7 +9,6 @@ const DonorProfile = ({ profile, disabled = true }) => {
 	return (
 		<div>
 			<Form initialValues={profile} form={form} disabled={disabled} layout="vertical">
-				<Title level={5}>Donor general information</Title>
 				<Title level={5}>Company general information</Title>
 				<Row gutter={16}>
 					<Col span={12}>
