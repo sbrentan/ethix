@@ -13,6 +13,7 @@ contract Charity {
     event DonationClaimed(bytes32 campaignId, address beneficiary, uint256 amount);
 
     address owner;
+    bytes32[] public campaignsIds;
 
     struct Token {
         bytes32 tokenId;
@@ -48,6 +49,16 @@ contract Charity {
         _;
     }
 
+    modifier onlyDonor(bytes32 campaignId) {
+        require(msg.sender == campaigns[campaignId].donor, "Only the donor can perform this action");
+        _;
+    }
+
+    modifier onlyVerifiedBeneficiary(address beneficiary) {
+        require(verifiedOrganizations[beneficiary], "Beneficiary is not a verified organization");
+        _;
+    }
+
     modifier onlyLiveCampaign(bytes32 campaignId) {
         require(block.timestamp < campaigns[campaignId].deadline, "Campaign has ended");
         _;
@@ -69,6 +80,7 @@ contract Charity {
         emit OrganizationRevoked(_organization, false);
     }
 
+    // check if an organization is verified
     function isOrganizationVerified(address _organization) public view returns (bool) {
         return verifiedOrganizations[_organization];
     }
@@ -98,7 +110,7 @@ contract Charity {
         uint256 _deadline,
         uint256 _tokenCounts,
         address _beneficiary
-    ) public payable { 
+    ) public payable onlyVerifiedBeneficiary(_beneficiary) { 
         // generate a unique ID for the campaign
         bytes32 campaignId = generateCampaignId(msg.sender, _beneficiary, _title, _description);
 
@@ -108,10 +120,8 @@ contract Charity {
         // require that the campaignId doesn't exist in the mapping
         require(!campaign.exists, "Campaign already exists");
 
-        // require that the beneficiary is a verified organization
-        require(verifiedOrganizations[_beneficiary], "Beneficiary is not a verified organization");
-
         // set the campaign properties
+        campaignsIds.push(campaignId);
         campaign.title = _title;
         campaign.description = _description;
         campaign.deadline = _deadline;
@@ -135,14 +145,13 @@ contract Charity {
     }
 
     // get the tokens of a campaign
-    function getCampaignTokens(bytes32 campaignId) public view onlyLiveCampaign(campaignId) returns(Token[] memory) {
+    function getCampaignTokens(bytes32 campaignId) public view onlyLiveCampaign(campaignId) onlyDonor(campaignId) returns(Token[] memory) {
+        return campaigns[campaignId].tokens;
+    }
 
-        Campaign memory campaign = campaigns[campaignId];
-
-        // require that the sender is the donor of the campaign
-        require(msg.sender == campaign.donor, "Only the donor can view the tokens");
-
-        return campaign.tokens;
+    // returns the IDs of all campaigns
+    function getCampaignsIds() public view returns(bytes32[] memory) {
+        return campaignsIds;
     }
 
     // returns the details of an active campaign given the campaignId
@@ -158,13 +167,10 @@ contract Charity {
     }
 
     // allow the donor to claim the refund
-    function claimRefund(bytes32 campaignId) public onlyEndedCampaign(campaignId) {
+    function claimRefund(bytes32 campaignId) public onlyEndedCampaign(campaignId) onlyDonor(campaignId) {
 
         // get a reference to the campaign with the given ID
-        Campaign memory campaign = campaigns[campaignId];
-
-        // require that the sender is the donor of the campaign
-        require(msg.sender == campaign.donor, "Only the donor can claim the refund");
+        Campaign storage campaign = campaigns[campaignId];
 
         // require that the refund is available
         require(campaign.refund > 0, "No refund available");
@@ -180,7 +186,7 @@ contract Charity {
     function claimDonation(bytes32 campaignId) public onlyEndedCampaign(campaignId) {
         
         // get a reference to the campaign with the given ID
-        Campaign memory campaign = campaigns[campaignId];
+        Campaign storage campaign = campaigns[campaignId];
         
         // require that the sender is the beneficiary of the campaign
         require(msg.sender == campaign.beneficiary, "Only the beneficiary can claim the donation");
