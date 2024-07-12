@@ -6,11 +6,13 @@ const rootRoutes = require('./root');
 const authRoutes = require('./authRoutes');
 const usersRoutes = require('./usersRoutes');
 const requestsRoutes = require('./requestsRoutes')
+const tokensRoutes = require('./tokensRoutes')
 
 // Use the route handlers with their respective prefixes
 router.use('/', rootRoutes);
 router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
 router.use('/requests', requestsRoutes);
+router.use('/tokens', tokensRoutes)
 
 module.exports = router;
