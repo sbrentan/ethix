@@ -5,7 +5,8 @@ module.exports = {
     development: {
       host: process.env.HOST,
       port: process.env.PORT,
-      network_id: "*" // * Match any network id
+      network_id: "*", // * Match any network id
+      from: process.env.MANAGER
     },
   },
   contracts_directory: './contracts/',

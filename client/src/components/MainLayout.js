@@ -12,14 +12,6 @@ const MainLayout = () => {
 			<Content>
 				<Outlet />
 				<Test />
-				Campaign name: <input type="text" />
-				Campaign name: <input type="text" />
-				Campaign name: <input type="text" />
-				Campaign name: <input type="text" />
-				Campaign name: <input type="text" />
-				Campaign name: <input type="text" /><br></br>
-				<button>Start</button>
-				<button>End</button>
 			</Content>
 			<Footer>Helo</Footer>
 		</Layout>
