@@ -1,7 +1,8 @@
 import React from "react";
 import { Layout } from "antd";
-import { Outlet } from "react-router-dom";
 import MainHeader from "./MainHeader";
+import Test from "./Test";
+import { Outlet } from "react-router-dom";
 const { Header, Content, Footer } = Layout;
 
 const MainLayout = () => {
@@ -10,6 +11,7 @@ const MainLayout = () => {
             <MainHeader />
 			<Content>
 				<Outlet />
+				<Test />
 			</Content>
 			<Footer>Helo</Footer>
 		</Layout>

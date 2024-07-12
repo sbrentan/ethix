@@ -7,12 +7,12 @@ contract Charity {
     // These are events to be emitted when specific actions are completed
     event AdminAdded(address admin);
     event AdminRemoved(address admin);
-    event OrganizationVerified(address organization);
-    event OrganizationRevoked(address organization);
+    event OrganizationVerified(address organization, bool status);
+    event OrganizationRevoked(address organization, bool status);
     event CampaignStarted(bytes32 campaignId, address donor);
     event CampaignEnded(bytes32 campaignId);
     event TokenRedeemed(bytes32 campaignId, bytes32 tokenId);
-    event DonationMade(address donor, address receiver, uint256 amount);
+    event DonationMade(bytes32 campaignId, address donor, uint256 refund, address beneficiary, uint256 donation);
 
     uint256 public campaignCount;
 
@@ -29,7 +29,7 @@ contract Charity {
         uint256 deadline; //timestamp format
         bool isLive;
         address donor;
-        address receiver;
+        address beneficiary;
         uint256 balance;
         uint256 deposit;
         Token[] tokens;
@@ -44,12 +44,16 @@ contract Charity {
     // only admin can verify or revoke organizations
     function verifyOrganization(address _organization) public {
         verifiedOrganizations[_organization] = true;
-        emit OrganizationVerified(_organization);
+        emit OrganizationVerified(_organization, true);
+    }
+
+    function isOrganizationVerified(address _organization) public view returns (bool) {
+        return verifiedOrganizations[_organization];
     }
 
     function revokeOrganization(address _organization) public {
         verifiedOrganizations[_organization] = false;
-        emit OrganizationRevoked(_organization);
+        emit OrganizationRevoked(_organization, false);
     }
 
     // modifier to check if an organization is verified
@@ -61,11 +65,11 @@ contract Charity {
     // generate a unique ID for a campaign from its title, description and creator address
     function generateCampaignId(
         address _donor, 
-        address _receiver,
+        address _beneficiary,
         string calldata _title, 
         string calldata _description
     ) private pure returns(bytes32) {
-        return keccak256(abi.encodePacked(_title, _description, _donor, _receiver));
+        return keccak256(abi.encodePacked(_title, _description, _donor, _beneficiary));
     }
 
     // generate a unique ID for a token from its campaign ID and index
@@ -83,16 +87,19 @@ contract Charity {
         string calldata _imgUrl, 
         uint256 _deadline,
         uint256 _tokenCounts,
-        address _receiver
-    ) public payable onlyVerifiedOrganization { 
+        address _beneficiary
+    ) public payable { 
         // generate a unique ID for the campaign
-        bytes32 campaignId = generateCampaignId(msg.sender, _receiver, _title, _description);
+        bytes32 campaignId = generateCampaignId(msg.sender, _beneficiary, _title, _description);
 
         // get a reference to the campaign with the generated Id
         Campaign storage campaign = campaigns[campaignId];
 
         // require that the campaign is not live yet.
         require(!campaign.isLive, "Campaign already exists");
+
+        // require that the beneficiary is a verified organization
+        require(verifiedOrganizations[_beneficiary], "beneficiary is not a verified organization");
 
         // set the campaign properties
         campaign.title = _title;
@@ -101,7 +108,7 @@ contract Charity {
         campaign.deadline = _deadline;
         campaign.isLive = true;
         campaign.donor = msg.sender;
-        campaign.receiver = _receiver;
+        campaign.beneficiary = _beneficiary;
         campaign.deposit = msg.value;
 
         // create tokens for the campaign
@@ -115,6 +122,20 @@ contract Charity {
 
         // emit the CampaignStarted event
         emit CampaignStarted(campaignId, msg.sender);
+    }
+
+    // get the tokens of a campaign
+    function getCampaignTokens(bytes32 campaignId) public view returns(Token[] memory) {
+
+        Campaign memory campaign = campaigns[campaignId];
+
+        // require that the campaign is live
+        require(campaign.isLive, "Campaign does not exist");
+
+        // require that the sender is the donor of the campaign
+        require(msg.sender == campaign.donor, "Only the donor can view the tokens");
+
+        return campaign.tokens;
     }
 
     // end the campaign of a verified organization 
@@ -137,21 +158,24 @@ contract Charity {
 
         emit CampaignEnded(campaignId);
 
-        // transfer the balance to the receiver
-        payable(campaign.receiver).transfer(campaign.balance);
+        // transfer the balance to the beneficiary
+        payable(campaign.beneficiary).transfer(campaign.balance);
         payable(msg.sender).transfer(campaign.deposit - campaign.balance);
 
-        emit DonationMade(msg.sender, campaign.receiver, campaign.balance);
+        emit DonationMade(campaignId, msg.sender, campaign.deposit - campaign.balance, campaign.beneficiary, campaign.balance);
     }
 
     // returns the details of an active campaign given the campaignId
     function getCampaign(bytes32 campaignId) public view returns(Campaign memory) {
         
-        // retrieve the campaign with the given ID
-        Campaign storage campaign = campaigns[campaignId];
+        // retrieve a copy of the campaign with the given ID
+        Campaign memory campaign = campaigns[campaignId];
 
         // require that the campaign is live
         require(campaign.isLive, "Campaign does not exist");
+
+        // remove the token array from the campaign before returning it
+        delete campaign.tokens;
 
         return campaign;
     }
@@ -174,7 +198,7 @@ contract Charity {
                 // require that the token has not been redeemed yet
                 require(!campaign.tokens[i].redeemed, "Token already redeemed");
 
-                // mark the token as redeemed and change the owner to the receiver
+                // mark the token as redeemed and change the owner to the beneficiary
                 campaign.tokens[i].redeemed = true;
                 campaign.balance += campaign.tokens[i].price;
 
