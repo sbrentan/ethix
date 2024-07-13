@@ -124,6 +124,25 @@ contract Charity {
         emit CampaignStarted(campaignId, msg.sender);
     }
 
+    function addressToString(address _address) internal pure returns (string memory) {
+        bytes32 value = bytes32(uint256(uint160(_address)));
+        bytes memory alphabet = "0123456789abcdef";
+
+        bytes memory str = new bytes(51);
+        str[0] = '0';
+        str[1] = 'x';
+        for (uint256 i = 0; i < 20; i++) {
+            str[2 + i * 2] = alphabet[uint8(value[i + 12] >> 4)];
+            str[3 + i * 2] = alphabet[uint8(value[i + 12] & 0x0f)];
+        }
+        return string(str);
+    }
+
+    function getDonorMessage(Campaign memory campaign, address sender) public pure returns (string memory) {
+        string memory temp = string(abi.encodePacked("Only the donor can view the tokens: ", addressToString(campaign.donor)));
+        return string(abi.encodePacked(temp, ". Sender: ", addressToString(sender)));
+    }
+
     // get the tokens of a campaign
     function getCampaignTokens(bytes32 campaignId) public view returns(Token[] memory) {
 
@@ -133,7 +152,7 @@ contract Charity {
         require(campaign.isLive, "Campaign does not exist");
 
         // require that the sender is the donor of the campaign
-        require(msg.sender == campaign.donor, "Only the donor can view the tokens");
+        require(msg.sender == campaign.donor, getDonorMessage(campaign, msg.sender));
 
         return campaign.tokens;
     }
@@ -175,7 +194,7 @@ contract Charity {
         require(campaign.isLive, "Campaign does not exist");
 
         // remove the token array from the campaign before returning it
-        delete campaign.tokens;
+        // delete campaign.tokens;
 
         return campaign;
     }

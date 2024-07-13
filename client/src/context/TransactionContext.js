@@ -101,7 +101,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if(!ethereum) return alert("Please install MetaMask.");
 
-            await transactionsContract.methods.isOrganizationVerified(organizationId).call()
+            await transactionsContract.methods.isOrganizationVerified(organizationId).call({ from: currentAccount })
             .then((status) => {
                 console.log(`Is organization verified: ${status}`);
             });
@@ -175,7 +175,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            await transactionsContract.methods.getCampaign(campaignId).call()
+            await transactionsContract.methods.getCampaign(campaignId).call({ from: currentAccount })
             .then((campaign) => {
                 console.log(campaign);
             });
@@ -189,7 +189,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            await transactionsContract.methods.getCampaignTokens(campaignId).call()
+            await transactionsContract.methods.getCampaignTokens(campaignId).call({ from: currentAccount })
             .then((tokens) => {
                 console.log(tokens);
             });
