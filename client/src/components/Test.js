@@ -25,14 +25,17 @@ const Test = () => {
       formData,
       startCampaign, 
       campaigns, 
+      getCampaignsIds,
       getCampaign,
       getCampaignTokens,
-      endCampaign,
+      //claimRefund,
+      //claimDonation,
       reedemToken
     } = useContext(TransactionContext);
 
     const [campaignId, setCampaignId] = useState(null);
     const [tokenId, setTokenId] = useState(null);
+    const [address, setAddress] = useState(null);
   
     return (
       <>
@@ -47,13 +50,12 @@ const Test = () => {
 
         <Input placeholder="Title" name="title" type="text" handleChange={handleChange} />
         <Input placeholder="Description" name="description" type="text" handleChange={handleChange} />
-        <Input placeholder="Image" name="image" type="text" handleChange={handleChange} />
         <Input placeholder="Deadline" name="deadline" type="date" handleChange={handleChange} />
         <Input placeholder="Amount (ETH)" name="amount" type="number" handleChange={handleChange} />
         <Input placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
         <select placeholder="Beneficiary (address)" name="beneficiary" onChange={(e) => handleChange(e, e.target.name)}>
           <option value="addr1">First beneficiary</option>
-          <option value="addr2">Second beneficiary</option>
+          <option value="0xd026076b57cbc2919E82BA089dD02Bd72032b11F">Second beneficiary</option>
         </select>
 
         <br /> <br />
@@ -68,11 +70,11 @@ const Test = () => {
 
         <p>Current campaign: {campaignId}</p>
 
+        <button type="button" onClick={getCampaignsIds}>Get campaigns Ids</button>
+
         <button type="button" onClick={() => getCampaign(campaignId)}>Get campaign</button>
 
         <button type="button" onClick={() => getCampaignTokens(campaignId)}>Get campaign tokens</button>
-
-        <button type="button" onClick={() => endCampaign(campaignId)}>End campaign</button>
 
         <br /><hr /><br />
         
@@ -83,11 +85,14 @@ const Test = () => {
 
         <br /><hr /><br />
 
-        <button type="button" onClick={() => verifyOrganization(currentAccount)}>Verify Organization</button>
+        <input placeholder="Address" type="text" onChange={(e) => setAddress(e.target.value)} />
+        <p>Current token: {address}</p>
 
-        <button type="button" onClick={() => isOrganizationVerified(currentAccount)}>Is verified?</button>
+        <button type="button" onClick={() => verifyOrganization(address)}>Verify Organization</button>
 
-        <button type="button" onClick={() => revokeOrganization(currentAccount)}>Revoke verification</button>
+        <button type="button" onClick={() => isOrganizationVerified(address)}>Is verified?</button>
+
+        <button type="button" onClick={() => revokeOrganization(address)}>Revoke verification</button>
       </>        
     );
   };

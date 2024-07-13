@@ -92,7 +92,7 @@ contract Charity {
         string calldata _title, 
         string calldata _description
     ) private view returns(bytes32) {
-        return keccak256(abi.encodePacked(_title, _description, _donor, _beneficiary, block.timestamp));
+        return keccak256(abi.encodePacked(_title, _description, _donor, _beneficiary, campaignsIds.length));
     }
 
     // generate a unique ID for a token from its campaign ID and index

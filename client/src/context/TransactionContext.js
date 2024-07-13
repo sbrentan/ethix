@@ -17,12 +17,13 @@ export const TransactionsProvider = ({ children }) => {
     const [formData, setformData] = useState({
         title: '',
         description: '',
-        image: '',
         deadline: Math.floor(Date.now() / 1000) + 60,
         amount: 0,
         tokens: 0,
         beneficiary: ''
     });
+
+    const transactionsContract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
 
     const handleChange = (e, name) => {
         switch (name) {
@@ -34,8 +35,6 @@ export const TransactionsProvider = ({ children }) => {
                 break;
         }
     };
-
-    const transactionsContract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
 
     const connectWallet = async () => {
         try {
@@ -84,13 +83,7 @@ export const TransactionsProvider = ({ children }) => {
                 console.log(`Organization [${event.returnValues.organization}] - verification status: [${event.returnValues.status}]`);
             })
 
-            await transactionsContract.methods.verifyOrganization(organizationId).send({ from: currentAccount })
-            .on('transactionHash', (hash) => {
-                console.log(`[LOADING] Transaction hash: ${hash}`);
-            })
-            .on('receipt', (receipt) => {
-                console.log(`[SUCCESS] Transaction receipt: ${receipt.transactionHash}`);
-            })
+            await transactionsContract.methods.verifyOrganization(organizationId).send({ from: currentAccount });
 
         } catch (error) {
             console.error(error);
@@ -101,7 +94,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if(!ethereum) return alert("Please install MetaMask.");
 
-            await transactionsContract.methods.isOrganizationVerified(organizationId).call()
+            await transactionsContract.methods.isOrganizationVerified(organizationId).call({ from: currentAccount })
             .then((status) => {
                 console.log(`Is organization verified: ${status}`);
             });
@@ -121,13 +114,7 @@ export const TransactionsProvider = ({ children }) => {
                 console.log(`Organization [${event.returnValues.organization}] - verification status: [${event.returnValues.status}]`);
             })
 
-            await transactionsContract.methods.revokeOrganization(organizationId).send({ from: currentAccount })
-            .on('transactionHash', (hash) => {
-                console.log(`[LOADING] Transaction hash: ${hash}`);
-            })
-            .on('receipt', (receipt) => {
-                console.log(`[SUCCESS] Transaction receipt: ${receipt.transactionHash}`);
-            })
+            await transactionsContract.methods.revokeOrganization(organizationId).send({ from: currentAccount });
 
         } catch (error) {
             console.error(error);
@@ -140,11 +127,11 @@ export const TransactionsProvider = ({ children }) => {
 
             transactionsContract.events.CampaignStarted()
             .on("data", (event) => {
-                console.log(`Campaign [${event.returnValues.campaignId}] started`);
+                console.log(`Campaign [${event.returnValues.campaignId}] started from [${event.returnValues.donor}]`);
                 setCampaigns(new Set([...campaigns, event.returnValues.campaignId]));
             })
 
-            const { title, description, image, deadline, amount, tokens, beneficiary } = formData;
+            const { title, description, deadline, amount, tokens, beneficiary } = formData;
 
             const txConfig = {
                 from: currentAccount,
@@ -154,20 +141,27 @@ export const TransactionsProvider = ({ children }) => {
             await transactionsContract.methods.startCampaign(
                 title,
                 description,
-                image,
                 deadline,
                 tokens,
                 beneficiary
-            ).send(txConfig)
-            .on('transactionHash', (hash) => {
-                console.log(`[LOADING] Transaction hash: ${hash}`);
-            })
-            .on('receipt', (receipt) => {
-                console.log(`[SUCCESS] Transaction receipt: ${receipt.transactionHash}`);
-            })
+            ).send(txConfig);
 
         } catch (error) {
-            console.error("Campaign already exists or permission denied.");
+            console.error("Beneficiary not verified or campaign already started");
+        }
+    };
+
+    const getCampaignsIds = async () => {
+        try {
+            if (!ethereum) return alert("Please install MetaMask.");
+
+            await transactionsContract.methods.getCampaignsIds().call({ from: currentAccount })
+            .then((campaignsIds) => {
+                console.log(campaignsIds);
+            });
+
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -175,7 +169,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            await transactionsContract.methods.getCampaign(campaignId).call()
+            await transactionsContract.methods.getCampaign(campaignId).call({ from: currentAccount })
             .then((campaign) => {
                 console.log(campaign);
             });
@@ -189,7 +183,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            await transactionsContract.methods.getCampaignTokens(campaignId).call()
+            await transactionsContract.methods.getCampaignTokens(campaignId).call({ from: currentAccount })
             .then((tokens) => {
                 console.log(tokens);
             });
@@ -199,34 +193,37 @@ export const TransactionsProvider = ({ children }) => {
         }
     }
 
-    const endCampaign = async (campaignId) => {
+    const claimRefund = async (campaignId) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            transactionsContract.events.CampaignEnded()
+            transactionsContract.events.RefundClaimed()
             .on("data", (event) => {
-                console.log(`Campaign [${event.returnValues.campaignId}] ended`);
+                console.log(`Campaign [${event.returnValues.campaignId}]: refund of [${web3.utils.fromWei(event.returnValues.amount)} ETH] claimed by [${event.returnValues.donor}]`);
             })
 
-            transactionsContract.events.DonationMade()
-            .on("data", (event) => {
-                console.log(`Campaign [${event.returnValues.campaignId}] details:`)
-                console.log(`   - Amount refunded to donor [${event.returnValues.donor}]: ${web3.utils.fromWei(event.returnValues.refund, 'ether')}`);
-                console.log(`   - Amount donated to beneficiary [${event.returnValues.beneficiary}]: ${web3.utils.fromWei(event.returnValues.donation, 'ether')}`);
-            });
-
-            await transactionsContract.methods.endCampaign(campaignId).send({ from: currentAccount })
-            .on('transactionHash', (hash) => {
-                console.log(`[LOADING] Transaction hash: ${hash}`);
-            })
-            .on('receipt', (receipt) => {
-                console.log(`[SUCCESS] Transaction receipt: ${receipt.transactionHash}`);
-            });
+            await transactionsContract.methods.claimRefund(campaignId).send({ from: currentAccount });
 
         } catch (error) {
             console.error(error);
         }
-    }
+    };
+
+    const claimDonation = async (campaignId) => {
+        try {
+            if (!ethereum) return alert("Please install MetaMask.");
+
+            transactionsContract.events.DonationClaimed()
+            .on("data", (event) => {
+                console.log(`Campaign [${event.returnValues.campaignId}]: donation of [${web3.utils.fromWei(event.returnValues.amount)} ETH] claimed by [${event.returnValues.beneficiary}]`);
+            })
+
+            await transactionsContract.methods.claimDonation(campaignId).send({ from: currentAccount });
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     // POST - /reedemToken
     // body { campaignId, tokenId }
@@ -240,13 +237,7 @@ export const TransactionsProvider = ({ children }) => {
                 console.log(`Campaign [${event.returnValues.campaignId}]: token [${event.returnValues.tokenId}] redeemed`);
             })
 
-            await transactionsContract.methods.redeemToken(campaignId, tokenId).send({ from: currentAccount })
-            .on('transactionHash', (hash) => {
-                console.log(`[LOADING] Transaction hash: ${hash}`);
-            })
-            .on('receipt', (receipt) => {
-                console.log(`[SUCCESS] Transaction receipt: ${receipt.transactionHash}`);
-            });
+            await transactionsContract.methods.redeemToken(campaignId, tokenId).send({ from: currentAccount });
 
         } catch (error) {
             console.error(error);
@@ -274,8 +265,10 @@ export const TransactionsProvider = ({ children }) => {
             startCampaign,
             campaigns,
             getCampaign,
+            getCampaignsIds,
             getCampaignTokens,
-            endCampaign,
+            claimRefund,
+            claimDonation,
             reedemToken
         }}>
             {children}  
