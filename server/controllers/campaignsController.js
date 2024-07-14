@@ -1,5 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
+const Token = require("../models/Token");
+const crypto = require('crypto');
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -55,7 +57,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 // @route POST /campaigns/:id/associate
 // @access Private: donor
 const associateCampaignToBlockchain = asyncHandler(async (req, res) => {
-	const campaign = await Campaign.findById(req.params.id).lean();
+	const campaign = await Campaign.findById(req.params.id).exec();
 	if (!campaign) {
 		return res.status(400).json({ message: "Campaign not found" });
 	}
@@ -98,12 +100,14 @@ const associateCampaignToBlockchain = asyncHandler(async (req, res) => {
 // @route PATCH /campaigns
 // @access Private: donor
 const updateCampaign = asyncHandler(async (req, res) => {
-	const { id, image, description } = req.body;
+	id = req.params.id;
 
 	// Confirm data
 	if (!id) {
 		return res.status(400).json({ message: "Id is required" });
 	}
+
+	const { image, description } = req.body;
 
 	const campaign = await Campaign.findById(id).exec();
 
@@ -137,7 +141,7 @@ const deleteCampaign = asyncHandler(async (req, res) => {
 		return res.status(400).json({ message: "Cannot delete a campaign associated to blockchain" });
 	}
 
-	await campaign.remove();
+	await campaign.deleteOne();
 
 	res.json({ message: "Campaign removed" });
 });

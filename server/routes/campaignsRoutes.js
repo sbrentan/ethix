@@ -11,16 +11,16 @@ router
 	.route("")
 	.get(
 		campaignsController.getAllCampaigns
+	)
+	.post(
+		verifyRoles([ROLES_LIST.donor]),
+		campaignsController.createNewCampaign
 	);
 
 router
 	.route("/:id")
 	.get(
 		campaignsController.getCampaign
-	)
-	.post(
-		verifyRoles([ROLES_LIST.donor]),
-		campaignsController.createNewCampaign
 	)
 	.patch(
 		verifyRoles([ROLES_LIST.donor]),
