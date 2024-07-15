@@ -49,7 +49,8 @@ export const TransactionsProvider = ({ children }) => {
 
             window.location.reload();
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
     
@@ -69,7 +70,8 @@ export const TransactionsProvider = ({ children }) => {
             });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -86,7 +88,8 @@ export const TransactionsProvider = ({ children }) => {
             await charityContract.methods.verifyOrganization(organizationId).send({ from: currentAccount });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -100,7 +103,8 @@ export const TransactionsProvider = ({ children }) => {
             });
             
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     }
 
@@ -117,7 +121,8 @@ export const TransactionsProvider = ({ children }) => {
             await charityContract.methods.revokeOrganization(organizationId).send({ from: currentAccount });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -146,7 +151,8 @@ export const TransactionsProvider = ({ children }) => {
             ).send(txConfig);
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -161,7 +167,8 @@ export const TransactionsProvider = ({ children }) => {
             });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -175,7 +182,8 @@ export const TransactionsProvider = ({ children }) => {
             });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -189,7 +197,8 @@ export const TransactionsProvider = ({ children }) => {
             });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     }
 
@@ -205,7 +214,8 @@ export const TransactionsProvider = ({ children }) => {
             await charityContract.methods.claimRefund(campaignId).send({ from: currentAccount });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -221,7 +231,8 @@ export const TransactionsProvider = ({ children }) => {
             await charityContract.methods.claimDonation(campaignId).send({ from: currentAccount });
 
         } catch (error) {
-            console.error(error.data.message || error.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     };
 
@@ -240,7 +251,8 @@ export const TransactionsProvider = ({ children }) => {
             await charityContract.methods.redeemToken(campaignId, tokenId).send({ from: currentAccount });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     }
 
@@ -254,7 +266,8 @@ export const TransactionsProvider = ({ children }) => {
             });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     }
 
@@ -270,7 +283,8 @@ export const TransactionsProvider = ({ children }) => {
             });
 
         } catch (error) {
-            console.error(error.message || error.data.message || error);
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
         }
     }
 
