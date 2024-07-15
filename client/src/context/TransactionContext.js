@@ -11,6 +11,8 @@ export const TransactionsProvider = ({ children }) => {
 
     const web3 = new Web3(ethereum);
 
+    const charityContract = new web3.eth.Contract(CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS);
+
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentAccount, setCurrentAccount] = useState(null);
     const [campaigns, setCampaigns] = useState(new Set());
@@ -22,8 +24,6 @@ export const TransactionsProvider = ({ children }) => {
         tokens: 0,
         beneficiary: ''
     });
-
-    const charityContract = new web3.eth.Contract(CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS);
 
     const handleChange = (e, name) => {
         switch (name) {
@@ -80,11 +80,6 @@ export const TransactionsProvider = ({ children }) => {
 
             if(!ethereum) return alert("Please install MetaMask.");
 
-            charityContract.events.OrganizationVerified()
-            .on("data", (event) => {
-                console.log(`Organization [${event.returnValues.organization}] - verification status: [${event.returnValues.status}]`);
-            })
-
             await charityContract.methods.verifyOrganization(organizationId).send({ from: currentAccount });
 
         } catch (error) {
@@ -113,11 +108,6 @@ export const TransactionsProvider = ({ children }) => {
 
             if(!ethereum) return alert("Please install MetaMask.");
 
-            charityContract.events.OrganizationRevoked()
-            .on("data", (event) => {
-                console.log(`Organization [${event.returnValues.organization}] - verification status: [${event.returnValues.status}]`);
-            })
-
             await charityContract.methods.revokeOrganization(organizationId).send({ from: currentAccount });
 
         } catch (error) {
@@ -136,12 +126,6 @@ export const TransactionsProvider = ({ children }) => {
                 from: currentAccount,
                 value: web3.utils.toWei(amount, 'ether')
             }
-
-            charityContract.events.CampaignStarted()
-            .on("data", (event) => {
-                console.log(`Campaign [${event.returnValues.campaignId}] started by [${event.returnValues.donor}]`);
-                setCampaigns((prevState) => new Set([...prevState, event.returnValues.campaignId]));
-            })
 
             await charityContract.methods.startCampaign(
                 title,
@@ -206,11 +190,6 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            charityContract.events.RefundClaimed()
-            .on("data", (event) => {
-                console.log(`Campaign [${event.returnValues.campaignId}]: refund of [${web3.utils.fromWei(event.returnValues.amount, 'ether')} ETH] claimed by [${event.returnValues.donor}]`);
-            })
-
             await charityContract.methods.claimRefund(campaignId).send({ from: currentAccount });
 
         } catch (error) {
@@ -222,11 +201,6 @@ export const TransactionsProvider = ({ children }) => {
     const claimDonation = async (campaignId) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
-
-            charityContract.events.DonationClaimed()
-            .on("data", (event) => {
-                console.log(`Campaign [${event.returnValues.campaignId}]: donation of [${web3.utils.fromWei(event.returnValues.amount, 'ether')} ETH] claimed by [${event.returnValues.beneficiary}]`);
-            })
 
             await charityContract.methods.claimDonation(campaignId).send({ from: currentAccount });
 
@@ -242,11 +216,6 @@ export const TransactionsProvider = ({ children }) => {
     const reedemToken = async (campaignId, tokenId) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
-
-            charityContract.events.TokenRedeemed()
-            .on("data", (event) => {
-                console.log(`Campaign [${event.returnValues.campaignId}]: token [${event.returnValues.tokenId}] redeemed`);
-            })
 
             await charityContract.methods.redeemToken(campaignId, tokenId).send({ from: currentAccount });
 
@@ -296,6 +265,53 @@ export const TransactionsProvider = ({ children }) => {
             checkIfWalletIsConnect();
         })
     }, [currentAccount]);
+
+    useEffect(() => {
+
+        // Subscriptions to contract events
+
+        const organizationVerifiedSubscription = charityContract.events.OrganizationVerified();
+        const organizationRevokedSubscription = charityContract.events.OrganizationRevoked();
+        const campaignStartedSubscription = charityContract.events.CampaignStarted();
+        const refundClaimedSubscription = charityContract.events.RefundClaimed();
+        const donationClaimedSubscription = charityContract.events.DonationClaimed();
+        const tokenRedeemedSubscription = charityContract.events.TokenRedeemed();
+
+        organizationVerifiedSubscription.on("data", (event) => {
+            console.log(`Organization [${event.returnValues.organization}] - verification status: [${event.returnValues.status}]`);
+        });
+
+        organizationRevokedSubscription.on("data", (event) => {
+            console.log(`Organization [${event.returnValues.organization}] - verification status: [${event.returnValues.status}]`);
+        });
+
+        campaignStartedSubscription.on("data", (event) => {
+            console.log(`Campaign [${event.returnValues.campaignId}] started by [${event.returnValues.donor}]`);
+            setCampaigns((prevState) => new Set([...prevState, event.returnValues.campaignId]));
+        });
+
+        refundClaimedSubscription.on("data", (event) => {
+            console.log(`Campaign [${event.returnValues.campaignId}]: refund of [${web3.utils.fromWei(event.returnValues.amount, 'ether')} ETH] claimed by [${event.returnValues.donor}]`);
+        });
+        
+        donationClaimedSubscription.on("data", (event) => {
+            console.log(`Campaign [${event.returnValues.campaignId}]: donation of [${web3.utils.fromWei(event.returnValues.amount, 'ether')} ETH] claimed by [${event.returnValues.beneficiary}]`);
+        });
+
+        tokenRedeemedSubscription.on("data", (event) => {
+            console.log(`Campaign [${event.returnValues.campaignId}]: token [${event.returnValues.tokenId}] redeemed`);
+        });
+
+        return() => {
+            organizationVerifiedSubscription.unsubscribe();
+            organizationRevokedSubscription.unsubscribe();
+            campaignStartedSubscription.unsubscribe();
+            refundClaimedSubscription.unsubscribe();
+            donationClaimedSubscription.unsubscribe();
+            tokenRedeemedSubscription.unsubscribe();
+        }
+
+    }, []);
     
     return (
         <TransactionContext.Provider value={{
