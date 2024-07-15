@@ -28,9 +28,11 @@ const Test = () => {
       getCampaignsIds,
       getCampaign,
       getCampaignTokens,
-      //claimRefund,
-      //claimDonation,
-      reedemToken
+      claimRefund,
+      claimDonation,
+      reedemToken,
+      getBalance,
+      getCampaignBalance
     } = useContext(TransactionContext);
 
     const [campaignId, setCampaignId] = useState(null);
@@ -76,6 +78,12 @@ const Test = () => {
 
         <button type="button" onClick={() => getCampaignTokens(campaignId)}>Get campaign tokens</button>
 
+        <button type="button" onClick={() => claimRefund(campaignId)}>Claim refund</button>
+
+        <button type="button" onClick={() => claimDonation(campaignId)}>Claim donation</button>
+
+        <button type="button" onClick={() => getCampaignBalance(campaignId)}>Get campaign balance</button>
+
         <br /><hr /><br />
         
         <input placeholder="Token ID" type="text" onChange={(e) => setTokenId(e.target.value)} />
@@ -86,13 +94,17 @@ const Test = () => {
         <br /><hr /><br />
 
         <input placeholder="Address" type="text" onChange={(e) => setAddress(e.target.value)} />
-        <p>Current token: {address}</p>
+        <p>Current organization: {address}</p>
 
         <button type="button" onClick={() => verifyOrganization(address)}>Verify Organization</button>
 
         <button type="button" onClick={() => isOrganizationVerified(address)}>Is verified?</button>
 
         <button type="button" onClick={() => revokeOrganization(address)}>Revoke verification</button>
+
+        <br /><hr /><br />
+
+        <button type="button" onClick={getBalance}>Get Charity balance</button>
       </>        
     );
   };

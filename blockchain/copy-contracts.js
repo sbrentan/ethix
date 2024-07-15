@@ -8,8 +8,8 @@ const destinationDir = "../client/src/utils/";
 // Read the contents of the source directory
 fs.readdir(sourceDir, (err, files) => {
     if (err) {
-    console.error('Error reading source directory:', err);
-    return;
+        console.error('Error reading source directory:', err);
+        return;
     }
 
     // Filter out Migrations.json
@@ -22,9 +22,9 @@ fs.readdir(sourceDir, (err, files) => {
 
     fs.copyFile(sourcePath, destinationPath, err => {
         if (err) {
-        console.error(`Error copying ${file}:`, err);
+            console.error(`Error copying ${file}:`, err);
         } else {
-        console.log(`${file} copied successfully!`);
+            console.log(`${file} copied successfully!`);
         }
     });
     });
