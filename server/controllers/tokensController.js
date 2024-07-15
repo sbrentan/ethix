@@ -37,14 +37,14 @@ const redeemToken = asyncHandler(async (req, res) => {
         to: WEB3_CONTRACT_ADDRESS,
         data: data
     };
-    console.log('Transaction:', tx);
 
     try {
-        const signedTx = await WEB3_MANAGER_ACCOUNT.signTransaction(tx);
-        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        const receipt = await WEB3_CONTRACT.methods.redeemToken(campaignId, tokenId).send({ from: WEB3_MANAGER_ACCOUNT.address });
+
         console.log('Transaction receipt:', receipt);
         res.json({ message: "Token redeemed" });
     } catch (error) {
+        console.log('Error redeeming token:', error);
         errorMessage = retrieveBlockchainError(error);
         res.json({ message: "Error redeeming token: " + errorMessage });
         res.status(400);

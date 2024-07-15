@@ -22,9 +22,10 @@ if (!process.env.WEB3_CONTRACT_ADDRESS) {
     process.exit(1);
 }
 
-const fs = require('fs');
 // read the ABI from the JSON file
-const contract_file = fs.readFileSync('../build/Charity.json');
+const fs = require('fs');
+const contract_file = fs.readFileSync('../blockchain/build/Charity.json');
+
 // convert the ABI from JSON
 const contractABI = JSON.parse(contract_file).abi;
 
