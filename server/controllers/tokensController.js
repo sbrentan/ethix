@@ -43,7 +43,6 @@ const redeemToken = asyncHandler(async (req, res) => {
     
     console.log('Redeeming token:', tokenId);
     console.log('Campaign ID:', campaignId);
-    const data = WEB3_CONTRACT.methods.redeemToken(campaignId, tokenId).encodeABI();
 
     try {
         const receipt = await WEB3_CONTRACT.methods.redeemToken(campaignId, tokenId).send({ from: WEB3_MANAGER_ACCOUNT.address });
