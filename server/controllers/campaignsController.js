@@ -47,7 +47,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 
 	if (campaign) {
 		// created
-		res.status(201).json({ message: `New campaign ${title} created` });
+		res.status(201).json({ message: `New campaign ${title} created`, campaignId: campaign._id });
 	} else {
 		res.status(500).json({ message: "Something went wrong!" });
 	}
