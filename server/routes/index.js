@@ -5,12 +5,14 @@ const router = express.Router();
 const rootRoutes = require('./root');
 const authRoutes = require('./authRoutes');
 const usersRoutes = require('./usersRoutes');
-const requestsRoutes = require('./requestsRoutes')
+const requestsRoutes = require('./requestsRoutes');
+const campaignsRoutes = require('./campaignsRoutes');
 
 // Use the route handlers with their respective prefixes
 router.use('/', rootRoutes);
 router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
 router.use('/requests', requestsRoutes);
+router.use('/campaigns', campaignsRoutes);
 
 module.exports = router;
