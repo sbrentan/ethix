@@ -22,7 +22,8 @@
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^7.0.3",
     "mongoose-plugin-autoinc": "^1.1.9",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "web3": "^4.11.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

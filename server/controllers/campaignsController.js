@@ -47,7 +47,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 
 	if (campaign) {
 		// created
-		res.status(201).json({ message: `New campaign ${title} created` });
+		res.status(201).json({ message: `New campaign ${title} created`, campaignId: campaign._id });
 	} else {
 		res.status(500).json({ message: "Something went wrong!" });
 	}
@@ -83,7 +83,7 @@ const associateCampaignToBlockchain = asyncHandler(async (req, res) => {
 	const tokenEntities = tokens.map((token) => {
 		return new Token({ 
 			campaignId: campaign._id, 
-			hash: crypto.createHash('sha256').update(token).digest('hex')
+			hash: crypto.createHash('sha256').update(campaignId + token).digest('hex')
 		});
 	});
 	

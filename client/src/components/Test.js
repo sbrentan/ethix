@@ -56,8 +56,8 @@ const Test = () => {
         <Input placeholder="Amount (ETH)" name="amount" type="number" handleChange={handleChange} />
         <Input placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
         <select placeholder="Beneficiary (address)" name="beneficiary" onChange={(e) => handleChange(e, e.target.name)}>
-          <option value="addr1">First beneficiary</option>
-          <option value="0xd026076b57cbc2919E82BA089dD02Bd72032b11F">Second beneficiary</option>
+          <option value="0xc05B7bC6Bde92F8e6820fD47c7e23DFE01869886">First beneficiary</option>
+          <option value="0x8588f4d002C747C5E7B6274752B251402c77d858">Second beneficiary</option>
         </select>
 
         <br /> <br />
