@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 
+import { useRedeemTokenMutation } from './tokensApiSlice';
+
 import { CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS } from '../utils/constants';
 
 export const TransactionContext = React.createContext();
@@ -24,6 +26,8 @@ export const TransactionsProvider = ({ children }) => {
         tokens: 0,
         beneficiary: ''
     });
+
+    const [ test ] = useRedeemTokenMutation();
 
     const handleChange = (e, name) => {
         switch (name) {
@@ -131,7 +135,8 @@ export const TransactionsProvider = ({ children }) => {
                 title,
                 deadline,
                 tokens,
-                beneficiary
+                beneficiary, 
+                web3.utils.randomHex(32)
             ).send(txConfig);
 
         } catch (error) {
@@ -213,8 +218,11 @@ export const TransactionsProvider = ({ children }) => {
     // POST - /reedemToken
     // body { campaignId, tokenId }
     
-    const reedemToken = async (campaignId, tokenId) => {
-        try {
+    const redeemToken = async (campaignId, tokenId) => {
+
+        test({ campaignId, tokenId });
+
+        /*try {
             if (!ethereum) return alert("Please install MetaMask.");
 
             await charityContract.methods.redeemToken(campaignId, tokenId).send({ from: currentAccount });
@@ -222,7 +230,7 @@ export const TransactionsProvider = ({ children }) => {
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
-        }
+        }*/
     }
 
     const getBalance = async () => {
@@ -330,7 +338,7 @@ export const TransactionsProvider = ({ children }) => {
             getCampaignTokens,
             claimRefund,
             claimDonation,
-            reedemToken,
+            redeemToken,
             getBalance,
             getCampaignBalance
         }}>
