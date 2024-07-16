@@ -59,12 +59,19 @@ contract Campaign {
         _;
     }
 
-    // generate a unique ID for a token from its campaign ID and index
-    function generateTokenId(
+    function generateTokenIndex(
         bytes32 _campaignId, 
         uint256 _index
     ) private pure returns(bytes32) {
         return keccak256(abi.encodePacked(_campaignId, _index));
+    }
+
+    function generateTokenId(
+        bytes32 _campaignId,
+        uint256 _index,
+        bytes32 _seed
+    ) private view returns(bytes32) {
+        return keccak256(abi.encodePacked(_campaignId, _index, _seed, block.timestamp, blockhash(block.number - 1), msg.sender));
     }
 
     function start(
@@ -73,7 +80,8 @@ contract Campaign {
         uint256 _deadline,
         address _donor,
         address _beneficiary,
-        uint256 _tokensCount
+        uint256 _tokensCount,
+        bytes32 _seed
     ) external payable {
 
         campaignDetails.campaignId = _campaignId;
@@ -83,27 +91,33 @@ contract Campaign {
         campaignDetails.beneficiary = payable(_beneficiary);
         campaignDetails.tokensCount = _tokensCount;
         campaignDetails.initialDeposit = msg.value;
-        campaignDetails.refunds = msg.value;   
+        campaignDetails.refunds = msg.value;
+
+        bytes32 tokenIndex;
+        bytes32 tokenId;  
 
         if (msg.value % _tokensCount == 0) {
 
             // create all tokens with equal value
             for (uint i = 0; i < _tokensCount; i++) {
-                bytes32 tokenId = generateTokenId(_campaignId, i);
-                tokens[tokenId] = Token(tokenId, false, msg.value / _tokensCount);
+                tokenIndex = generateTokenIndex(_campaignId, i);
+                tokenId = generateTokenId(_campaignId, i, _seed);
+                tokens[tokenIndex] = Token(tokenId, false, msg.value / _tokensCount);
             }            
 
         } else {
 
             // create N-1 tokens with equal value
             for (uint i = 0; i < _tokensCount - 1; i++) {
-                bytes32 tokenId = generateTokenId(_campaignId, i);
-                tokens[tokenId] = Token(tokenId, false, msg.value / _tokensCount);
+                tokenIndex = generateTokenIndex(_campaignId, i);
+                tokenId = generateTokenId(_campaignId, i, _seed);
+                tokens[tokenIndex] = Token(tokenId, false, msg.value / _tokensCount);
             }
 
             // create the last token with the remaining value
-            bytes32 lastId = generateTokenId(_campaignId, _tokensCount - 1);
-            tokens[lastId] = Token(lastId, false, msg.value % _tokensCount);
+            tokenIndex = generateTokenIndex(_campaignId, _tokensCount - 1);
+            tokenId = generateTokenId(_campaignId, _tokensCount - 1, _seed);
+            tokens[tokenIndex] = Token(tokenId, false, msg.value % _tokensCount);
         }
     }
 
@@ -115,7 +129,7 @@ contract Campaign {
     function getTokens(address _from) external view onlyDonor(_from) onlyLiveCampaign returns(Token[] memory) {
         Token[] memory _tokens = new Token[](campaignDetails.tokensCount);
         for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            _tokens[i] = tokens[generateTokenId(campaignDetails.campaignId, i)];
+            _tokens[i] = tokens[generateTokenIndex(campaignDetails.campaignId, i)];
         }
         return _tokens;
     }
@@ -136,16 +150,22 @@ contract Campaign {
 
     // allow users to reedem the tokens they bought
     function redeemToken(bytes32 tokenId) external onlyLiveCampaign {
-        
-        Token storage token = tokens[tokenId];
 
-        // require that the token has not been redeemed yet
-        require(!token.redeemed, "Token already redeemed");
+        // get the token from the mapping
+        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
+            Token storage token = tokens[generateTokenIndex(campaignDetails.campaignId, i)];
+            if (token.tokenId == tokenId) {
+                
+                // require that the token has not been redeemed yet
+                require(!token.redeemed, "Token already redeemed");
 
-        // mark the token as redeemed and change the owner to the beneficiary
-        token.redeemed = true;
-        campaignDetails.donations += token.value;
-        campaignDetails.refunds -= token.value;
+                // mark the token as redeemed
+                token.redeemed = true;
+                campaignDetails.donations += token.value;
+                campaignDetails.refunds -= token.value;
+                break;
+            }
+        }
     }
 
     function getBalance() external view returns(uint256, uint256, uint256) {

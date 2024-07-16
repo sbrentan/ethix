@@ -75,7 +75,8 @@ contract Charity {
         string calldata _title,
         uint256 _deadline,
         uint256 _tokensCount,
-        address _beneficiary
+        address _beneficiary,
+        bytes32 _seed
     ) external payable onlyVerifiedBeneficiary(_beneficiary) {
 
         // generate a unique ID for the campaign
@@ -89,7 +90,7 @@ contract Charity {
         campaignsIds.push(campaignId);
         
         // start the campaign
-        campaigns[campaignId].start{value: msg.value}(campaignId, _title, _deadline, msg.sender, _beneficiary, _tokensCount);
+        campaigns[campaignId].start{value: msg.value}(campaignId, _title, _deadline, msg.sender, _beneficiary, _tokensCount, _seed);
 
         emit CampaignStarted(campaignId, msg.sender);
     }

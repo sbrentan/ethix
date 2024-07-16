@@ -30,7 +30,7 @@ const Test = () => {
       getCampaignTokens,
       claimRefund,
       claimDonation,
-      reedemToken,
+      redeemToken,
       getBalance,
       getCampaignBalance
     } = useContext(TransactionContext);
@@ -89,7 +89,7 @@ const Test = () => {
         <input placeholder="Token ID" type="text" onChange={(e) => setTokenId(e.target.value)} />
         <p>Current token: {tokenId}</p>
 
-        <button type="button" onClick={() => reedemToken(campaignId, tokenId)}>Reedem</button>
+        <button type="button" onClick={() => redeemToken(campaignId, tokenId)}>Reedem</button>
 
         <br /><hr /><br />
 
