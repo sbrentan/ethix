@@ -15,6 +15,7 @@ import Register from "./features/auth/Register";
 import ProfileRequestsList from "./features/requests/ProfileRequestsList";
 import MyProfileRequest from "./features/requests/MyProfileRequest";
 import CampaignsList from "./features/campaigns/CampaignsList";
+import CampaignsGrid from "./features/campaigns/CampaignsGrid";
 
 function App() {
 	return (
@@ -55,6 +56,9 @@ function App() {
                         >
                             <Route path="user">
                                 <Route index element={<>User</>} />
+                                <Route path="campaigns">
+                                    <Route index element={<CampaignsGrid />} />
+                                </Route>
                             </Route>
                         </Route>
 
@@ -117,25 +121,9 @@ function App() {
                                 </Route>
                                 <Route path="campaigns">
                                     <Route index element={<CampaignsList />} />
-                                    {/* /* <Route
-                                        path=":id"
-                                        element={<EditUser />}
-                                    />
-                                    <Route
-                                        path="new"
-                                        element={<NewUserForm />}
-                                    />  */}
                                 </Route>
                                 <Route path="requests">
                                     <Route index element={<ProfileRequestsList />} />
-                                    {/* /* <Route
-                                        path=":id"
-                                        element={<EditUser />}
-                                    />
-                                    <Route
-                                        path="new"
-                                        element={<NewUserForm />}
-                                    />  */}
                                 </Route>
                             </Route>
                         </Route>

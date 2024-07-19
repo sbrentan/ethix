@@ -23,6 +23,11 @@ const userMenu = [
 		icon: <HomeOutlined />,
 	},
     {
+		label: (<Link to='/user/campaigns'>Campaigns</Link>),
+		key: "/user/campaigns",
+		icon: <EuroOutlined />,
+	},
+    {
 		label: (<Link to='/user/dashboard'>Dashboard</Link>),
 		key: "/user/dashboard",
 		icon: <BarChartOutlined />,
