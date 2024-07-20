@@ -16,6 +16,7 @@ import ProfileRequestsList from "./features/requests/ProfileRequestsList";
 import MyProfileRequest from "./features/requests/MyProfileRequest";
 import CampaignsList from "./features/campaigns/CampaignsList";
 import CampaignsGrid from "./features/campaigns/CampaignsGrid";
+import Campaign from "./features/campaigns/Campaign";
 
 function App() {
 	return (
@@ -47,6 +48,13 @@ function App() {
 
                     {/* Protected Routes */}
 					<Route element={<PersistLogin />}>
+
+                        <Route path="campaigns">
+                            <Route index element={<CampaignsGrid />} />
+                            <Route path=":id">
+                                <Route index element={<Campaign />} />
+                            </Route>
+                        </Route>
 
                         {/* User Routes */}
                         <Route

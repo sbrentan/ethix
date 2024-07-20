@@ -2,6 +2,7 @@ import { Card, Col, Divider, Progress, Row, Space, Typography } from "antd";
 import { format } from "date-fns";
 import React from "react";
 import { useGetCampaignsQuery } from "./campaignsApiSlice";
+import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
 
@@ -23,21 +24,24 @@ const CampaignCard = ({ campaignId }) => {
 		}),
 	});
 
+    const navigate = useNavigate()
+
 	if (campaign) {
-        const percent = Math.floor(Math.random() * 11) * 10;
-        let status = "active"
-        if (percent === 100) {
-            status = ""
-        } else if (isExpired(campaign.deadline)) {
-            status = "exception"
-        }
+		const percent = Math.floor(Math.random() * 11) * 10;
+		let status = "active";
+		if (percent === 100) {
+			status = "";
+		} else if (isExpired(campaign.deadline)) {
+			status = "exception";
+		}
 		return (
-			<Card title={campaign.title}>
+			<Card title={campaign.title} hoverable onClick={() => navigate(`/campaigns/${campaign.id}`)}>
 				<Text>{campaign.description}</Text>
 				<br />
-                <Divider type="horizontal" />
+				<Divider type="horizontal" />
 				<Row>
-					<Col span={6}><Space direction="vertical">
+					<Col span={6}>
+						<Space direction="vertical">
 							<Text strong>Starting Date:</Text>
 							<Text>
 								{format(
@@ -45,13 +49,22 @@ const CampaignCard = ({ campaignId }) => {
 									"dd/MM/yyyy"
 								)}
 							</Text>
-						</Space></Col>
-					<Col span={1}>
-						<Divider type="vertical" style={{ height: 'auto', minHeight: '100%' }} />
+						</Space>
 					</Col>
-					<Col span={10}><Progress percent={percent} status={status} /></Col>
 					<Col span={1}>
-						<Divider type="vertical" style={{ height: 'auto', minHeight: '100%' }} />
+						<Divider
+							type="vertical"
+							style={{ height: "auto", minHeight: "100%" }}
+						/>
+					</Col>
+					<Col span={10}>
+						<Progress percent={percent} status={status} />
+					</Col>
+					<Col span={1}>
+						<Divider
+							type="vertical"
+							style={{ height: "auto", minHeight: "100%" }}
+						/>
 					</Col>
 					<Col span={6}>
 						<Space direction="vertical">

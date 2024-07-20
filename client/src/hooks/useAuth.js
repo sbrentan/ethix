@@ -9,7 +9,7 @@ const useAuth = () => {
     let isDonor = false
     let isBeneficiary = false
     let isAdmin = false
-    let status = "Employee"
+    let status = null
 
     if (token) {
         const decoded = jwtDecode(token)
@@ -28,6 +28,6 @@ const useAuth = () => {
         return { username, role, status, isUser, isDonor, isBeneficiary, isAdmin, verified }
     }
 
-    return { username: '', roles: null, isUser, isDonor, isBeneficiary, isAdmin, verified: null }
+    return { username: '', roles: null, status, isUser, isDonor, isBeneficiary, isAdmin, verified: null }
 }
 export default useAuth

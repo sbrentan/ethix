@@ -165,13 +165,14 @@ const CampaignsGrid = () => {
         </>)
 	}
 
-  return (
-    <>{contextHolder}
-    <Title>Campaigns</Title>
-    {errContent}
-    <div>{tableContent}</div>
-    </>
-  )
+    return (
+        <div style={{ margin: 30 }}>
+            {contextHolder}
+            <Title>Campaigns</Title>
+            {errContent}
+            <div>{tableContent}</div>
+        </div>
+    )
 }
 
 export default CampaignsGrid
