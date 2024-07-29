@@ -121,6 +121,12 @@ contract Campaign {
         campaignDetails.initialDeposit = msg.value;
         campaignDetails.refunds = msg.value;
 
+        // require the campaign is not already funded
+        require(
+            campaignDetails.funded == false,
+            "Campaign has already been funded"
+        );
+
         // generate tokens
         _generateTokens(_seed);
     }
@@ -135,6 +141,7 @@ contract Campaign {
     )
         external
         view
+        onlyOwner
         onlyDonor(_from)
         onlyFundedCampaign
         returns (Token[] memory)
@@ -153,6 +160,7 @@ contract Campaign {
         address _from
     )
         external
+        onlyOwner
         onlyDonor(_from)
         onlyEndedCampaign
         onlyNotAlreadyRefunded
@@ -168,6 +176,7 @@ contract Campaign {
         address _from
     )
         external
+        onlyOwner
         onlyBeneficiary(_from)
         onlyEndedCampaign
         onlyNotAlreadyDonated

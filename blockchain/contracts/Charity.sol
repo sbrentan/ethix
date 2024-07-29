@@ -18,6 +18,7 @@ contract Charity {
 
     // Campaign events
     event CampaignStarted(bytes32 campaignId, address donor);
+    event CampaignCreated(bytes32 campaignId, address donor);
     event TokenRedeemed(bytes32 campaignId, bytes32 tokenId);
     event RefundClaimed(bytes32 campaignId, address donor, uint256 amount);
     event DonationClaimed(
@@ -25,6 +26,15 @@ contract Charity {
         address beneficiary,
         uint256 amount
     );
+
+    // ====================================== STRUCTS ======================================
+
+    // Commit struct used to store the hash of the seed and the block number
+    // Used to generate a secure blockchain-level seed using the Commit Reveal Randomness (CRR) technique
+    struct Commit {
+        bytes32 commitHash;
+        uint256 blockNumber;
+    }
 
     // ====================================== VARIABLES ======================================
 
@@ -39,6 +49,9 @@ contract Charity {
     // keep track of verified organizations
     mapping(address => bool) private verifiedOrganizations;
 
+    // keep track of all commits for each campaign
+    mapping(bytes32 => Commit) public commits;
+
     // ====================================== MODIFIERS ======================================
 
     modifier onlyOwner() {
@@ -51,6 +64,11 @@ contract Charity {
             verifiedOrganizations[beneficiary],
             "Beneficiary is not a verified organization"
         );
+        _;
+    }
+
+    modifier onlyExistingCampaign(bytes32 campaignId) {
+        require(campaignExists(campaignId), "Campaign does not exist");
         _;
     }
 
@@ -100,22 +118,24 @@ contract Charity {
     }
 
     // create a new campaign for a verified organization
-    function startCampaign(
+    // (corresponds to the `commit` method in the CRR process)
+    function createCampaign(
         string calldata _title,
         uint256 _deadline,
         uint256 _startingDate,
         uint256 _tokensCount,
         address _beneficiary,
-        bytes32 _seed
-    ) external payable onlyVerifiedBeneficiary(_beneficiary) {
+        bytes32 _commitHash // is the hash of the seed
+    ) external onlyVerifiedBeneficiary(_beneficiary) {
         // generate a unique ID for the campaign
         bytes32 campaignId = generateCampaignId(
             msg.sender,
             _beneficiary,
             _title
         );
+        commits[campaignId] = Commit(_commitHash, block.number);
 
-        // require that the campaignId doesn't exist in the mapping
+        // require that the campaignId doesn't already exist in the mapping
         require(!campaignExists(campaignId), "Campaign already exists");
 
         // create the campaign, add it to the mapping and the list of campaigns IDs
@@ -130,8 +150,49 @@ contract Charity {
         );
         campaignsIds.push(campaignId);
 
+        emit CampaignCreated(campaignId, msg.sender);
+    }
+
+    // fund and start an existing campaign
+    // (corresponds to the `reveal` method in the CRR process)
+    function startCampaign(
+        bytes32 campaignId,
+        bytes32 _seed
+    ) external payable onlyExistingCampaign(campaignId) {
+        Campaign campaign = campaigns[campaignId];
+
+        // require that a commit exists for the campaign
+        require(
+            commits[campaignId].commitHash != 0,
+            "Campaign has already been started"
+        );
+        Commit memory commitData = commits[campaignId];
+
+        // require that the seed matches the commit
+        require(
+            commitData.commitHash == keccak256(abi.encodePacked(_seed)),
+            "Seed hash does not match the previously sent commit hash"
+        );
+
+        // require that the block number is at least 1 block after the commit block number
+        require(
+            block.number > commitData.blockNumber,
+            "Must wait at least 1 block after the commit block"
+        );
+
+        // requires the sender is the campaign donor
+        require(
+            msg.sender == campaign.getDetails().donor,
+            "Only the donor can start the campaign"
+        );
+
+        // generate the seed
+        bytes32 randomSeed = keccak256(
+            abi.encodePacked(_seed, blockhash(block.number))
+        );
+
         // start the campaign
-        campaigns[campaignId].start{value: msg.value}(_seed);
+        campaign.start{value: msg.value}(randomSeed);
 
         emit CampaignStarted(campaignId, msg.sender);
     }
