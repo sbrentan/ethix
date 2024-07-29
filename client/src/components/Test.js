@@ -23,19 +23,21 @@ const Test = () => {
       revokeOrganization, 
       handleChange,
       formData,
+      handleCreateCampaign,
       startCampaign, 
-      campaigns, 
+      campaign, 
       getCampaignsIds,
       getCampaign,
       getCampaignTokens,
       claimRefund,
       claimDonation,
-      redeemToken,
+      handleTokenRedeem,
       getBalance,
       getCampaignBalance
     } = useContext(TransactionContext);
 
-    const [campaignId, setCampaignId] = useState(null);
+    const [campaignIdBc, setCampaignIdBc] = useState(null);
+    const [campaignIdDb, setCampaignIdDb] = useState(null);
     const [tokenId, setTokenId] = useState(null);
     const [address, setAddress] = useState(null);
   
@@ -48,7 +50,7 @@ const Test = () => {
 
         <br /><hr /><br />
 
-        <p>Campaigns: {Array.from(campaigns).join(', ')}</p>
+        <p>Campaign: {campaign}</p>
 
         <Input placeholder="Title" name="title" type="text" handleChange={handleChange} />
         <Input placeholder="Description" name="description" type="text" handleChange={handleChange} />
@@ -64,32 +66,37 @@ const Test = () => {
 
         <p>{JSON.stringify(formData)}</p>
 
+        <button type="button" onClick={handleCreateCampaign}>Create Campaign</button>
         <button type="button" onClick={startCampaign}>Start Campaign</button>
 
         <br /><hr /><br />
 
-        <input placeholder="Campaign ID" type="text" onChange={(e) => setCampaignId(e.target.value)} />
+        <input placeholder="CampaignIdDb (DB)" type="text" onChange={(e) => setCampaignIdDb(e.target.value)} />
+        <input placeholder="Campaign ID (BlockChain)" type="text" onChange={(e) => setCampaignIdBc(e.target.value)} />
 
-        <p>Current campaign: {campaignId}</p>
+        <p>Current campaign (DB): {campaignIdDb}</p>
+        <p>Current campaign (Blockchain): {campaignIdBc}</p>
+
+        <br /><hr /><br />
 
         <button type="button" onClick={getCampaignsIds}>Get campaigns Ids</button>
 
-        <button type="button" onClick={() => getCampaign(campaignId)}>Get campaign</button>
+        <button type="button" onClick={() => getCampaign(campaignIdBc)}>Get campaign</button>
 
-        <button type="button" onClick={() => getCampaignTokens(campaignId)}>Get campaign tokens</button>
+        <button type="button" onClick={() => getCampaignTokens(campaignIdBc)}>Get campaign tokens</button>
 
-        <button type="button" onClick={() => claimRefund(campaignId)}>Claim refund</button>
+        <button type="button" onClick={() => claimRefund(campaignIdBc)}>Claim refund</button>
 
-        <button type="button" onClick={() => claimDonation(campaignId)}>Claim donation</button>
+        <button type="button" onClick={() => claimDonation(campaignIdBc)}>Claim donation</button>
 
-        <button type="button" onClick={() => getCampaignBalance(campaignId)}>Get campaign balance</button>
+        <button type="button" onClick={() => getCampaignBalance(campaignIdBc)}>Get campaign balance</button>
 
         <br /><hr /><br />
         
         <input placeholder="Token ID" type="text" onChange={(e) => setTokenId(e.target.value)} />
         <p>Current token: {tokenId}</p>
 
-        <button type="button" onClick={() => redeemToken(campaignId, tokenId)}>Reedem</button>
+        <button type="button" onClick={() => handleTokenRedeem(campaignIdBc, tokenId)}>Reedem</button>
 
         <br /><hr /><br />
 

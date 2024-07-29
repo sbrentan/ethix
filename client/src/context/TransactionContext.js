@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 
-import { useRedeemTokenMutation } from './tokensApiSlice';
+import { 
+    useCreateCampaignMutation,
+    useAssociateCampaignsMutation,
+    useRedeemTokenMutation 
+} from './contextApiSlice';
 
 import { CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS } from '../utils/constants';
 
@@ -11,13 +15,15 @@ const { ethereum } = window;
 
 export const TransactionsProvider = ({ children }) => {
 
-    const web3 = new Web3(ethereum);
+    /* ------------------------ VARIABLES ------------------------ */
 
+    const web3 = new Web3(ethereum);
     const charityContract = new web3.eth.Contract(CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS);
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentAccount, setCurrentAccount] = useState(null);
-    const [campaigns, setCampaigns] = useState(new Set());
+    const [campaignIdDb, setCampaignIdDb] = useState(null);
+    const [campaignIdBc, setCampaignIdBc] = useState(null);
     const [formData, setformData] = useState({
         title: '',
         description: '',
@@ -27,7 +33,14 @@ export const TransactionsProvider = ({ children }) => {
         beneficiary: ''
     });
 
-    const [ test ] = useRedeemTokenMutation();
+    /* ------------------------ MUTATIONS ------------------------ */
+    
+    // Move to specific components
+    const [createCampaign] = useCreateCampaignMutation();
+    const [associateCampaigns] = useAssociateCampaignsMutation();
+    const [redeemToken] = useRedeemTokenMutation();
+
+    /* ------------------------ FUNCTIONS ------------------------ */
 
     const handleChange = (e, name) => {
         switch (name) {
@@ -120,6 +133,16 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
+    const handleCreateCampaign = async () => {
+        const { title, deadline, amount } = formData;
+
+        await createCampaign({ target: amount, title: title, deadline: deadline, donor: '66a7a899d8d441aa09810736', receiver: '66841d794229eb671102d6b3' })
+        .then((response) => {
+            console.log(response?.data);
+            setCampaignIdDb(response?.data?.campaignId);
+        });
+    };
+
     const startCampaign = async () => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
@@ -139,6 +162,18 @@ export const TransactionsProvider = ({ children }) => {
                 web3.utils.randomHex(32)
             ).send(txConfig);
 
+            const campaignTokens = await getCampaignTokens(campaignIdBc);
+
+            await associateCampaigns({ 
+                campaignIdDb: campaignIdDb, 
+                campaignIdBc: campaignIdBc, 
+                tokenPrice: amount / tokens, 
+                tokenAmount: campaignTokens
+            })
+            .then((response) => {
+                console.log(response?.data);
+            });
+
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
@@ -152,7 +187,6 @@ export const TransactionsProvider = ({ children }) => {
             await charityContract.methods.getCampaignsIds().call({ from: currentAccount })
             .then((campaignsIds) => {
                 console.log(campaignsIds);
-                setCampaigns(new Set(campaignsIds));
             });
 
         } catch (error) {
@@ -177,18 +211,24 @@ export const TransactionsProvider = ({ children }) => {
     };
 
     const getCampaignTokens = async (campaignId) => {
+
+        var campaignTokens = [];
+
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
             await charityContract.methods.getCampaignTokens(campaignId).call({ from: currentAccount })
             .then((tokens) => {
                 console.log(tokens);
+                campaignTokens = tokens;
             });
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
         }
+
+        return campaignTokens;
     }
 
     const claimRefund = async (campaignId) => {
@@ -214,24 +254,6 @@ export const TransactionsProvider = ({ children }) => {
             console.error(errorMessage);
         }
     };
-
-    // POST - /reedemToken
-    // body { campaignId, tokenId }
-    
-    const redeemToken = async (campaignId, tokenId) => {
-
-        test({ campaignId, tokenId });
-
-        /*try {
-            if (!ethereum) return alert("Please install MetaMask.");
-
-            await charityContract.methods.redeemToken(campaignId, tokenId).send({ from: currentAccount });
-
-        } catch (error) {
-            let errorMessage = error.data ? error.data.message : (error.message || error);
-            console.error(errorMessage);
-        }*/
-    }
 
     const getBalance = async () => {
         try {
@@ -265,6 +287,13 @@ export const TransactionsProvider = ({ children }) => {
         }
     }
 
+    const handleTokenRedeem = async (campaignId, tokenId) => {
+        await redeemToken({ campaignId, tokenId })
+        .then((response) => { 
+            console.log(response?.data);
+        })
+    }
+
     useEffect(() => {
 
         if (!currentAccount) checkIfWalletIsConnect();
@@ -295,7 +324,7 @@ export const TransactionsProvider = ({ children }) => {
 
         campaignStartedSubscription.on("data", (event) => {
             console.log(`Campaign [${event.returnValues.campaignId}] started by [${event.returnValues.donor}]`);
-            setCampaigns((prevState) => new Set([...prevState, event.returnValues.campaignId]));
+            setCampaignIdBc(event.returnValues.campaignId);
         });
 
         refundClaimedSubscription.on("data", (event) => {
@@ -331,14 +360,15 @@ export const TransactionsProvider = ({ children }) => {
             revokeOrganization,
             formData,
             handleChange,
+            handleCreateCampaign,
             startCampaign,
-            campaigns,
+            campaign,
             getCampaign,
             getCampaignsIds,
             getCampaignTokens,
             claimRefund,
             claimDonation,
-            redeemToken,
+            handleTokenRedeem,
             getBalance,
             getCampaignBalance
         }}>

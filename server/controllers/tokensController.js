@@ -64,7 +64,7 @@ const checkTokenHash = async (campaignId, tokenId) => {
         throw new Error("Campaign not found");
 
     token_hash = crypto.createHash('sha256').update(campaignId + tokenId).digest('hex')
-    const token = await Token.findOne({ _id: campaign._id, hash: token_hash }).exec();
+    const token = await Token.findOne({ campaignId: campaign._id, hash: token_hash }).exec();
 
     if (!token)
         throw new Error("Token not valid");

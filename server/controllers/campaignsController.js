@@ -37,6 +37,8 @@ const getCampaign = asyncHandler(async (req, res) => {
 const createNewCampaign = asyncHandler(async (req, res) => {
 	const { target, title, image, description, deadline, donor, receiver } = req.body;
 
+	console.log(req.body);
+
 	// Confirm data
 	if (!target || !title || !deadline || !donor || !receiver) {
 		return res.status(400).json({ message: "All fields are required" });
