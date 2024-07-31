@@ -117,9 +117,18 @@ contract Campaign {
         campaignDetails.tokensCount = _tokensCount;
     }
 
-    function start(bytes32 _seed) external payable onlyOwner {
+    function start(
+        bytes32 _seed,
+        address _from
+    ) external payable onlyOwner onlyDonor(_from) {
         campaignDetails.initialDeposit = msg.value;
         campaignDetails.refunds = msg.value;
+
+        // require the campaign is not already funded
+        require(
+            campaignDetails.funded == false,
+            "Campaign has already been funded"
+        );
 
         // generate tokens
         _generateTokens(_seed);
@@ -135,6 +144,7 @@ contract Campaign {
     )
         external
         view
+        onlyOwner
         onlyDonor(_from)
         onlyFundedCampaign
         returns (Token[] memory)
@@ -153,6 +163,7 @@ contract Campaign {
         address _from
     )
         external
+        onlyOwner
         onlyDonor(_from)
         onlyEndedCampaign
         onlyNotAlreadyRefunded
@@ -168,6 +179,7 @@ contract Campaign {
         address _from
     )
         external
+        onlyOwner
         onlyBeneficiary(_from)
         onlyEndedCampaign
         onlyNotAlreadyDonated
@@ -198,19 +210,6 @@ contract Campaign {
                 break;
             }
         }
-    }
-
-    function getBalance()
-        external
-        view
-        onlyFundedCampaign
-        returns (uint256, uint256, uint256)
-    {
-        return (
-            address(this).balance,
-            campaignDetails.refunds,
-            campaignDetails.donations
-        );
     }
 
     // ====================================== UTILS FUNCTIONS ======================================
