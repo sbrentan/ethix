@@ -13,19 +13,15 @@ contract Charity {
     // ====================================== EVENTS ======================================
 
     // Charity events
-    event OrganizationVerified(address organization, bool status);
-    event OrganizationRevoked(address organization, bool status);
+    event OrganizationVerified();
+    event OrganizationRevoked();
 
     // Campaign events
-    event CampaignStarted(bytes32 campaignId, address donor);
-    event CampaignCreated(bytes32 campaignId, address donor);
-    event TokenRedeemed(bytes32 campaignId, bytes32 tokenId);
-    event RefundClaimed(bytes32 campaignId, address donor, uint256 amount);
-    event DonationClaimed(
-        bytes32 campaignId,
-        address beneficiary,
-        uint256 amount
-    );
+    event CampaignStarted(bytes32 campaignId);
+    event CampaignCreated(bytes32 campaignId);
+    event TokenRedeemed(bytes32 campaignId);
+    event RefundClaimed(uint256 amount);
+    event DonationClaimed(uint256 amount);
 
     // ====================================== STRUCTS ======================================
 
@@ -81,12 +77,12 @@ contract Charity {
     // only admin can verify or revoke organizations
     function verifyOrganization(address _organization) external onlyOwner {
         verifiedOrganizations[_organization] = true;
-        emit OrganizationVerified(_organization, true);
+        emit OrganizationVerified();
     }
 
     function revokeOrganization(address _organization) external onlyOwner {
         verifiedOrganizations[_organization] = false;
-        emit OrganizationRevoked(_organization, false);
+        emit OrganizationRevoked();
     }
 
     // check if an organization is verified
@@ -150,7 +146,7 @@ contract Charity {
         );
         campaignsIds.push(campaignId);
 
-        emit CampaignCreated(campaignId, msg.sender);
+        emit CampaignCreated(campaignId);
     }
 
     // fund and start an existing campaign
@@ -180,21 +176,15 @@ contract Charity {
             "Must wait at least 1 block after the commit block"
         );
 
-        // requires the sender is the campaign donor
-        require(
-            msg.sender == campaign.getDetails().donor,
-            "Only the donor can start the campaign"
-        );
-
         // generate the seed
         bytes32 randomSeed = keccak256(
             abi.encodePacked(_seed, blockhash(block.number))
         );
 
         // start the campaign
-        campaign.start{value: msg.value}(randomSeed);
+        campaign.start{value: msg.value}(randomSeed, msg.sender);
 
-        emit CampaignStarted(campaignId, msg.sender);
+        emit CampaignStarted(campaignId);
     }
 
     // returns the IDs of all campaigns
@@ -205,46 +195,49 @@ contract Charity {
     // returns the details of an active campaign given the campaignId
     function getCampaign(
         bytes32 campaignId
-    ) external view returns (Campaign.CampaignDetails memory) {
+    )
+        external
+        view
+        onlyExistingCampaign(campaignId)
+        returns (Campaign.CampaignDetails memory)
+    {
         return campaigns[campaignId].getDetails();
     }
 
+    // returns the tokens of an active campaign given the campaignId
     function getCampaignTokens(
         bytes32 campaignId
-    ) external view returns (Campaign.Token[] memory) {
+    )
+        external
+        view
+        onlyExistingCampaign(campaignId)
+        returns (Campaign.Token[] memory)
+    {
         return campaigns[campaignId].getTokens(msg.sender);
     }
 
-    function claimRefund(bytes32 campaignId) external {
-        campaigns[campaignId].claimRefund(msg.sender);
-        emit RefundClaimed(
-            campaignId,
-            msg.sender,
-            campaigns[campaignId].getDetails().refunds
-        );
-    }
-
-    function claimDonation(bytes32 campaignId) external {
-        campaigns[campaignId].claimDonation(msg.sender);
-        emit DonationClaimed(
-            campaignId,
-            msg.sender,
-            campaigns[campaignId].getDetails().donations
-        );
-    }
-
-    function redeemToken(bytes32 campaignId, bytes32 tokenId) external {
-        campaigns[campaignId].redeemToken(tokenId);
-        emit TokenRedeemed(campaignId, tokenId);
-    }
-
-    function getBalance() external view returns (uint256) {
-        return address(this).balance;
-    }
-
-    function getCampaignBalance(
+    // claim a refund for an ended campaign
+    function claimRefund(
         bytes32 campaignId
-    ) external view returns (uint256, uint256, uint256) {
-        return campaigns[campaignId].getBalance();
+    ) external onlyExistingCampaign(campaignId) {
+        campaigns[campaignId].claimRefund(msg.sender);
+        emit RefundClaimed(campaigns[campaignId].getDetails().refunds);
+    }
+
+    // claim a donation for an ended campaign
+    function claimDonation(
+        bytes32 campaignId
+    ) external onlyExistingCampaign(campaignId) {
+        campaigns[campaignId].claimDonation(msg.sender);
+        emit DonationClaimed(campaigns[campaignId].getDetails().donations);
+    }
+
+    // redeem a token for an active campaign
+    function redeemToken(
+        bytes32 campaignId,
+        bytes32 tokenId
+    ) external onlyExistingCampaign(campaignId) {
+        campaigns[campaignId].redeemToken(tokenId);
+        emit TokenRedeemed(campaignId);
     }
 }

@@ -117,7 +117,10 @@ contract Campaign {
         campaignDetails.tokensCount = _tokensCount;
     }
 
-    function start(bytes32 _seed) external payable onlyOwner {
+    function start(
+        bytes32 _seed,
+        address _from
+    ) external payable onlyOwner onlyDonor(_from) {
         campaignDetails.initialDeposit = msg.value;
         campaignDetails.refunds = msg.value;
 
@@ -207,19 +210,6 @@ contract Campaign {
                 break;
             }
         }
-    }
-
-    function getBalance()
-        external
-        view
-        onlyFundedCampaign
-        returns (uint256, uint256, uint256)
-    {
-        return (
-            address(this).balance,
-            campaignDetails.refunds,
-            campaignDetails.donations
-        );
     }
 
     // ====================================== UTILS FUNCTIONS ======================================
