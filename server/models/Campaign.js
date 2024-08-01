@@ -49,6 +49,14 @@ const CampaignSchema = new mongoose.Schema(
             required: true,
             ref: "Beneficiary",
         },
+        seed: {
+            type: String,
+            required: true
+        },
+        blockNumber: {
+            type: Number,
+            required: true
+        }
 	},
     {
 		timestamps: true,

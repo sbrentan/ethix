@@ -28,6 +28,13 @@ const getCampaign = asyncHandler(async (req, res) => {
 		// TODO: implement
 		// campaign.blockchain_data = ...
 	}
+
+	// Get current blockchain block number (used for to wait for CRR reveal method)
+	const blockNumber = web3.eth.getBlockNumber();
+
+	// Tell the frontend when the reveal method is callable because the block number has changed
+	campaign.is_fundable = campaign.blockNumber < blockNumber;
+
 	res.json(campaign);
 });
 
@@ -35,17 +42,20 @@ const getCampaign = asyncHandler(async (req, res) => {
 // @route POST /campaigns
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
-	const { target, title, image, description, deadline, donor, receiver } = req.body;
+	const { target, title, image, description, deadline, donor, receiver, seed } = req.body;
 
 	console.log(req.body);
 
 	// Confirm data
-	if (!target || !title || !deadline || !donor || !receiver) {
+	if (!target || !title || !deadline || !donor || !receiver, !seed) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
+	// Get current blockchain block number (used for to wait for CRR reveal method)
+	const blockNumber = web3.eth.getBlockNumber();
+
 	// Create and store new campaign
-	const campaign = await Campaign.create({ target, title, image, description, deadline, donor, receiver });
+	const campaign = await Campaign.create({ target, title, image, description, deadline, donor, receiver, seed, blockNumber });
 
 	if (campaign) {
 		// created
