@@ -26,12 +26,12 @@ export const TransactionsProvider = ({ children }) => {
     const [campaignId, setCampaignId] = useState(null);
     const [campaignAddress, setCampaignAddress] = useState(null);
     const [formData, setformData] = useState({
-        title: '',
-        deadline: Math.floor(Date.now() / 1000) + 60,
-        startdate: Math.floor(Date.now() / 1000),
-        amount: 0,
-        tokens: 0,
-        beneficiary: ''
+        title: '1',
+        startdate: '',
+        deadline: '',
+        amount: "0.001",
+        tokens: "5",
+        beneficiary: '0x665d33620B72b917932Ae8bdE0382494C25b45e1'
     });
 
     /* ------------------------ MUTATIONS ------------------------ */
@@ -48,7 +48,7 @@ export const TransactionsProvider = ({ children }) => {
         switch (name) {
             case 'deadline':
             case 'startdate':
-                setformData((prevState) => ({ ...prevState, [name]: Math.floor(new Date(e.target.value).getTime() / 1000) }));
+                setformData((prevState) => ({ ...prevState, [name]: Math.floor(new Date(e.target.value).getTime()) }));
                 break;
             default:
                 setformData((prevState) => ({ ...prevState, [name]: e.target.value }));
@@ -158,18 +158,20 @@ export const TransactionsProvider = ({ children }) => {
             setCampaignId(campaignId);
             console.log(campaignId);
 
-            const campaign = await charityContract.methods.createCampaign(
-                title,
-                deadline,
-                startdate,
-                tokens,
-                beneficiary,
-                web3.utils.keccak256(seed)
-            ).send({ from: currentAccount });
+            if(campaignId) {
+                const campaign = await charityContract.methods.createCampaign(
+                    title,
+                    Math.floor(startdate / 1000),
+                    Math.floor(deadline / 1000),
+                    tokens,
+                    beneficiary,
+                    web3.utils.keccak256(seed)
+                ).send({ from: currentAccount });
 
-            const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
-            setCampaignAddress(campaignAddress);
-            console.log(campaignAddress);
+                const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
+                setCampaignAddress(campaignAddress);
+                console.log(campaignAddress);
+            }
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -177,18 +179,32 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
+    useEffect(() => {
+
+        async function checkFundable() {
+            if (campaignId) {
+                const _response = await getCampaignDetails({campaignId: campaignId});
+                const is_fundable = _response?.data?.is_fundable;
+                console.log("Fundable: " + is_fundable);
+            }
+        }
+
+        checkFundable();
+    }, []);
+
     const startCampaign = async () => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
             const { amount, tokens } = formData;
 
-            //let campaignAddress = '0xfba2599bb83d596558f9670782301284cce8ced9f5eac98a184a4f7221260b3a';
-            let campaignId = '66ab5f4464e77c018043e247';
+            let campaignAddress = '0x8fadb7d4366675068884325d4db95c3ccf1589214250a0d0a2ecd1ff117a7028';
+            let campaignId = '66abb70316d25225c04ccecd';
 
             // retrieve seed from db
             const _response = await getCampaignDetails({campaignId: campaignId});
             const seed = _response?.data?.seed;
+            console.log(_response);
             console.log(seed || "No seed found");
 
             await charityContract.methods.startCampaign(campaignAddress, seed).send({
@@ -222,6 +238,11 @@ export const TransactionsProvider = ({ children }) => {
             if (!ethereum) return alert("Please install MetaMask.");
 
             campaignsIds = await charityContract.methods.getCampaignsIds().call({ from: currentAccount })
+            const block = await web3.eth.getBlock('latest');
+            console.log(block.timestamp);
+
+            console.log("Dates:", Math.floor(formData.startdate / 1000), Math.floor(formData.deadline / 1000));
+            console.log(campaignsIds);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -239,6 +260,8 @@ export const TransactionsProvider = ({ children }) => {
             if (!ethereum) return alert("Please install MetaMask.");
 
             campaign = await charityContract.methods.getCampaign(campaignId).call({ from: currentAccount })
+            console.log(new Date(Math.floor(Number(campaign.deadline))));
+            console.log(new Date(Math.floor(Number(campaign.startingDate))));
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -256,6 +279,14 @@ export const TransactionsProvider = ({ children }) => {
             if (!ethereum) return alert("Please install MetaMask.");
 
             tokens = await charityContract.methods.getCampaignTokens(campaignId).call({ from: currentAccount });
+            
+            const block = await web3.eth.getBlock('latest');
+            console.log(block);
+
+            const timestamp = await web3.eth.getBlockNumber("49").timestamp;
+            console.log(timestamp);
+
+            console.log(tokens);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);

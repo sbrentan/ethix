@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const { WEB3_MANAGER_ACCOUNT, WEB3_CONTRACT_ADDRESS, WEB3_CONTRACT } = require("../config/web3");
+const { WEB3_MANAGER_ACCOUNT, WEB3_CONTRACT_ADDRESS, WEB3_CONTRACT, web3 } = require("../config/web3");
 const Token = require("../models/Token");
 const Campaign = require("../models/Campaign");
 const crypto = require('crypto');
@@ -30,6 +30,9 @@ const redeemToken = asyncHandler(async (req, res) => {
     // Get the token from the request body
     const tokenId = req.body.tokenId;
     const campaignId = req.body.campaignId;
+
+    const block = await web3.eth.getBlock('latest');
+    console.log('Current block:', block.timestamp);
 
     // check if the token hash is present in db
     try{

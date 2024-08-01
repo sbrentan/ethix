@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
 const Token = require("../models/Token");
 const crypto = require('crypto');
+const { web3 } = require("../config/web3");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -30,7 +31,7 @@ const getCampaign = asyncHandler(async (req, res) => {
 	}
 
 	// Get current blockchain block number (used for to wait for CRR reveal method)
-	const blockNumber = web3.eth.getBlockNumber();
+	const blockNumber = Number(await web3.eth.getBlockNumber());
 
 	// Tell the frontend when the reveal method is callable because the block number has changed
 	campaign.is_fundable = campaign.blockNumber < blockNumber;
@@ -52,7 +53,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	}
 
 	// Get current blockchain block number (used for to wait for CRR reveal method)
-	const blockNumber = web3.eth.getBlockNumber();
+	const blockNumber = Number(await web3.eth.getBlockNumber());
 
 	// Create and store new campaign
 	const campaign = await Campaign.create({ target, title, image, description, deadline, donor, receiver, seed, blockNumber });

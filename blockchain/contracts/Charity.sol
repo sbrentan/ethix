@@ -117,8 +117,8 @@ contract Charity {
     // (corresponds to the `commit` method in the CRR process)
     function createCampaign(
         string calldata _title,
-        uint256 _deadline,
         uint256 _startingDate,
+        uint256 _deadline,
         uint256 _tokensCount,
         address _beneficiary,
         bytes32 _commitHash // is the hash of the seed
@@ -134,12 +134,22 @@ contract Charity {
         // require that the campaignId doesn't already exist in the mapping
         require(!campaignExists(campaignId), "Campaign already exists");
 
+        require(
+            _startingDate < _deadline,
+            "Starting date must be before the deadline"
+        );
+
+        require(
+            _startingDate >= block.timestamp,
+            "Starting date must be in the future"
+        );
+
         // create the campaign, add it to the mapping and the list of campaigns IDs
         campaigns[campaignId] = new Campaign(
             campaignId,
             _title,
-            _deadline,
             _startingDate,
+            _deadline,
             msg.sender,
             _beneficiary,
             _tokensCount

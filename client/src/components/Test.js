@@ -48,12 +48,12 @@ const Test = () => {
 
         <br /><hr /><br />
 
-        <Input placeholder="Title" name="title" type="text" handleChange={handleChange} />
-        <Input placeholder="Start date" name="startdate" type="date" handleChange={handleChange} />
-        <Input placeholder="Deadline" name="deadline" type="date" handleChange={handleChange} />
-        <Input placeholder="Amount (ETH)" name="amount" type="number" handleChange={handleChange} />
-        <Input placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
-        <select placeholder="Beneficiary (address)" name="beneficiary" defaultValue={'DEFAULT'} onChange={(e) => handleChange(e, e.target.name)}>
+        <Input value={formData.title} placeholder="Title" name="title" type="text" handleChange={handleChange} />
+        <Input placeholder="Start date" name="startdate" type="datetime-local" handleChange={handleChange} />
+        <Input placeholder="Deadline" name="deadline" type="datetime-local" handleChange={handleChange} />
+        <Input value={formData.amount} placeholder="Amount (ETH)" name="amount" type="number" handleChange={handleChange} />
+        <Input value={formData.tokens} placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
+        <select placeholder="Beneficiary (address)" name="beneficiary" defaultValue={formData.beneficiary} onChange={(e) => handleChange(e, e.target.name)}>
           <option value="DEFAULT" disabled>Choose beneficiary</option>
           <option value="0x665d33620B72b917932Ae8bdE0382494C25b45e1">First beneficiary</option>
         </select>
@@ -82,7 +82,7 @@ const Test = () => {
           setCampaignsIds(ids);
         }}>Get campaigns Ids</button>
 
-        <button type="button" onClick={() => getCampaign(campaignIdBc)}>Get campaign</button>
+        <button type="button" onClick={async () => console.log(await getCampaign(campaignIdBc))}>Get campaign</button>
 
         <button type="button" onClick={() => getCampaignTokens(campaignIdBc)}>Get campaign tokens</button>
 
@@ -112,3 +112,7 @@ const Test = () => {
   };
   
   export default Test;
+
+  function datetohtmlinput(date) {
+    return new Date(date).toISOString().split('T')[0];
+  }
