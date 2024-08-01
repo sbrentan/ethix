@@ -17,8 +17,8 @@ contract Charity {
     event OrganizationRevoked();
 
     // Campaign events
-    event CampaignStarted(bytes32 campaignId);
-    event CampaignCreated(bytes32 campaignId);
+    event CampaignStarted(bytes32 campaignId); // useless since it's an input parameter of the startCampaign function
+    event CampaignCreated(bytes32 campaignId); 
     event TokenRedeemed(bytes32 campaignId);
     event RefundClaimed(uint256 amount);
     event DonationClaimed(uint256 amount);

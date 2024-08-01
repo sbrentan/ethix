@@ -13,7 +13,7 @@ fs.readdir(sourceDir, (err, files) => {
     }
 
     // Filter out Migrations.json
-    const contractFiles = files.filter(file => file === 'Chairity.json');
+    const contractFiles = files.filter(file => file === 'Charity.json');
 
     // Copy each contract file to the destination directory
     contractFiles.forEach(file => {

@@ -2,35 +2,39 @@ import { apiSlice } from "../app/api/apiSlice";
 
 export const api = apiSlice.injectEndpoints({
     endpoints: builder => ({
+        getCampaign: builder.mutation({
+            query: params => `/campaigns/${params?.campaignId}`
+        }),
         createCampaign: builder.mutation({
-            query: formData => ({
+            query: params => ({
                 url: '/campaigns',
                 method: 'POST',
-                body: { ...formData }
+                body: { ...params }
             })
         }),
         associateCampaigns: builder.mutation({
-            query: formData => ({
-                url: `/campaigns/${formData?.campaignIdDb}/associate`,
+            query: params => ({
+                url: `/campaigns/${params?.campaignId}/associate`,
                 method: 'POST',
                 body: { 
-                    campaignId: formData?.campaignIdBc, 
-                    tokenDonation: formData?.tokenPrice, 
-                    tokens: formData?.tokenAmount
+                    campaignId: params?.campaignAddress,
+                    tokenDonation: params?.tokenPrice, 
+                    tokens: params?.tokens
                 }
             })
         }),
         redeemToken: builder.mutation({
-            query: formData => ({
+            query: params => ({
                 url: '/tokens/redeem',
                 method: 'POST',
-                body: { campaignId: formData?.campaignId, tokenId: formData?.tokenId }
+                body: { campaignId: params?.campaignId, tokenId: params?.tokenId }
             })
         })
     })
 });
 
-export const { 
+export const {
+    useGetCampaignMutation, 
     useCreateCampaignMutation,
     useAssociateCampaignsMutation,
     useRedeemTokenMutation 

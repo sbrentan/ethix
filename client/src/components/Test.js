@@ -20,22 +20,20 @@ const Test = () => {
       currentAccount,
       verifyOrganization, 
       isOrganizationVerified, 
-      revokeOrganization, 
+      revokeOrganization,
+      formData, 
       handleChange,
-      formData,
-      handleCreateCampaign,
+      createCampaign,
       startCampaign, 
-      campaign, 
-      getCampaignsIds,
       getCampaign,
+      getCampaignsIds,
       getCampaignTokens,
       claimRefund,
       claimDonation,
-      handleTokenRedeem,
-      getBalance,
-      getCampaignBalance
+      handleTokenRedeem
     } = useContext(TransactionContext);
 
+    const [campaignsIds, setCampaignsIds] = useState([]);
     const [campaignIdBc, setCampaignIdBc] = useState(null);
     const [campaignIdDb, setCampaignIdDb] = useState(null);
     const [tokenId, setTokenId] = useState(null);
@@ -50,24 +48,22 @@ const Test = () => {
 
         <br /><hr /><br />
 
-        <p>Campaign: {campaign}</p>
-
         <Input placeholder="Title" name="title" type="text" handleChange={handleChange} />
-        <Input placeholder="Description" name="description" type="text" handleChange={handleChange} />
+        <Input placeholder="Start date" name="startdate" type="date" handleChange={handleChange} />
         <Input placeholder="Deadline" name="deadline" type="date" handleChange={handleChange} />
         <Input placeholder="Amount (ETH)" name="amount" type="number" handleChange={handleChange} />
         <Input placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
-        <select placeholder="Beneficiary (address)" name="beneficiary" onChange={(e) => handleChange(e, e.target.name)}>
-          <option value="0xc05B7bC6Bde92F8e6820fD47c7e23DFE01869886">First beneficiary</option>
-          <option value="0x8588f4d002C747C5E7B6274752B251402c77d858">Second beneficiary</option>
+        <select placeholder="Beneficiary (address)" name="beneficiary" defaultValue={'DEFAULT'} onChange={(e) => handleChange(e, e.target.name)}>
+          <option value="DEFAULT" disabled>Choose beneficiary</option>
+          <option value="0x665d33620B72b917932Ae8bdE0382494C25b45e1">First beneficiary</option>
         </select>
 
         <br /> <br />
 
         <p>{JSON.stringify(formData)}</p>
 
-        <button type="button" onClick={handleCreateCampaign}>Create Campaign</button>
-        <button type="button" onClick={startCampaign}>Start Campaign</button>
+        <button type="button" onClick={createCampaign}>Create Campaign</button>
+        <button type="button" id="start" onClick={startCampaign}>Start Campaign</button>
 
         <br /><hr /><br />
 
@@ -79,7 +75,12 @@ const Test = () => {
 
         <br /><hr /><br />
 
-        <button type="button" onClick={getCampaignsIds}>Get campaigns Ids</button>
+        <p>Campaings Ids: {campaignsIds.map((id) => (<li key={id}>{id}</li>))}</p>
+
+        <button type="button" onClick={async () => {
+          const ids = await getCampaignsIds();
+          setCampaignsIds(ids);
+        }}>Get campaigns Ids</button>
 
         <button type="button" onClick={() => getCampaign(campaignIdBc)}>Get campaign</button>
 
@@ -88,8 +89,6 @@ const Test = () => {
         <button type="button" onClick={() => claimRefund(campaignIdBc)}>Claim refund</button>
 
         <button type="button" onClick={() => claimDonation(campaignIdBc)}>Claim donation</button>
-
-        <button type="button" onClick={() => getCampaignBalance(campaignIdBc)}>Get campaign balance</button>
 
         <br /><hr /><br />
         
@@ -108,10 +107,6 @@ const Test = () => {
         <button type="button" onClick={() => isOrganizationVerified(address)}>Is verified?</button>
 
         <button type="button" onClick={() => revokeOrganization(address)}>Revoke verification</button>
-
-        <br /><hr /><br />
-
-        <button type="button" onClick={getBalance}>Get Charity balance</button>
       </>        
     );
   };
