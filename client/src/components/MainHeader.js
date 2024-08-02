@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Layout, Typography, Menu, Button } from "antd";
-import { AuditOutlined, BarChartOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { AuditOutlined, BarChartOutlined, EuroOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import logo from "../logo.svg";
 import { Link, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -14,6 +14,11 @@ const defaultMenu = [
 		key: "/home",
 		icon: <HomeOutlined />,
 	},
+    {
+		label: (<Link to='/campaigns'>Campaigns</Link>),
+		key: "/campaigns",
+		icon: <EuroOutlined />,
+	},
 ];
 
 const userMenu = [
@@ -21,6 +26,11 @@ const userMenu = [
 		label: (<Link to='/home'>Home</Link>),
 		key: "/home",
 		icon: <HomeOutlined />,
+	},
+    {
+		label: (<Link to='/campaigns'>Campaigns</Link>),
+		key: "/campaigns",
+		icon: <EuroOutlined />,
 	},
     {
 		label: (<Link to='/user/dashboard'>Dashboard</Link>),
@@ -34,6 +44,11 @@ const beneficiaryMenu = [
 		label: (<Link to='/home'>Home</Link>),
 		key: "/home",
 		icon: <HomeOutlined />,
+	},
+    {
+		label: (<Link to='/campaigns'>Campaigns</Link>),
+		key: "/campaigns",
+		icon: <EuroOutlined />,
 	},
     {
 		label: (<Link to='/beneficiary/dashboard'>Dashboard</Link>),
@@ -53,6 +68,11 @@ const donorMenu = [
 		label: (<Link to='/home'>Home</Link>),
 		key: "/home",
 		icon: <HomeOutlined />,
+	},
+    {
+		label: (<Link to='/campaigns'>Campaigns</Link>),
+		key: "/campaigns",
+		icon: <EuroOutlined />,
 	},
     {
 		label: (<Link to='/donor/dashboard'>Dashboard</Link>),
@@ -79,6 +99,11 @@ const adminMenu = [
 		icon: <BarChartOutlined />,
 	},
     {
+		label: (<Link to='/admin/campaigns'>Campaigns</Link>),
+		key: "/admin/campaigns",
+		icon: <EuroOutlined />,
+	},
+    {
 		label: (<Link to='/admin/requests'>Richieste</Link>),
 		key: "/admin/requests",
 		icon: <AuditOutlined />,
@@ -98,14 +123,19 @@ const MainHeader = () => {
     const [current, setCurrent] = useState(
         location.pathname === "/" || location.pathname === ""
             ? "/home"
-            : location.pathname,
+            //When reaching '/campaigns/campaingId' I overwrite the current to highlights Campaigns
+            : (location.pathname.includes("/campaigns/") ? '/campaigns' : location.pathname),
     );
 
     // keeps the current updated
     useEffect(() => {
         if (location) {
             if(current !== location.pathname) {
-                setCurrent(location.pathname);
+                // A key in the menu is highlighted only if the location is equal to the current value
+                let newCurrent = location.pathname
+                // When reaching '/campaigns/campaingId' I overwrite the current to highlights Campaigns
+                if (location.pathname.includes("/campaigns/")) newCurrent = '/campaigns'
+                setCurrent(newCurrent);
             }
         }
     }, [location, current]);
@@ -115,9 +145,9 @@ const MainHeader = () => {
         setCurrent(e.key);
     }
 
-    const { isUser, isDonor, isBeneficiary, isAdmin } = useAuth()
+    const { status, isUser, isDonor, isBeneficiary, isAdmin } = useAuth()
 
-    let selectedMenu = null
+    let selectedMenu = defaultMenu
     if (isUser) {
         selectedMenu = userMenu
     } else if (isDonor) {
@@ -157,7 +187,7 @@ const MainHeader = () => {
 				</Menu.Item>
 			</Menu> */}
 
-			{selectedMenu !== null ?
+			{status !== null ?
             <Link to="/logout">
 				<Button type="primary" icon={<LogoutOutlined />}>
 					Logout
