@@ -34,7 +34,6 @@ const Campaign = () => {
 	// id campaign
 	const { id } = useParams();
 
-	// Stato Corso
 	const { campaign, isCampaignLoading } = useGetCampaignsQuery(
 		"campaignsList",
 		{
