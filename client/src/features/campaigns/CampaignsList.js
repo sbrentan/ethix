@@ -59,7 +59,7 @@ const CampaignsList = () => {
 	} = useGetCampaignsQuery("campaignsList", {});
 
 	// When campaigns or the filter change it perform a filters evaluation
-	// Filtered result is the ID lists of the filtered bookings
+	// Filtered result is the ID lists of the filtered campaigns
 	useEffect(() => {
 		let filteredResult = [];
 		if (isSuccess) {
