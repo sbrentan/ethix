@@ -15,6 +15,8 @@ import Register from "./features/auth/Register";
 import ProfileRequestsList from "./features/requests/ProfileRequestsList";
 import MyProfileRequest from "./features/requests/MyProfileRequest";
 import CampaignsList from "./features/campaigns/CampaignsList";
+import CampaignsGrid from "./features/campaigns/CampaignsGrid";
+import Campaign from "./features/campaigns/Campaign";
 
 function App() {
 	return (
@@ -47,6 +49,13 @@ function App() {
                     {/* Protected Routes */}
 					<Route element={<PersistLogin />}>
 
+                        <Route path="campaigns">
+                            <Route index element={<CampaignsGrid />} />
+                            <Route path=":id">
+                                <Route index element={<Campaign />} />
+                            </Route>
+                        </Route>
+
                         {/* User Routes */}
                         <Route
                             element={
@@ -55,6 +64,9 @@ function App() {
                         >
                             <Route path="user">
                                 <Route index element={<>User</>} />
+                                <Route path="campaigns">
+                                    <Route index element={<CampaignsGrid />} />
+                                </Route>
                             </Route>
                         </Route>
 
@@ -117,25 +129,9 @@ function App() {
                                 </Route>
                                 <Route path="campaigns">
                                     <Route index element={<CampaignsList />} />
-                                    {/* /* <Route
-                                        path=":id"
-                                        element={<EditUser />}
-                                    />
-                                    <Route
-                                        path="new"
-                                        element={<NewUserForm />}
-                                    />  */}
                                 </Route>
                                 <Route path="requests">
                                     <Route index element={<ProfileRequestsList />} />
-                                    {/* /* <Route
-                                        path=":id"
-                                        element={<EditUser />}
-                                    />
-                                    <Route
-                                        path="new"
-                                        element={<NewUserForm />}
-                                    />  */}
                                 </Route>
                             </Route>
                         </Route>
