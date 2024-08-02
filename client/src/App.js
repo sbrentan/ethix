@@ -14,6 +14,7 @@ import NewUserForm from "./features/users/NewUserForm";
 import Register from "./features/auth/Register";
 import ProfileRequestsList from "./features/requests/ProfileRequestsList";
 import MyProfileRequest from "./features/requests/MyProfileRequest";
+import CampaignsList from "./features/campaigns/CampaignsList";
 
 function App() {
 	return (
@@ -113,6 +114,17 @@ function App() {
                                         path="new"
                                         element={<NewUserForm />}
                                     /> 
+                                </Route>
+                                <Route path="campaigns">
+                                    <Route index element={<CampaignsList />} />
+                                    {/* /* <Route
+                                        path=":id"
+                                        element={<EditUser />}
+                                    />
+                                    <Route
+                                        path="new"
+                                        element={<NewUserForm />}
+                                    />  */}
                                 </Route>
                                 <Route path="requests">
                                     <Route index element={<ProfileRequestsList />} />

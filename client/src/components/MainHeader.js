@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Layout, Typography, Menu, Button } from "antd";
-import { AuditOutlined, BarChartOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { AuditOutlined, BarChartOutlined, EuroOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import logo from "../logo.svg";
 import { Link, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -77,6 +77,11 @@ const adminMenu = [
 		label: (<Link to='/admin/dashboard'>Dashboard</Link>),
 		key: "/admin/dashboard",
 		icon: <BarChartOutlined />,
+	},
+    {
+		label: (<Link to='/admin/campaigns'>Campaigns</Link>),
+		key: "/admin/campaigns",
+		icon: <EuroOutlined />,
 	},
     {
 		label: (<Link to='/admin/requests'>Richieste</Link>),
