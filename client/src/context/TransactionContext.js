@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 
-import { 
+import {
     useGetCampaignMutation,
     useCreateCampaignMutation,
     useAssociateCampaignsMutation,
-    useRedeemTokenMutation 
+    useRedeemTokenMutation
 } from './contextApiSlice';
 
 import { CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS } from '../utils/constants';
@@ -21,10 +21,20 @@ export const TransactionsProvider = ({ children }) => {
     const web3 = new Web3(ethereum);
     const charityContract = new web3.eth.Contract(CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS);
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [currentAccount, setCurrentAccount] = useState(null);
-    const [campaignId, setCampaignId] = useState(null);
-    const [campaignAddress, setCampaignAddress] = useState(null);
+    /* ------------------------ STATES ------------------------ */
+
+    const [block, setBlock] = useState(0);
+
+    const [wallet, setWallet] = useState({
+        address: '', // walletAddress of MetaMask
+        is_logged: false,
+    });
+
+    const [organization, setOrganization] = useState({
+        address: '', // organizationAddress on the blockchain
+        is_verified: false
+    });
+
     const [formData, setformData] = useState({
         title: '1',
         startdate: '',
@@ -34,21 +44,31 @@ export const TransactionsProvider = ({ children }) => {
         beneficiary: '0x665d33620B72b917932Ae8bdE0382494C25b45e1'
     });
 
+    const [campaign, setCampaign] = useState({
+        id: '', // campaignId on the database
+        address: '', // campaignAddress on the blockchain
+        is_created: false,
+        is_started: false,
+        is_fundable: false,
+        is_refunded: false,
+        is_donated: false
+    });
+
     /* ------------------------ MUTATIONS ------------------------ */
-    
+
     // Move to specific components
     const [getCampaignDetails] = useGetCampaignMutation();
     const [initCampaign] = useCreateCampaignMutation();
     const [associateCampaigns] = useAssociateCampaignsMutation();
-    const [redeemToken] = useRedeemTokenMutation();
+    const [claimToken] = useRedeemTokenMutation();
 
     /* ------------------------ FUNCTIONS ------------------------ */
 
     const handleChange = (e, name) => {
         switch (name) {
-            case 'deadline':
             case 'startdate':
-                setformData((prevState) => ({ ...prevState, [name]: Math.floor(new Date(e.target.value).getTime()) }));
+            case 'deadline':
+                setformData((prevState) => ({ ...prevState, [name]: new Date(e.target.value).getTime() }));
                 break;
             default:
                 setformData((prevState) => ({ ...prevState, [name]: e.target.value }));
@@ -61,11 +81,9 @@ export const TransactionsProvider = ({ children }) => {
             if (!ethereum) return alert("Please install MetaMask.");
 
             await ethereum.request({ method: "eth_requestAccounts" })
-            .then(async (accounts) => {
-                console.log(accounts)
-                setCurrentAccount(accounts[0]);
-                setIsLoggedIn(true);
-            });
+                .then(async (accounts) => {
+                    setWallet({ address: accounts[0], is_logged: true });
+                });
 
             window.location.reload();
         } catch (error) {
@@ -73,21 +91,18 @@ export const TransactionsProvider = ({ children }) => {
             console.error(errorMessage);
         }
     };
-    
-    const checkIfWalletIsConnect = async () => {  
+
+    const checkIfWalletIsConnect = async () => {
         try {
 
             if (!ethereum) return alert("Please install MetaMask.");
 
             await ethereum.request({ method: "eth_accounts" })
-            .then(async (accounts) => {
-                if (accounts.length > 0) {
-                    setCurrentAccount(accounts[0]);
-                    setIsLoggedIn(true);
-                } else {
-                    console.log("No accounts found");
-                }
-            });
+                .then(async (accounts) => {
+                    if (accounts.length > 0) {
+                        setWallet({ address: accounts[0], is_logged: true });
+                    } else throw new Error("No wallet accounts found");
+                });
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -98,9 +113,11 @@ export const TransactionsProvider = ({ children }) => {
     const verifyOrganization = async (organizationId) => {
         try {
 
-            if(!ethereum) return alert("Please install MetaMask.");
+            if (!ethereum) return alert("Please install MetaMask.");
 
-            await charityContract.methods.verifyOrganization(organizationId).send({ from: currentAccount });
+            await charityContract.methods.verifyOrganization(organizationId).send({ from: wallet.address });
+
+            setOrganization({ address: organizationId, is_verified: true });
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -110,13 +127,13 @@ export const TransactionsProvider = ({ children }) => {
 
     const isOrganizationVerified = async (organizationId) => {
         try {
-            if(!ethereum) return alert("Please install MetaMask.");
+            if (!ethereum) return alert("Please install MetaMask.");
 
-            await charityContract.methods.isOrganizationVerified(organizationId).call({ from: currentAccount })
-            .then((status) => {
-                status ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
-            });
-            
+            await charityContract.methods.isOrganizationVerified(organizationId).call({ from: wallet.address })
+                .then((status) => {
+                    status ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
+                });
+
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
@@ -126,9 +143,11 @@ export const TransactionsProvider = ({ children }) => {
     const revokeOrganization = async (organizationId) => {
         try {
 
-            if(!ethereum) return alert("Please install MetaMask.");
+            if (!ethereum) return alert("Please install MetaMask.");
 
-            await charityContract.methods.revokeOrganization(organizationId).send({ from: currentAccount });
+            await charityContract.methods.revokeOrganization(organizationId).send({ from: wallet.address });
+
+            setOrganization({ address: organizationId, is_verified: false });
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -136,29 +155,30 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const createCampaign = async () => {
+    const createCampaign = async (donor, receiver) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
             const { title, startdate, deadline, tokens, amount, beneficiary } = formData;
 
+            if (!title || !startdate || !deadline || !tokens || !amount || !beneficiary)
+                throw new Error("All fields are required");
+
             const seed = web3.utils.randomHex(32);
-            console.log(seed);
 
-            const response = await initCampaign({ 
-                target: amount, 
-                title: title, 
-                deadline: deadline, 
-                donor: '66a7a899d8d441aa09810736', // obtained from the select - paperino@donor.com user id
-                receiver: '66841d794229eb671102d6b1', // obtained from the select - bennannana@ben.ben user id
-                seed: seed
+            const response = await initCampaign({
+                target: amount,
+                title: title,
+                deadline: deadline,
+                donor: donor,
+                receiver: receiver,
+                seed: seed,
+                draft: true
             })
-            
-            const campaignId = response?.data?.campaignId;
-            setCampaignId(campaignId);
-            console.log(campaignId);
 
-            if(campaignId) {
+            const _id = response?.data?.campaignId;
+
+            if (_id) {
                 const campaign = await charityContract.methods.createCampaign(
                     title,
                     Math.floor(startdate / 1000),
@@ -166,12 +186,27 @@ export const TransactionsProvider = ({ children }) => {
                     tokens,
                     beneficiary,
                     web3.utils.keccak256(seed)
-                ).send({ from: currentAccount });
+                ).send({ from: wallet.address });
 
                 const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
-                setCampaignAddress(campaignAddress);
+                setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
                 console.log(campaignAddress);
-            }
+
+                const response = await initCampaign({
+                    target: amount,
+                    title: title,
+                    deadline: deadline,
+                    donor: donor,
+                    receiver: receiver,
+                    seed: seed,
+                    draft: false
+                })
+
+                const campaignId = response?.data?.campaignId;
+                setCampaign((prevState) => ({ ...prevState, id: campaignId, is_created: true }));
+                console.log(campaignId);
+
+            } else throw new Error("No campaign id found");
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -179,50 +214,39 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    useEffect(() => {
-
-        async function checkFundable() {
-            if (campaignId) {
-                const _response = await getCampaignDetails({campaignId: campaignId});
-                const is_fundable = _response?.data?.is_fundable;
-                console.log("Fundable: " + is_fundable);
-            }
-        }
-
-        checkFundable();
-    }, []);
-
     const startCampaign = async () => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
             const { amount, tokens } = formData;
 
-            let campaignAddress = '0x8fadb7d4366675068884325d4db95c3ccf1589214250a0d0a2ecd1ff117a7028';
-            let campaignId = '66abb70316d25225c04ccecd';
+            if (!amount || !tokens) throw new Error("Amount and tokens are required");
 
             // retrieve seed from db
-            const _response = await getCampaignDetails({campaignId: campaignId});
-            const seed = _response?.data?.seed;
-            console.log(_response);
-            console.log(seed || "No seed found");
+            const response = await getCampaignDetails({ campaignId: campaign.id });
+            const seed = response?.data?.seed;
 
-            await charityContract.methods.startCampaign(campaignAddress, seed).send({
-                from: currentAccount,
-                value: web3.utils.toWei(amount, 'ether')
-            });
+            if (seed) {
+                await charityContract.methods.startCampaign(campaign.address, seed).send({
+                    from: wallet.address,
+                    value: web3.utils.toWei(amount, 'ether')
+                });
 
-            const campaignTokens = await getCampaignTokens(campaignAddress);
-            console.log(campaignTokens);
+                const campaignTokens = await getCampaignTokens(campaign.address);
 
-            const response = await associateCampaigns({ 
-                campaignId: campaignId, 
-                campaignAddress: campaignAddress, 
-                tokenPrice: amount / tokens,
-                tokens: campaignTokens.map((token) => token.tokenId)
-            })
+                if (campaignTokens && campaignTokens.length > 0) {
+                    const response = await associateCampaigns({
+                        campaignId: campaign.id,
+                        campaignAddress: campaign.address,
+                        tokenPrice: amount / tokens,
+                        tokens: campaignTokens.map((token) => token.tokenId)
+                    })
 
-            console.log(response);
+                    setCampaign((prevState) => ({ ...prevState, is_started: true }));
+                    console.log(response);
+                } else throw new Error("No tokens found");
+
+            } else throw new Error("No seed found");
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -237,11 +261,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            campaignsIds = await charityContract.methods.getCampaignsIds().call({ from: currentAccount })
-            const block = await web3.eth.getBlock('latest');
-            console.log(block.timestamp);
-
-            console.log("Dates:", Math.floor(formData.startdate / 1000), Math.floor(formData.deadline / 1000));
+            campaignsIds = await charityContract.methods.getCampaignsIds().call({ from: wallet.address });
             console.log(campaignsIds);
 
         } catch (error) {
@@ -259,9 +279,8 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            campaign = await charityContract.methods.getCampaign(campaignId).call({ from: currentAccount })
-            console.log(new Date(Math.floor(Number(campaign.deadline))));
-            console.log(new Date(Math.floor(Number(campaign.startingDate))));
+            campaign = await charityContract.methods.getCampaign(campaignId).call({ from: wallet.address });
+            console.log(campaign);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -278,14 +297,7 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            tokens = await charityContract.methods.getCampaignTokens(campaignId).call({ from: currentAccount });
-            
-            const block = await web3.eth.getBlock('latest');
-            console.log(block);
-
-            const timestamp = await web3.eth.getBlockNumber("49").timestamp;
-            console.log(timestamp);
-
+            tokens = await charityContract.methods.getCampaignTokens(campaignId).call({ from: wallet.address });
             console.log(tokens);
 
         } catch (error) {
@@ -303,8 +315,9 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            const result = await charityContract.methods.claimRefund(campaignId).send({ from: currentAccount });
+            const result = await charityContract.methods.claimRefund(campaignId).send({ from: wallet.address });
             refund = result.events.RefundClaimed.returnValues.amount;
+            setCampaign((prevState) => ({ ...prevState, is_refunded: true }));
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -321,8 +334,9 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            const result = await charityContract.methods.claimDonation(campaignId).send({ from: currentAccount });
+            const result = await charityContract.methods.claimDonation(campaignId).send({ from: wallet.address });
             donation = result.events.DonationClaimed.returnValues.amount;
+            setCampaign((prevState) => ({ ...prevState, is_donated: true }));
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -332,24 +346,54 @@ export const TransactionsProvider = ({ children }) => {
         return donation;
     };
 
-    // Move to specific component
-    const handleTokenRedeem = async (campaignId, tokenId) => {
-        await redeemToken({ campaignId, tokenId })
-        .then((response) => { 
+    const redeemToken = async (campaignId, tokenId) => {
+        try {
+            const response = await claimToken({
+                campaignId: campaignId,
+                tokenId: tokenId
+            });
             console.log(response?.data);
-        })
+        } catch (error) {
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
+        }
     }
 
-    useEffect(() => {
-
-        if (!currentAccount) checkIfWalletIsConnect();
-
-        ethereum.on('accountsChanged', () => {
-            checkIfWalletIsConnect();
-        })
-    }, [currentAccount]);
+    /* ------------------------ USE EFFECT ------------------------ */
 
     useEffect(() => {
+        if (!wallet.address) checkIfWalletIsConnect();
+        ethereum.on('accountsChanged', checkIfWalletIsConnect);
+        return () => ethereum.removeListener('accountsChanged', checkIfWalletIsConnect);
+    }, [wallet]);
+
+    useEffect(() => {
+        const checkMinedBlock = async () => {
+            const response = await getCampaignDetails({ campaignId: campaign.id });
+            const is_fundable = response?.data?.is_fundable;
+            setCampaign((prevState) => ({ ...prevState, is_fundable: is_fundable }));
+            console.log(is_fundable);
+        }
+        if (campaign.id) checkMinedBlock();
+    }, [block]);
+
+    useEffect(() => {
+
+        // Subscription to new blocks mined event
+
+        const checkMinedBlock = async () => {
+            const minedBlockSubscription = await web3.eth.subscribe('newBlockHeaders');
+
+            minedBlockSubscription.on('data', async (blockHeader) => {
+                setBlock(Number(blockHeader.number));
+            });
+
+            return () => minedBlockSubscription.unsubscribe();
+        };
+
+        // Call async functions
+
+        checkMinedBlock();
 
         // Subscriptions to contract events
 
@@ -386,12 +430,14 @@ export const TransactionsProvider = ({ children }) => {
         refundClaimedSubscription.on("data", (event) => {
             console.log(`Refund of [${web3.utils.fromWei(event.returnValues.amount, 'ether')}] ETH claimed`);
         });
-        
+
         donationClaimedSubscription.on("data", (event) => {
             console.log(`Donation of [${web3.utils.fromWei(event.returnValues.amount, 'ether')}] ETH claimed`);
         });
 
-        return() => {
+        // Unsubscribing from events on unmount
+
+        return () => {
             organizationVerifiedSubscription.unsubscribe();
             organizationRevokedSubscription.unsubscribe();
             campaignCreatedSubscription.unsubscribe();
@@ -402,17 +448,22 @@ export const TransactionsProvider = ({ children }) => {
         }
 
     }, []);
-    
+
+    /* ------------------------ PROVIDER ------------------------ */
+
     return (
         <TransactionContext.Provider value={{
+            wallet,
             connectWallet,
-            isLoggedIn, 
-            currentAccount,
+            organization,
+            setOrganization,
             verifyOrganization,
             isOrganizationVerified,
             revokeOrganization,
             formData,
             handleChange,
+            campaign,
+            setCampaign,
             createCampaign,
             startCampaign,
             getCampaign,
@@ -420,9 +471,9 @@ export const TransactionsProvider = ({ children }) => {
             getCampaignTokens,
             claimRefund,
             claimDonation,
-            handleTokenRedeem
+            redeemToken
         }}>
-            {children}  
+            {children}
         </TransactionContext.Provider>
     );
 };
