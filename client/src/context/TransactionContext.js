@@ -49,6 +49,7 @@ export const TransactionsProvider = ({ children }) => {
         address: '', // campaignAddress on the blockchain
         is_created: false,
         is_started: false,
+        is_association_failed: false,
         is_fundable: false,
         is_refunded: false,
         is_donated: false
@@ -59,7 +60,7 @@ export const TransactionsProvider = ({ children }) => {
     // Move to specific components
     const [getCampaignDetails] = useGetCampaignMutation();
     const [initCampaign] = useCreateCampaignMutation();
-    const [associateCampaigns] = useAssociateCampaignsMutation();
+    const [handleAssociation] = useAssociateCampaignsMutation();
     const [claimToken] = useRedeemTokenMutation();
 
     /* ------------------------ FUNCTIONS ------------------------ */
@@ -218,41 +219,49 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            const { amount, tokens } = formData;
-
-            if (!amount || !tokens) throw new Error("Amount and tokens are required");
-
             // retrieve seed from db
             const response = await getCampaignDetails({ campaignId: campaign.id });
+            const target = response?.data?.target;
             const seed = response?.data?.seed;
 
-            if (seed) {
-                await charityContract.methods.startCampaign(campaign.address, seed).send({
-                    from: wallet.address,
-                    value: web3.utils.toWei(amount, 'ether')
-                });
+            if (!seed) throw new Error("No seed found");
+            if (!target) throw new Error("No target found");
 
-                const campaignTokens = await getCampaignTokens(campaign.address);
+            await charityContract.methods.startCampaign(campaign.address, seed).send({
+                from: wallet.address,
+                value: web3.utils.toWei(target, 'ether')
+            });
 
-                if (campaignTokens && campaignTokens.length > 0) {
-                    const response = await associateCampaigns({
-                        campaignId: campaign.id,
-                        campaignAddress: campaign.address,
-                        tokenPrice: amount / tokens,
-                        tokens: campaignTokens.map((token) => token.tokenId)
-                    })
-
-                    setCampaign((prevState) => ({ ...prevState, is_started: true }));
-                    console.log(response);
-                } else throw new Error("No tokens found");
-
-            } else throw new Error("No seed found");
+            associateCampaigns(campaign.id, campaign.address);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
         }
     };
+
+    const associateCampaigns = async (campaignId, campaignAddress) => {
+        try {
+            const campaignTokens = await getCampaignTokens(campaignAddress);
+
+            if (!campaignTokens || campaignTokens.length === 0) throw new Error("No tokens found");
+
+            const response = await handleAssociation({
+                campaignId: campaignId,
+                campaignAddress: campaignAddress,
+                tokenPrice: campaignTokens[0].value,
+                tokens: campaignTokens.map((token) => token.tokenId)
+            })
+
+            console.log(response?.data);
+
+            const association_failed = response?.data?.association_failed;
+            setCampaign((prevState) => ({ ...prevState, is_started: true, is_association_failed: association_failed }));
+        } catch (error) {
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            console.error(errorMessage);
+        }
+    }
 
     const getCampaignsIds = async () => {
 
@@ -466,6 +475,7 @@ export const TransactionsProvider = ({ children }) => {
             setCampaign,
             createCampaign,
             startCampaign,
+            associateCampaigns,
             getCampaign,
             getCampaignsIds,
             getCampaignTokens,
