@@ -83,6 +83,8 @@ const associateCampaignToBlockchain = asyncHandler(async (req, res) => {
 	if (campaign.campaignId) {
 		return res.status(400).json({ message: "Campaign already associated to blockchain" });
 	}
+	campaign.association_failed = true;
+	await campaign.save();
 
 	const { campaignId, tokenDonation, tokens } = req.body;
 
@@ -107,6 +109,7 @@ const associateCampaignToBlockchain = asyncHandler(async (req, res) => {
 	
 	await Token.insertMany(tokenEntities);
 
+	campaign.association_failed = false;
 	await campaign.save();
 
 	// TODO: add endpoint to edit campaign data in blockchain
