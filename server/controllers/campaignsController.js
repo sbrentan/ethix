@@ -44,12 +44,17 @@ const getCampaign = asyncHandler(async (req, res) => {
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
 	const { target, title, image, description, deadline, donor, receiver, seed } = req.body;
-
-	console.log(req.body);
+	const { draft } = req.params;
 
 	// Confirm data
 	if (!target || !title || !deadline || !donor || !receiver, !seed) {
 		return res.status(400).json({ message: "All fields are required" });
+	}
+
+	// Check if the campaign is a draft and skip campaign creation if it is
+	if (draft) {
+		res.status(200).json({ message: "Validation passed" });
+		return;
 	}
 
 	// Get current blockchain block number (used for to wait for CRR reveal method)
