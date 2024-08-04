@@ -259,7 +259,7 @@ export const TransactionsProvider = ({ children }) => {
             const response = await handleAssociation({
                 campaignId: campaignId,
                 campaignAddress: campaignAddress,
-                tokenPrice: campaignTokens[0].value,
+                tokenPrice: Number(campaignTokens[0].value),
                 tokens: campaignTokens.map((token) => token.tokenId)
             })
 

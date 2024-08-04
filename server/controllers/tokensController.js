@@ -43,13 +43,22 @@ const redeemToken = asyncHandler(async (req, res) => {
         res.status(400);
         return;
     }
+
+    const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignId, tokenId).call({ from: WEB3_MANAGER_ACCOUNT.address });
+    if (!isTokenValid) {
+        res.json({ message: "Token not valid" });
+        res.status(400);
+        return;
+    }
+
     
     console.log('Redeeming token:', tokenId);
     console.log('Campaign ID:', campaignId);
 
     try {
         const receipt = await WEB3_CONTRACT.methods.redeemToken(campaignId, tokenId).send({ from: WEB3_MANAGER_ACCOUNT.address });
-        token.redeemed = true;
+        if(token)
+            token.redeemed = true;
 
         console.log('Transaction receipt:', receipt);
         res.json({ message: "Token redeemed" });

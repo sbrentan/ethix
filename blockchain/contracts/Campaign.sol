@@ -216,6 +216,25 @@ contract Campaign {
         }
     }
 
+    // check if a token is valid
+    function isTokenValid(
+        bytes32 tokenId
+    ) external view returns (bool) {
+        if (msg.sender != owner) {
+            return false;
+        }
+        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
+            Token memory token = tokens[
+                _generateTokenIndex(campaignDetails.campaignId, i)
+            ];
+            if (token.tokenId == tokenId) {
+                return !token.redeemed;
+            }
+        }
+        return false;
+    }
+
+
     // ====================================== UTILS FUNCTIONS ======================================
 
     function _generateTokens(bytes32 _seed) private {
