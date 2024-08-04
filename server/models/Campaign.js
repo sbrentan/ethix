@@ -37,6 +37,11 @@ const CampaignSchema = new mongoose.Schema(
             type: Date,
             required: true
         },
+        association_failed: {
+            type: Boolean,
+            required: false,
+            default: false
+        },
         // The donor user id        
         donor: {
             type: mongoose.Schema.Types.ObjectId,
@@ -49,6 +54,14 @@ const CampaignSchema = new mongoose.Schema(
             required: true,
             ref: "Beneficiary",
         },
+        seed: {
+            type: String,
+            required: true
+        },
+        blockNumber: {
+            type: Number,
+            required: true
+        }
 	},
     {
 		timestamps: true,

@@ -14,99 +14,108 @@ const Input = ({ placeholder, name, type, value, handleChange }) => (
 );
 
 const Test = () => {
-    const { 
-      connectWallet, 
-      isLoggedIn,
-      currentAccount,
-      verifyOrganization, 
-      isOrganizationVerified, 
-      revokeOrganization, 
-      handleChange,
-      formData,
-      startCampaign, 
-      campaigns, 
-      getCampaignsIds,
-      getCampaign,
-      getCampaignTokens,
-      claimRefund,
-      claimDonation,
-      redeemToken,
-      getBalance,
-      getCampaignBalance
-    } = useContext(TransactionContext);
+  const {
+    wallet,
+    connectWallet,
+    organization,
+    setOrganization,
+    verifyOrganization,
+    isOrganizationVerified,
+    revokeOrganization,
+    formData,
+    handleChange,
+    campaign,
+    setCampaign,
+    createCampaign,
+    startCampaign,
+    getCampaign,
+    getCampaignsIds,
+    getCampaignTokens,
+    claimRefund,
+    claimDonation,
+    redeemToken
+  } = useContext(TransactionContext);
 
-    const [campaignId, setCampaignId] = useState(null);
-    const [tokenId, setTokenId] = useState(null);
-    const [address, setAddress] = useState(null);
-  
-    return (
-      <>
-        {!isLoggedIn && (
-          <button type="button" onClick={connectWallet}>Connect wallet</button>
-        )}
-        <p>Connected wallet: {currentAccount}</p>
+  const [campaignsIds, setCampaignsIds] = useState([]);
+  const [tokenId, setTokenId] = useState(null);
 
-        <br /><hr /><br />
+  return (
+    <>
+      {!wallet.is_logged && (
+        <button type="button" onClick={connectWallet}>Connect wallet</button>
+      )}
+      <p>Connected wallet: {wallet.address}</p>
 
-        <p>Campaigns: {Array.from(campaigns).join(', ')}</p>
+      {wallet.is_logged && (
+        <div>
+          <br /><hr /><br />
 
-        <Input placeholder="Title" name="title" type="text" handleChange={handleChange} />
-        <Input placeholder="Description" name="description" type="text" handleChange={handleChange} />
-        <Input placeholder="Deadline" name="deadline" type="date" handleChange={handleChange} />
-        <Input placeholder="Amount (ETH)" name="amount" type="number" handleChange={handleChange} />
-        <Input placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
-        <select placeholder="Beneficiary (address)" name="beneficiary" onChange={(e) => handleChange(e, e.target.name)}>
-          <option value="0xc05B7bC6Bde92F8e6820fD47c7e23DFE01869886">First beneficiary</option>
-          <option value="0x8588f4d002C747C5E7B6274752B251402c77d858">Second beneficiary</option>
-        </select>
+          <Input value={formData.title} placeholder="Title" name="title" type="text" handleChange={handleChange} />
+          <Input placeholder="Start date" name="startdate" type="datetime-local" handleChange={handleChange} />
+          <Input placeholder="Deadline" name="deadline" type="datetime-local" handleChange={handleChange} />
+          <Input value={formData.target} placeholder="Target (ETH)" name="target" type="number" handleChange={handleChange} />
+          <Input value={formData.tokens} placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
+          <select placeholder="Beneficiary (address)" name="beneficiary" defaultValue={formData.beneficiary} onChange={(e) => handleChange(e, e.target.name)}>
+            <option value="DEFAULT" disabled>Choose beneficiary</option>
+            <option value="0x665d33620B72b917932Ae8bdE0382494C25b45e1">First beneficiary</option>
+          </select>
 
-        <br /> <br />
+          <br /> <br />
 
-        <p>{JSON.stringify(formData)}</p>
+          <p>{JSON.stringify(formData)}</p>
 
-        <button type="button" onClick={startCampaign}>Start Campaign</button>
+          <button type="button" onClick={() => createCampaign('66a7a899d8d441aa09810736', '66841d794229eb671102d6b1')}>Create Campaign</button>
+          <button type="button" id="start" onClick={startCampaign} disabled={!campaign.is_fundable}>Start Campaign</button>
 
-        <br /><hr /><br />
+          <p>Current camapign id: {campaign.id}</p>
+          <p>Current camapign address: {campaign.address}</p>
 
-        <input placeholder="Campaign ID" type="text" onChange={(e) => setCampaignId(e.target.value)} />
+          <br /><hr /><br />
 
-        <p>Current campaign: {campaignId}</p>
+          <input placeholder="Campaign ID" type="text" onChange={(e) => setCampaign((prevState) => ({ ...prevState, id: e.target.value }))} />
+          <input placeholder="Campaign Address" type="text" onChange={(e) => setCampaign((prevState) => ({ ...prevState, address: e.target.value }))} />
 
-        <button type="button" onClick={getCampaignsIds}>Get campaigns Ids</button>
+          <p>Current campaign (DB): {campaign.id}</p>
+          <p>Current campaign (Blockchain): {campaign.address}</p>
 
-        <button type="button" onClick={() => getCampaign(campaignId)}>Get campaign</button>
+          <br /><hr /><br />
 
-        <button type="button" onClick={() => getCampaignTokens(campaignId)}>Get campaign tokens</button>
+          <p>Campaings Ids: {campaignsIds.map((id) => (<li key={id}>{id}</li>))}</p>
 
-        <button type="button" onClick={() => claimRefund(campaignId)}>Claim refund</button>
+          <button type="button" onClick={async () => {
+            const ids = await getCampaignsIds();
+            setCampaignsIds(ids);
+          }}>Get campaigns Ids</button>
 
-        <button type="button" onClick={() => claimDonation(campaignId)}>Claim donation</button>
+          <button type="button" onClick={async () => await getCampaign(campaign.address)}>Get campaign</button>
 
-        <button type="button" onClick={() => getCampaignBalance(campaignId)}>Get campaign balance</button>
+          <button type="button" onClick={() => getCampaignTokens(campaign.address)}>Get campaign tokens</button>
 
-        <br /><hr /><br />
-        
-        <input placeholder="Token ID" type="text" onChange={(e) => setTokenId(e.target.value)} />
-        <p>Current token: {tokenId}</p>
+          <button type="button" onClick={() => claimRefund(campaign.address)}>Claim refund</button>
 
-        <button type="button" onClick={() => redeemToken(campaignId, tokenId)}>Reedem</button>
+          <button type="button" onClick={() => claimDonation(campaign.address)}>Claim donation</button>
 
-        <br /><hr /><br />
+          <br /><hr /><br />
 
-        <input placeholder="Address" type="text" onChange={(e) => setAddress(e.target.value)} />
-        <p>Current organization: {address}</p>
+          <input placeholder="Token ID" type="text" onChange={(e) => setTokenId(e.target.value)} />
+          <p>Current token: {tokenId}</p>
 
-        <button type="button" onClick={() => verifyOrganization(address)}>Verify Organization</button>
+          <button type="button" onClick={() => redeemToken(campaign.address, tokenId)}>Reedem</button>
 
-        <button type="button" onClick={() => isOrganizationVerified(address)}>Is verified?</button>
+          <br /><hr /><br />
 
-        <button type="button" onClick={() => revokeOrganization(address)}>Revoke verification</button>
+          <input placeholder="Address" type="text" onChange={(e) => setOrganization((prevState) => ({ ...prevState, address: e.target.value }))} />
+          <p>Current organization: {organization.address}</p>
 
-        <br /><hr /><br />
+          <button type="button" onClick={() => verifyOrganization(organization.address)}>Verify Organization</button>
 
-        <button type="button" onClick={getBalance}>Get Charity balance</button>
-      </>        
-    );
-  };
-  
-  export default Test;
+          <button type="button" onClick={() => isOrganizationVerified(organization.address)}>Is verified?</button>
+
+          <button type="button" onClick={() => revokeOrganization(organization.address)}>Revoke verification</button>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default Test;

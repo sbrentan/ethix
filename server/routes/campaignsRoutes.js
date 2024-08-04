@@ -13,7 +13,7 @@ router
 		campaignsController.getAllCampaigns
 	)
 	.post(
-		verifyRoles([ROLES_LIST.donor]),
+		verifyRoles(ROLES_LIST.donor),
 		campaignsController.createNewCampaign
 	);
 
@@ -23,18 +23,18 @@ router
 		campaignsController.getCampaign
 	)
 	.patch(
-		verifyRoles([ROLES_LIST.donor]),
+		verifyRoles(ROLES_LIST.donor),
 		campaignsController.updateCampaign
 	)
 	.delete(
-		verifyRoles([ROLES_LIST.donor]),
+		verifyRoles(ROLES_LIST.donor),
 		campaignsController.deleteCampaign
 	);
 
 router
 	.route("/:id/associate")
 	.post(
-		verifyRoles([ROLES_LIST.donor]),
+		verifyRoles(ROLES_LIST.donor),
 		campaignsController.associateCampaignToBlockchain
 	);
 
