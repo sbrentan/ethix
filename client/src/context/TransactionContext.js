@@ -37,9 +37,11 @@ export const TransactionsProvider = ({ children }) => {
 
     const [formData, setformData] = useState({
         title: '1',
+        description: '',
+        image: '',
         startdate: '',
         deadline: '',
-        amount: "0.001",
+        target: "0.001",
         tokens: "5",
         beneficiary: '0x665d33620B72b917932Ae8bdE0382494C25b45e1'
     });
@@ -160,16 +162,22 @@ export const TransactionsProvider = ({ children }) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            const { title, startdate, deadline, tokens, amount, beneficiary } = formData;
+            const { title, description, image, startdate, deadline, tokens, target, beneficiary } = formData;
 
-            if (!title || !startdate || !deadline || !tokens || !amount || !beneficiary)
-                throw new Error("All fields are required");
+            if (!title) throw new Error("Title is required");
+            if (!startdate) throw new Error("Start date is required");
+            if (!deadline) throw new Error("Deadline is required");
+            if (!tokens) throw new Error("Tokens count is required");
+            if (!target) throw new Error("Target is required");
+            if (!beneficiary) throw new Error("Beneficiary is required");
 
             const seed = web3.utils.randomHex(32);
 
             const response = await initCampaign({
-                target: amount,
+                target: target,
                 title: title,
+                description: description, // optional
+                image: image, // optional
                 deadline: deadline,
                 donor: donor,
                 receiver: receiver,
@@ -194,8 +202,10 @@ export const TransactionsProvider = ({ children }) => {
                 console.log(campaignAddress);
 
                 const response = await initCampaign({
-                    target: amount,
+                    target: target,
                     title: title,
+                    description: description,
+                    image: image,
                     deadline: deadline,
                     donor: donor,
                     receiver: receiver,

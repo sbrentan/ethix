@@ -53,7 +53,7 @@ const Test = () => {
           <Input value={formData.title} placeholder="Title" name="title" type="text" handleChange={handleChange} />
           <Input placeholder="Start date" name="startdate" type="datetime-local" handleChange={handleChange} />
           <Input placeholder="Deadline" name="deadline" type="datetime-local" handleChange={handleChange} />
-          <Input value={formData.amount} placeholder="Amount (ETH)" name="amount" type="number" handleChange={handleChange} />
+          <Input value={formData.target} placeholder="Target (ETH)" name="target" type="number" handleChange={handleChange} />
           <Input value={formData.tokens} placeholder="Amount (tokens)" name="tokens" type="number" handleChange={handleChange} />
           <select placeholder="Beneficiary (address)" name="beneficiary" defaultValue={formData.beneficiary} onChange={(e) => handleChange(e, e.target.name)}>
             <option value="DEFAULT" disabled>Choose beneficiary</option>
