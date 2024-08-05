@@ -185,6 +185,8 @@ export const TransactionsProvider = ({ children }) => {
                 draft: true
             })
 
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+
             const _id = response?.data?.campaignId;
 
             if (_id) {
@@ -214,6 +216,9 @@ export const TransactionsProvider = ({ children }) => {
                 })
 
                 const campaignId = response?.data?.campaignId;
+
+                if (!campaignId) throw new Error("No campaign id found");
+
                 setCampaign((prevState) => ({ ...prevState, id: campaignId, is_created: true }));
                 console.log(campaignId);
 
@@ -231,6 +236,9 @@ export const TransactionsProvider = ({ children }) => {
 
             // retrieve seed from db
             const response = await getCampaignDetails({ campaignId: campaign.id });
+
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+
             const target = response?.data?.target;
             const seed = response?.data?.seed;
 
@@ -239,7 +247,7 @@ export const TransactionsProvider = ({ children }) => {
 
             await charityContract.methods.startCampaign(campaign.address, seed).send({
                 from: wallet.address,
-                value: web3.utils.toWei(target, 'ether')
+                value: web3.utils.toWei(String(target), 'ether')
             });
 
             associateCampaigns(campaign.id, campaign.address);
@@ -259,9 +267,11 @@ export const TransactionsProvider = ({ children }) => {
             const response = await handleAssociation({
                 campaignId: campaignId,
                 campaignAddress: campaignAddress,
-                tokenPrice: campaignTokens[0].value,
+                tokenPrice: Number(campaignTokens[0].value),
                 tokens: campaignTokens.map((token) => token.tokenId)
             })
+
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
 
             console.log(response?.data);
 
@@ -391,9 +401,8 @@ export const TransactionsProvider = ({ children }) => {
             const response = await getCampaignDetails({ campaignId: campaign.id });
             const is_fundable = response?.data?.is_fundable;
             setCampaign((prevState) => ({ ...prevState, is_fundable: is_fundable }));
-            console.log(is_fundable);
         }
-        if (campaign.id) checkMinedBlock();
+        if (campaign.id && !campaign.is_fundable) checkMinedBlock();
     }, [block]);
 
     useEffect(() => {
