@@ -260,7 +260,7 @@ contract Campaign {
             tokens[tokenId] = Token(
                 tokenId,
                 false,
-                (i == _tokensCount - 1 && lastValue != 0) ? lastValue : tokenValue
+                (i == _tokensCount - 1 && lastValue != 0) ? tokenValue + lastValue : tokenValue
             );
             tokensIds.push(tokenId);
         }
