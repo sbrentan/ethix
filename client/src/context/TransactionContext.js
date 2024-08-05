@@ -375,12 +375,16 @@ export const TransactionsProvider = ({ children }) => {
         return donation;
     };
 
-    const redeemToken = async (campaignId, tokenId) => {
+    const redeemToken = async (campaignId, campaignAddress, tokenId) => {
         try {
             const response = await claimToken({
                 campaignId: campaignId,
+                campaignAddress: campaignAddress,
                 tokenId: tokenId
             });
+
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+
             console.log(response?.data);
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);

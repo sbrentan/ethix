@@ -73,15 +73,11 @@ contract Campaign {
         _;
     }
 
-    modifier onlyStartedCampaign() {
+    modifier onlyLiveCampaign() {
         require(
             campaignDetails.startingDate <= block.timestamp,
             "Campaign has not started yet"
         );
-        _;
-    }
-
-    modifier onlyNotEndedCampaign() {
         require(
             block.timestamp < campaignDetails.deadline,
             "Campaign has ended"
@@ -233,7 +229,11 @@ contract Campaign {
     // allow users to reedem the tokens they bought
     function redeemToken(
         bytes32 tokenId
-    ) external onlyStartedCampaign onlyNotEndedCampaign onlyFundedCampaign {
+    ) external onlyLiveCampaign onlyFundedCampaign {
+
+        // check if the token exists
+        require(tokens[tokenId].tokenId != 0, "Token does not exist");
+
         // get the token from the mapping
         Token storage token = tokens[tokenId];
 
