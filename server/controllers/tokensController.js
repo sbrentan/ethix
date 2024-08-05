@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const { WEB3_MANAGER_ACCOUNT, WEB3_CONTRACT_ADDRESS, WEB3_CONTRACT, web3 } = require("../config/web3");
+const { WEB3_MANAGER_ACCOUNT, WEB3_CONTRACT, web3 } = require("../config/web3");
 const Token = require("../models/Token");
 const Campaign = require("../models/Campaign");
 const crypto = require('crypto');
@@ -44,7 +44,7 @@ const redeemToken = asyncHandler(async (req, res) => {
         return;
     }
 
-    const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignId, tokenId).call({ from: WEB3_MANAGER_ACCOUNT.address });
+    const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, tokenId).call({ from: WEB3_MANAGER_ACCOUNT.address });
     if (!isTokenValid) {
         res.json({ message: "Token not valid" });
         res.status(400);

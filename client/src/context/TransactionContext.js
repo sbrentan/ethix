@@ -433,7 +433,6 @@ export const TransactionsProvider = ({ children }) => {
         const organizationRevokedSubscription = charityContract.events.OrganizationRevoked();
         const campaignCreatedSubscription = charityContract.events.CampaignCreated();
         const campaignStartedSubscription = charityContract.events.CampaignStarted();
-        const tokenRedeemedSubscription = charityContract.events.TokenRedeemed();
         const refundClaimedSubscription = charityContract.events.RefundClaimed();
         const donationClaimedSubscription = charityContract.events.DonationClaimed();
 
@@ -455,10 +454,6 @@ export const TransactionsProvider = ({ children }) => {
             console.log(`Campaign [${event.returnValues.campaignId}] started`);
         });
 
-        tokenRedeemedSubscription.on("data", (event) => {
-            console.log(`Token for Campaign [${event.returnValues.campaignId}] redeemed`);
-        });
-
         refundClaimedSubscription.on("data", (event) => {
             console.log(`Refund of [${web3.utils.fromWei(event.returnValues.amount, 'ether')}] ETH claimed`);
         });
@@ -474,7 +469,6 @@ export const TransactionsProvider = ({ children }) => {
             organizationRevokedSubscription.unsubscribe();
             campaignCreatedSubscription.unsubscribe();
             campaignStartedSubscription.unsubscribe();
-            tokenRedeemedSubscription.unsubscribe();
             refundClaimedSubscription.unsubscribe();
             donationClaimedSubscription.unsubscribe();
         }

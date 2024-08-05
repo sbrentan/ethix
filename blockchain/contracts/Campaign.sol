@@ -73,18 +73,6 @@ contract Campaign {
         _;
     }
 
-    modifier onlyLiveCampaign() {
-        require(
-            campaignDetails.startingDate <= block.timestamp,
-            "Campaign has not started yet"
-        );
-        require(
-            block.timestamp < campaignDetails.deadline,
-            "Campaign has ended"
-        );
-        _;
-    }
-
     modifier onlyEndedCampaign() {
         require(
             block.timestamp >= campaignDetails.deadline,
@@ -229,37 +217,45 @@ contract Campaign {
     // allow users to reedem the tokens they bought
     function redeemToken(
         bytes32 tokenId
-    ) external onlyLiveCampaign onlyFundedCampaign {
+    ) external {
+        
+        require(isTokenValid(tokenId), "Token is not valid");
 
-        // check if the token exists
-        require(tokens[tokenId].tokenId != 0, "Token does not exist");
-
-        // get the token from the mapping
-        Token storage token = tokens[tokenId];
-
-        // require that the token has not been redeemed yet
-        require(!token.redeemed, "Token already redeemed");
-
-        // mark the token as redeemed
-        token.redeemed = true;
+        // redeem the token
+        tokens[tokenId].redeemed = true;
     }
 
     // check if a token is valid
     function isTokenValid(
         bytes32 tokenId
-    ) external view returns (bool) {
+    ) public view returns (bool) {
+        // check if the campaign contract has made the validation call
         if (msg.sender != owner) {
             return false;
         }
-        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            Token memory token = tokens[
-                _generateTokenIndex(campaignDetails.campaignId, i)
-            ];
-            if (token.tokenId == tokenId) {
-                return !token.redeemed;
-            }
+
+        // check if the campaign is live
+        if (block.timestamp < campaignDetails.startingDate || block.timestamp >= campaignDetails.deadline) {
+            return false;
         }
-        return false;
+
+        // check if the campaign is funded
+        if (!campaignDetails.funded) {
+            return false;
+        }
+
+        Token memory token = tokens[tokenId];
+        // check if the token exists
+        if(token.tokenId == 0) {
+            return false;
+        }
+        
+        // check if the token has been redeemed
+        if (token.redeemed) {
+            return false;
+        }
+
+        return true;
     }
 
 
@@ -270,7 +266,7 @@ contract Campaign {
         bytes32 _campaignId = campaignDetails.campaignId;
 
         uint256 tokenValue = msg.value / _tokensCount;
-        uint256 lastValue = msg.value % _tokensCount;
+        uint256 remainingValue = msg.value % _tokensCount;
 
         bytes32 tokenId;
 
@@ -279,7 +275,7 @@ contract Campaign {
             tokens[tokenId] = Token(
                 tokenId,
                 false,
-                (i == _tokensCount - 1 && lastValue != 0) ? lastValue : tokenValue
+                (i == _tokensCount - 1 && remainingValue != 0) ? tokenValue + remainingValue : tokenValue
             );
             tokensIds.push(tokenId);
         }

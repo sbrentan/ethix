@@ -240,11 +240,7 @@ contract Charity {
         if (!campaignExists(campaignId) || msg.sender != owner) {
             return false;
         }
-        try campaigns[campaignId].isTokenValid(tokenId) returns (bool isValid) {
-            return isValid;
-        } catch {
-            return false;
-        }
+        return campaigns[campaignId].isTokenValid(tokenId);
     }
 
     // ====================================== UTILS FUNCTIONS ======================================
