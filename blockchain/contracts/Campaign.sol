@@ -22,6 +22,8 @@ contract Campaign {
         uint256 refunds;
         uint256 donations;
         uint256 tokensCount;
+
+        // TODO: move below
         bool refundClaimed;
         bool donationClaimed;
         bool funded;
@@ -43,6 +45,11 @@ contract Campaign {
 
     // keep track of all tokens
     mapping(bytes32 => Token) private tokens;
+
+    // keep track of the gas fees
+    uint256 public gasFeesStorage;
+    uint256 constant public REDEEM_TOKEN_GAS_COST = 65000; // approximated gas cost to redeem a token
+    uint24 constant public REDEEM_TOKEN_COST_MULTIPLIER = 2; // gas cost multiplier to be sure to have enough gas to redeem a token
 
 
     // ====================================== MODIFIERS ======================================
@@ -114,13 +121,11 @@ contract Campaign {
         campaignDetails.tokensCount = _tokensCount;
     }
 
+
     function start(
         bytes32 _seed,
         address _from
     ) external payable onlyOwner onlyDonor(_from) {
-        seed = _seed;
-        campaignDetails.initialDeposit = msg.value;
-        campaignDetails.refunds = msg.value;
 
         // require the campaign is not already funded
         require(
@@ -128,9 +133,25 @@ contract Campaign {
             "Campaign has already been funded"
         );
 
+        uint256 redeemTransactionCost = REDEEM_TOKEN_GAS_COST * REDEEM_TOKEN_COST_MULTIPLIER * tx.gasprice;
+        gasFeesStorage = redeemTransactionCost * campaignDetails.tokensCount;
+
+        require(
+            msg.value > gasFeesStorage,
+            "Insufficient funds to start the campaign"
+        );
+
+        // compute the initial deposit after subtracting the gas fees for the tokens redeem
+        uint _initialDeposit = msg.value - gasFeesStorage;
+
+        seed = _seed;
+        campaignDetails.initialDeposit = _initialDeposit;
+        campaignDetails.refunds = _initialDeposit;
+
         // generate tokens
         _generateTokens();
     }
+
 
     function getDetails() external view returns (CampaignDetails memory) {
         CampaignDetails memory _campaignDetails = campaignDetails;
@@ -143,6 +164,7 @@ contract Campaign {
         
         return _campaignDetails;
     }
+
 
     // get the tokens of a campaign
     function getTokens(
@@ -163,6 +185,7 @@ contract Campaign {
 
         return _tokens;
     }
+
 
     // allow the donor to claim the refund
     function claimRefund(
@@ -189,6 +212,7 @@ contract Campaign {
         campaignDetails.refundClaimed = true;
     }
 
+
     // allow the beneficiary to claim the donation
     function claimDonation(
         address _from
@@ -214,6 +238,20 @@ contract Campaign {
         campaignDetails.donationClaimed = true;
     }
 
+
+    // get the number of tokens redeemed
+    function getRedeemedTokensCount() external view returns (uint256) {
+        uint256 _redeemedTokens = 0;
+
+        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
+            if (tokens[tokensIds[i]].redeemed)
+                _redeemedTokens++;
+        }
+
+        return _redeemedTokens;
+    }
+
+
     // allow users to reedem the tokens they bought
     function redeemToken(
         bytes32 tokenId
@@ -224,6 +262,7 @@ contract Campaign {
         // redeem the token
         tokens[tokenId].redeemed = true;
     }
+
 
     // check if a token is valid
     function isTokenValid(
@@ -261,6 +300,7 @@ contract Campaign {
 
     // ====================================== UTILS FUNCTIONS ======================================
 
+
     function _generateTokens() private {
         uint256 _tokensCount = campaignDetails.tokensCount;
         bytes32 _campaignId = campaignDetails.campaignId;
@@ -282,6 +322,7 @@ contract Campaign {
 
         campaignDetails.funded = true;
     }
+
 
     function _generateTokenId(
         bytes32 _campaignId,
