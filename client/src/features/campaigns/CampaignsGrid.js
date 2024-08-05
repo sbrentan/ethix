@@ -131,36 +131,6 @@ const CampaignsGrid = () => {
                         <CampaignCard key={campaignId} campaignId={campaignId} />
                     </Col>
                 ))}
-                {filteredCampaigns.map((campaignId) => (
-                    <Col key={campaignId} span={12}>
-                        <CampaignCard key={campaignId} campaignId={campaignId} />
-                    </Col>
-                ))}
-                {filteredCampaigns.map((campaignId) => (
-                    <Col key={campaignId} span={12}>
-                        <CampaignCard key={campaignId} campaignId={campaignId} />
-                    </Col>
-                ))}
-                {filteredCampaigns.map((campaignId) => (
-                    <Col key={campaignId} span={12}>
-                        <CampaignCard key={campaignId} campaignId={campaignId} />
-                    </Col>
-                ))}
-                {filteredCampaigns.map((campaignId) => (
-                    <Col key={campaignId} span={12}>
-                        <CampaignCard key={campaignId} campaignId={campaignId} />
-                    </Col>
-                ))}
-                {filteredCampaigns.map((campaignId) => (
-                    <Col key={campaignId} span={12}>
-                        <CampaignCard key={campaignId} campaignId={campaignId} />
-                    </Col>
-                ))}
-                {filteredCampaigns.map((campaignId) => (
-                    <Col key={campaignId} span={12}>
-                        <CampaignCard key={campaignId} campaignId={campaignId} />
-                    </Col>
-                ))}
             </Row>
         </>)
 	}

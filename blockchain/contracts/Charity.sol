@@ -19,7 +19,6 @@ contract Charity {
     // Campaign events
     event CampaignStarted(bytes32 campaignId); // useless since it's an input parameter of the startCampaign function
     event CampaignCreated(bytes32 campaignId); 
-    event TokenRedeemed(bytes32 campaignId);
     event RefundClaimed(uint256 amount);
     event DonationClaimed(uint256 amount);
 
@@ -231,7 +230,6 @@ contract Charity {
         bytes32 tokenId
     ) external onlyExistingCampaign(campaignId) {
         campaigns[campaignId].redeemToken(tokenId);
-        emit TokenRedeemed(campaignId);
     }
 
     // function to check if a token is valid
@@ -263,6 +261,7 @@ contract Charity {
                     _donor,
                     _beneficiary,
                     _title,
+                    block.timestamp,
                     campaignsIds.length
                 )
             );
