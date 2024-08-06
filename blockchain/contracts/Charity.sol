@@ -91,24 +91,6 @@ contract Charity {
         return verifiedOrganizations[_organization];
     }
 
-    // generate a unique ID for a campaign from its title, description and creator address
-    function generateCampaignId(
-        address _donor,
-        address _beneficiary,
-        string calldata _title
-    ) private view returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    _donor,
-                    _beneficiary,
-                    _title,
-                    block.timestamp,
-                    campaignsIds.length
-                )
-            );
-    }
-
     function campaignExists(bytes32 campaignId) private view returns (bool) {
         return address(campaigns[campaignId]) != address(0);
     }
@@ -221,7 +203,7 @@ contract Charity {
         external
         view
         onlyExistingCampaign(campaignId)
-        returns (Campaign.Token[] memory)
+        returns (bytes32)
     {
         return campaigns[campaignId].getTokens(msg.sender);
     }
@@ -248,5 +230,36 @@ contract Charity {
         bytes32 tokenId
     ) external onlyExistingCampaign(campaignId) {
         campaigns[campaignId].redeemToken(tokenId);
+    }
+
+    // function to check if a token is valid
+    function isTokenValid( 
+        bytes32 campaignId,
+        bytes32 tokenId
+    ) external view returns (bool) {
+        if (!campaignExists(campaignId) || msg.sender != owner) {
+            return false;
+        }
+        return campaigns[campaignId].isTokenValid(tokenId);
+    }
+
+    // ====================================== UTILS FUNCTIONS ======================================
+
+    // generate a unique ID for a campaign from its title, description and creator address
+    function _generateCampaignId(
+        address _donor,
+        address _beneficiary,
+        string calldata _title
+    ) private view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    _donor,
+                    _beneficiary,
+                    _title,
+                    block.timestamp,
+                    campaignsIds.length
+                )
+            );
     }
 }
