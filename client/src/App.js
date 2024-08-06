@@ -17,6 +17,7 @@ import MyProfileRequest from "./features/requests/MyProfileRequest";
 import CampaignsList from "./features/campaigns/CampaignsList";
 import CampaignsGrid from "./features/campaigns/CampaignsGrid";
 import Campaign from "./features/campaigns/Campaign";
+import HomePage from "./components/HomePage";
 
 function App() {
 	return (
@@ -45,7 +46,7 @@ function App() {
                     <Route path="login" element={<Login />} />
                     <Route path="logout" element={<Logout />}/>
                     <Route path="register" element={<Register />}/>
-
+                    <Route path="home" element={<HomePage />}/>
                     {/* Protected Routes */}
 					<Route element={<PersistLogin />}>
 
