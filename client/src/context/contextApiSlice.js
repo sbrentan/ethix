@@ -16,9 +16,9 @@ export const api = apiSlice.injectEndpoints({
             query: params => ({
                 url: `/campaigns/${params?.campaignId}/associate`,
                 method: 'POST',
-                body: { 
+                body: {
                     campaignId: params?.campaignAddress,
-                    tokenDonation: params?.tokenPrice, 
+                    tokenDonation: params?.tokenPrice,
                     tokens: params?.tokens
                 }
             })
@@ -27,15 +27,19 @@ export const api = apiSlice.injectEndpoints({
             query: params => ({
                 url: '/tokens/redeem',
                 method: 'POST',
-                body: { campaignId: params?.campaignId, tokenId: params?.tokenId }
+                body: { 
+                    campaignId: params?.campaignId, 
+                    campaignAddress: params?.campaignAddress, 
+                    tokenId: params?.tokenId 
+                }
             })
         })
     })
 });
 
 export const {
-    useGetCampaignMutation, 
+    useGetCampaignMutation,
     useCreateCampaignMutation,
     useAssociateCampaignsMutation,
-    useRedeemTokenMutation 
+    useRedeemTokenMutation
 } = api;

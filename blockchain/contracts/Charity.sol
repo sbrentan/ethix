@@ -19,7 +19,6 @@ contract Charity {
     // Campaign events
     event CampaignStarted(bytes32 campaignId); // useless since it's an input parameter of the startCampaign function
     event CampaignCreated(bytes32 campaignId); 
-    event TokenRedeemed(bytes32 campaignId);
     event RefundClaimed(uint256 amount);
     event DonationClaimed(uint256 amount);
 
@@ -92,23 +91,6 @@ contract Charity {
         return verifiedOrganizations[_organization];
     }
 
-    // generate a unique ID for a campaign from its title, description and creator address
-    function generateCampaignId(
-        address _donor,
-        address _beneficiary,
-        string calldata _title
-    ) private view returns (bytes32) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    _donor,
-                    _beneficiary,
-                    _title,
-                    campaignsIds.length
-                )
-            );
-    }
-
     function campaignExists(bytes32 campaignId) private view returns (bool) {
         return address(campaigns[campaignId]) != address(0);
     }
@@ -124,7 +106,7 @@ contract Charity {
         bytes32 _commitHash // is the hash of the seed
     ) external onlyVerifiedBeneficiary(_beneficiary) {
         // generate a unique ID for the campaign
-        bytes32 campaignId = generateCampaignId(
+        bytes32 campaignId = _generateCampaignId(
             msg.sender,
             _beneficiary,
             _title
@@ -170,7 +152,7 @@ contract Charity {
         // require that a commit exists for the campaign
         require(
             commits[campaignId].commitHash != 0,
-            "Campaign has already been started"
+            "Campaign has already been started" // TODO: change error message
         );
         Commit memory commitData = commits[campaignId];
 
@@ -248,6 +230,36 @@ contract Charity {
         bytes32 tokenId
     ) external onlyExistingCampaign(campaignId) {
         campaigns[campaignId].redeemToken(tokenId);
-        emit TokenRedeemed(campaignId);
+    }
+
+    // function to check if a token is valid
+    function isTokenValid(
+        bytes32 campaignId,
+        bytes32 tokenId
+    ) external view returns (bool) {
+        if (!campaignExists(campaignId) || msg.sender != owner) {
+            return false;
+        }
+        return campaigns[campaignId].isTokenValid(tokenId);
+    }
+
+    // ====================================== UTILS FUNCTIONS ======================================
+
+    // generate a unique ID for a campaign from its title, description and creator address
+    function _generateCampaignId(
+        address _donor,
+        address _beneficiary,
+        string calldata _title
+    ) private view returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    _donor,
+                    _beneficiary,
+                    _title,
+                    block.timestamp,
+                    campaignsIds.length
+                )
+            );
     }
 }
