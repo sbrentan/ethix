@@ -62,7 +62,7 @@ const CampaignsGrid = () => {
 		let filteredResult = [];
 		if (isSuccess) {
 			const { ids, entities } = normalizedCampaigns;
-			filteredResult = ids.filter((campaignId) => {
+			filteredResult = ids.filter((campaignId, index) => {
 				const campaign = entities[campaignId];
 
 				const titleCondition =
@@ -79,7 +79,7 @@ const CampaignsGrid = () => {
 
 				// TODO: donor and receiver filter
 
-				return titleCondition && activeCondition;
+				return titleCondition && activeCondition && index < 10;
 			});
 		}
 		setFilteredCampaigns(filteredResult);
@@ -117,22 +117,17 @@ const CampaignsGrid = () => {
 		//if (!preventPolling) setPreventPolling(true)
 	} else if (isSuccess) {
 		//if (preventPolling) setPreventPolling(false)
-		if (filteredCampaigns.length) {
-			const { entities } = normalizedCampaigns;
-			tableSource = filteredCampaigns
-				.map((campaignId) => entities[campaignId])
-				.filter((entity) => entity !== undefined);
+		if (filteredCampaigns.length) {            
+            tableContent = (<>
+                <Row gutter={[0, 0]}>
+                    {filteredCampaigns.map((campaignId) => (
+                        <Col key={campaignId} span={12}>
+                            <CampaignCard key={campaignId} campaignId={campaignId} />
+                        </Col>
+                    ))}
+                </Row>
+            </>)
 		}
-
-		tableContent = (<>
-            <Row gutter={[15, 15]}>
-                {filteredCampaigns.map((campaignId) => (
-                    <Col key={campaignId} span={12}>
-                        <CampaignCard key={campaignId} campaignId={campaignId} />
-                    </Col>
-                ))}
-            </Row>
-        </>)
 	}
 
     return (

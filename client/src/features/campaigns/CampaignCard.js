@@ -35,7 +35,7 @@ const CampaignCard = ({ campaignId }) => {
 			status = "exception";
 		}
 		return (
-			<Card title={campaign.title} hoverable onClick={() => navigate(`/campaigns/${campaign.id}`)}>
+			<Card title={campaign.title} hoverable onClick={() => navigate(`/campaigns/${campaign.id}`)} style={{ margin: '8px'}}>
 				<Text>{campaign.description}</Text>
 				<br />
 				<Divider type="horizontal" />

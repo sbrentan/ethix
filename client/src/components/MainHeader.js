@@ -126,6 +126,7 @@ const MainHeader = () => {
             //When reaching '/campaigns/campaingId' I overwrite the current to highlights Campaigns
             : (location.pathname.includes("/campaigns/") ? '/campaigns' : location.pathname),
     );
+    const [disableOverflow, setDisableOverflow] = useState(false);
 
     // keeps the current updated
     useEffect(() => {
@@ -139,6 +140,28 @@ const MainHeader = () => {
             }
         }
     }, [location, current]);
+
+    useEffect(() => {
+        // Function to check the window size and update the state
+        const handleResize = () => {
+            if (window.innerWidth > 800) {
+                setDisableOverflow(true);
+            } else {
+                setDisableOverflow(false);
+            }
+        };
+    
+        // Initial check
+        handleResize();
+    
+        // Add event listener for window resize
+        window.addEventListener('resize', handleResize);
+    
+        // Cleanup event listener on component unmount
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
 
     // when I click set the right key, might be not needed since the location will change due the Link component
     function handleClick(e) {
@@ -178,7 +201,7 @@ const MainHeader = () => {
 				    <h1 style={{ margin: 0 }}>CharityChain</h1>
                 </Link>
 			</div>
-			{selectedMenu !== null && <Menu onClick={handleClick} selectedKeys={[current]} mode="horizontal" style={{ borderBottom: "none" }} items={selectedMenu} />}
+			{selectedMenu !== null && <Menu disabledOverflow={disableOverflow} onClick={handleClick} selectedKeys={[current]} mode="horizontal" style={{ borderBottom: "none" }} items={selectedMenu} />}
 			{/* <Menu mode="horizontal" style={{ borderBottom: "none" }}>
 				<Menu.Item key="login">
 					<Button type="primary" icon={<LoginOutlined />}>
