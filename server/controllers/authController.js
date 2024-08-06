@@ -45,11 +45,13 @@ const register = asyncHandler(async (req, res) => {
 // @route POST /auth/register/thirdParts
 // @access Public
 const registerDonorBeneficiary = asyncHandler(async (req, res) => {
-    const { username, password, role } = req.body
+    console.log(req.body);
+    const { username, wallet, password, role } = req.body
     const values = {...req.body}
+    const address = wallet.address;
 
     // Confirm data
-    if (!username || !password) {
+    if (!username || !password ||!address) {
         return res.status(400).json({ message: 'All fields are required'})
     }
 
@@ -71,7 +73,7 @@ const registerDonorBeneficiary = asyncHandler(async (req, res) => {
     // User should be verified, while beneficiary and donors should have it as default false. waiting for an admin approval
     const verified = false
 
-    const user = await User.create({ username, "password": hashedPwd, role, verified })
+    const user = await User.create({ username, address, "password": hashedPwd, role, verified })
 
     if (!user) {
         return res.status(500).json({ message: 'Something went wrong' })
@@ -120,6 +122,7 @@ const login = asyncHandler(async (req, res) => {
     const accessToken = jwt.sign(
         {
             "UserInfo": {
+                "userId": foundUser._id,
                 "username": foundUser.username,
                 "role": foundUser.role,
                 "verified": foundUser.verified,
@@ -172,6 +175,7 @@ const refresh = (req, res) => {
             const accessToken = jwt.sign(
                 {
                     "UserInfo": {
+                        "userId": foundUser._id,
                         "username": foundUser.username,
                         "role": foundUser.role,
                         "verified": foundUser.verified,

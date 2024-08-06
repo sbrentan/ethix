@@ -7,6 +7,14 @@ const verifyJWT = require("../middleware/verifyJWT");
 
 router.use(verifyJWT);
 
+
+router
+	.route("/userCampaigns")
+		.get(
+			verifyRoles(ROLES_LIST.donor, ROLES_LIST.beneficiary),
+			campaignsController.getUserCampaigns
+		);
+
 router
 	.route("")
 	.get(
@@ -37,5 +45,4 @@ router
 		verifyRoles(ROLES_LIST.donor),
 		campaignsController.associateCampaignToBlockchain
 	);
-
 module.exports = router;

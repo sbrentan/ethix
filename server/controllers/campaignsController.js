@@ -3,6 +3,7 @@ const Campaign = require("../models/Campaign");
 const Token = require("../models/Token");
 const crypto = require('crypto');
 const { web3 } = require("../config/web3");
+const { beneficiary } = require("../config/roles_list");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -39,15 +40,28 @@ const getCampaign = asyncHandler(async (req, res) => {
 	res.json(campaign);
 });
 
+// @desc Get a campaign
+// @route GET /campaigns/userCampaigns
+// @access Donor
+const getUserCampaigns = asyncHandler(async (req, res) => {
+	let userId = req.userId;
+	console.log("userid:"+userId)
+	const campaigns = await Campaign.find({$or:[{donor: userId},{receiver: userId}]}).exec();
+	if (!campaigns?.length) {
+		return res.status(400).json({ message: "No campaigns found" });
+	}
+	res.json(campaigns);
+});
+
 // @desc Create new campaign
 // @route POST /campaigns
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
-	const { target, title, image, description, deadline, donor, receiver, seed } = req.body;
+	const { target, title, image, description, startingDate, deadline, receiver, seed } = req.body;
 	const { draft } = req.params;
 
 	// Confirm data
-	if (!target || !title || !deadline || !donor || !receiver, !seed) {
+	if (!target || !title || !deadline || !receiver, !seed) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
@@ -60,8 +74,11 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	// Get current blockchain block number (used for to wait for CRR reveal method)
 	const blockNumber = Number(await web3.eth.getBlockNumber());
 
+	let donor = req.userId;
+	console.log(req)
+
 	// Create and store new campaign
-	const campaign = await Campaign.create({ target, title, image, description, deadline, donor, receiver, seed, blockNumber });
+	const campaign = await Campaign.create({ target, title, image, description, startingDate, deadline, donor, receiver, seed, blockNumber });
 
 	if (campaign) {
 		// created
@@ -174,4 +191,5 @@ module.exports = {
 	associateCampaignToBlockchain,
 	updateCampaign,
 	deleteCampaign,
+	getUserCampaigns,
 };

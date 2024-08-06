@@ -50,6 +50,11 @@ const beneficiaryMenu = [
 		key: "/campaigns",
 		icon: <EuroOutlined />,
 	},
+	{
+	label: (<Link to='/beneficiary/beneficiaryCampaigns'>My Campaigns</Link>),
+	key: "/beneficiary/beneficiaryCampaigns",
+	icon: <EuroOutlined />,
+	},
     {
 		label: (<Link to='/beneficiary/dashboard'>Dashboard</Link>),
 		key: "/beneficiary/dashboard",
@@ -69,11 +74,16 @@ const donorMenu = [
 		key: "/home",
 		icon: <HomeOutlined />,
 	},
-    {
-		label: (<Link to='/campaigns'>Campaigns</Link>),
-		key: "/campaigns",
-		icon: <EuroOutlined />,
-	},
+	{
+	label: (<Link to='/campaigns'>Campaigns</Link>),
+	key: "/campaigns",
+	icon: <EuroOutlined />,
+},
+{
+label: (<Link to='/donor/donorCampaigns'>My Campaigns</Link>),
+key: "/donor/donorCampaigns",
+icon: <EuroOutlined />,
+},
     {
 		label: (<Link to='/donor/dashboard'>Dashboard</Link>),
 		key: "/donor/dashboard",
@@ -145,7 +155,7 @@ const MainHeader = () => {
         setCurrent(e.key);
     }
 
-    const { status, isUser, isDonor, isBeneficiary, isAdmin } = useAuth()
+    const { role, isUser, isDonor, isBeneficiary, isAdmin } = useAuth()
 
     let selectedMenu = defaultMenu
     if (isUser) {
@@ -186,18 +196,18 @@ const MainHeader = () => {
 					</Button>
 				</Menu.Item>
 			</Menu> */}
-
-			{status !== null ?
+			
+			{role !== null ?
             <Link to="/logout">
-				<Button type="primary" icon={<LogoutOutlined />}>
-					Logout
-				</Button>
-			</Link>
+							<Button type="primary" icon={<LogoutOutlined />}>
+								Logout
+							</Button>
+						</Link>
             :
             <Link to="/login">
-				<Button type="primary" icon={<LoginOutlined />}>
-					Login
-				</Button>
+							<Button type="primary" icon={<LoginOutlined />}>
+								Login
+							</Button>
             </Link>
             }
 		</Header>

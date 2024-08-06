@@ -14,6 +14,8 @@ import NewUserForm from "./features/users/NewUserForm";
 import Register from "./features/auth/Register";
 import ProfileRequestsList from "./features/requests/ProfileRequestsList";
 import MyProfileRequest from "./features/requests/MyProfileRequest";
+import MyCampaigns from "./features/campaigns/MyCampaigns";
+import NewCampaign from "./features/campaigns/NewCampaign.js";
 import CampaignsList from "./features/campaigns/CampaignsList";
 import CampaignsGrid from "./features/campaigns/CampaignsGrid";
 import Campaign from "./features/campaigns/Campaign";
@@ -45,16 +47,17 @@ function App() {
                     <Route path="login" element={<Login />} />
                     <Route path="logout" element={<Logout />}/>
                     <Route path="register" element={<Register />}/>
-
-                    {/* Protected Routes */}
-					<Route element={<PersistLogin />}>
-
-                        <Route path="campaigns">
+                    <Route path="campaigns">
                             <Route index element={<CampaignsGrid />} />
                             <Route path=":id">
                                 <Route index element={<Campaign />} />
                             </Route>
                         </Route>
+
+                    {/* Protected Routes */}
+					<Route element={<PersistLogin />}>
+
+                        
 
                         {/* User Routes */}
                         <Route
@@ -86,6 +89,14 @@ function App() {
                                     path="profile"
                                     element={<MyProfileRequest />}
                                 />
+                                <Route
+                                    path="donorCampaigns"
+                                    element={<MyCampaigns />}
+                                />
+                                <Route
+                                    path="newCampaign"
+                                    element={<NewCampaign />}
+                                />
                             </Route>
                         </Route>
 
@@ -100,6 +111,10 @@ function App() {
                                 <Route
                                     path="dashboard"
                                     element={<p>dashboard</p>}
+                                />
+                                <Route
+                                    path="beneficiaryCampaigns"
+                                    element={<MyCampaigns />}
                                 />
                                 <Route
                                     path="profile"

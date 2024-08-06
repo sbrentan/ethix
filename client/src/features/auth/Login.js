@@ -9,7 +9,7 @@ import {
 	Row,
 	Col,
 	Card,
-    message,
+	message,
 } from "antd";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -49,19 +49,19 @@ const Login = () => {
 			navigate("/home");
 		} catch (err) {
 			if (!err.status) {
-                messageApi.open({
-                    key: 'error',
-                    type: 'error',
-                    content: "No response from the server",
-                    duration: 5,
-                });
+				messageApi.open({
+					key: 'error',
+					type: 'error',
+					content: "No response from the server",
+					duration: 5,
+				});
 			} else {
-                messageApi.open({
-                    key: 'error',
-                    type: 'error',
-                    content: err?.data?.message,
-                    duration: 5,
-                });
+				messageApi.open({
+					key: 'error',
+					type: 'error',
+					content: err?.data?.message,
+					duration: 5,
+				});
 			}
 		}
 	};
@@ -70,7 +70,7 @@ const Login = () => {
 
 	return (
 		<div>
-            {contextHolder}
+			{contextHolder}
 			{needVerify ? (
 				<>
 					<Result
@@ -101,7 +101,7 @@ const Login = () => {
 								}}
 								size={"large"}
 							>
-                                <Title>Login</Title>
+								<Title>Login</Title>
 								<Form
 									form={form}
 									layout="vertical"

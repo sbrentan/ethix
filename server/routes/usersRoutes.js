@@ -25,5 +25,11 @@ router
 		verifyRoles(ROLES_LIST.admin),
 		usersController.deleteUser
 	);
+	router
+	.route("/beneficiaries")
+	.get(
+		verifyRoles(ROLES_LIST.donor),
+		usersController.getBeneficiaryUser
+	);
 
 module.exports = router;
