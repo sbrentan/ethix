@@ -220,7 +220,7 @@ export const TransactionsProvider = ({ children }) => {
 
                 const campaignId = response?.data?.campaignId;
                 setCampaign((prevState) => ({ ...prevState, id: campaignId, is_fundable:true, is_created: true }));
-
+if (campaignId) return true
             } else throw new Error("No campaign id found");
 
         } catch (error) {

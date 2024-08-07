@@ -45,7 +45,6 @@ const register = asyncHandler(async (req, res) => {
 // @route POST /auth/register/thirdParts
 // @access Public
 const registerDonorBeneficiary = asyncHandler(async (req, res) => {
-    console.log(req.body);
     const { username, wallet, password, role } = req.body
     const values = {...req.body}
     const address = wallet.address;

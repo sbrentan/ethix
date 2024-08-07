@@ -73,7 +73,8 @@ function range(start, end) {
         user._id === receiverId
       );   
       const receiver = benef[0].address;
-      createCampaign(title, description, image, startDate, deadline, targetEth, tokenAmount, donor, receiverId, receiver)
+      const response = await createCampaign(title, description, image, startDate, deadline, targetEth, tokenAmount, donor, receiverId, receiver)
+      setSuccessCreation(response === true)
 	};
 
 	return (

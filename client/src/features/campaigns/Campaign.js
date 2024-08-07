@@ -69,7 +69,7 @@ const Campaign = () => {
 	console.log(campaign)
 	const daysLeft = Math.floor(
 		(new Date(campaignDB.deadline).getTime() -
-			new Date(campaignDB.createdAt).getTime()) /
+			new Date(campaignDB.startingDate).getTime()) /
 			(1000 * 60 * 60 * 24)
 	);
 	return (
@@ -125,7 +125,7 @@ const Campaign = () => {
 								<Col span={12}>
 									<Text strong>
 										{format(
-											new Date(campaignDB.createdAt),
+											new Date(campaignDB.startingDate),
 											"dd/MM/yyyy"
 										)}
 									</Text>
