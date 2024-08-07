@@ -39,16 +39,12 @@ const redeemToken = asyncHandler(async (req, res) => {
         token = await checkTokenHash(campaignId, tokenId, campaignAddress);
     } catch (error) {
         // console.log('Error redeeming token:', error);
-        res.json({ message: "Error redeeming token: " + error.message });
-        res.status(400);
-        return;
+        return res.status(400).json({ message: "Error redeeming token: " + error.message });
     }
 
     const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, tokenId).call({ from: WEB3_MANAGER_ACCOUNT.address });
     if (!isTokenValid) {
-        res.json({ message: "Token not valid" });
-        res.status(400);
-        return;
+        return res.status(400).json({ message: "Token not valid" });
     }
 
     
@@ -66,8 +62,7 @@ const redeemToken = asyncHandler(async (req, res) => {
     } catch (error) {
         console.log('Error redeeming token:', error);
         errorMessage = retrieveBlockchainError(error);
-        res.json({ message: "Error redeeming token: " + errorMessage });
-        res.status(400);
+        return res.status(400).json({ message: "Error redeeming token: " + errorMessage });
     }
 });
 

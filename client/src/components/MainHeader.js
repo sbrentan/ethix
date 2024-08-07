@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Layout, Typography, Menu, Button } from "antd";
-import { AuditOutlined, BarChartOutlined, EuroOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { AuditOutlined, BarChartOutlined, EuroOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, QrcodeOutlined, UserOutlined } from "@ant-design/icons";
 import logo from "../logo.svg";
 import { Link, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -18,6 +18,11 @@ const defaultMenu = [
 		label: (<Link to='/campaigns'>Campaigns</Link>),
 		key: "/campaigns",
 		icon: <EuroOutlined />,
+	},
+    {
+		label: (<Link to='/redeem'>Redeem</Link>),
+		key: "/redeem",
+		icon: <QrcodeOutlined />,
 	},
 ];
 
@@ -124,7 +129,8 @@ const MainHeader = () => {
         location.pathname === "/" || location.pathname === ""
             ? "/home"
             //When reaching '/campaigns/campaingId' I overwrite the current to highlights Campaigns
-            : (location.pathname.includes("/campaigns/") ? '/campaigns' : location.pathname),
+            : (location.pathname.includes("/campaigns/") ? '/campaigns'
+            : (location.pathname.includes("/redeem/") ? '/redeem' : location.pathname)),
     );
     const [disableOverflow, setDisableOverflow] = useState(false);
 
@@ -136,6 +142,8 @@ const MainHeader = () => {
                 let newCurrent = location.pathname
                 // When reaching '/campaigns/campaingId' I overwrite the current to highlights Campaigns
                 if (location.pathname.includes("/campaigns/")) newCurrent = '/campaigns'
+                // same for the redeem
+                else if (location.pathname.includes("/redeem/")) newCurrent = '/redeem'
                 setCurrent(newCurrent);
             }
         }
