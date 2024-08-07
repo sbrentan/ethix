@@ -52,7 +52,13 @@ const CreateCampaign = ({ setSuccessCreation }) => {
 
 const [targetEth,setTargetEth] = useState(null)
 
-
+function range(start, end) {
+  const result = [];
+  for (let i = start; i < end; i++) {
+    result.push(i);
+  }
+  return result;
+}
   const { username } = useAuth()
 
     const handleSubmit = async (values) => {
@@ -191,6 +197,10 @@ const [targetEth,setTargetEth] = useState(null)
               style={{
                 width: '100%',
               }}
+            disabledDate={(current) => {
+              return current && current.valueOf() < Date.now();
+
+            }}
             />
             </Form.Item>
           </Col>

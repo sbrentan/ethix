@@ -113,14 +113,14 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const verifyOrganization = async (organizationId) => {
+    const verifyOrganization = async (organizationAddress) => {
         try {
 
             if (!ethereum) return alert("Please install MetaMask.");
 
-            await charityContract.methods.verifyOrganization(organizationId).send({ from: wallet.address });
+            await charityContract.methods.verifyOrganization(organizationAddress).send({ from: wallet.address });
 
-            setOrganization({ address: organizationId, is_verified: true });
+            setOrganization({ address: organizationAddress, is_verified: true });
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -128,14 +128,17 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const isOrganizationVerified = async (organizationId) => {
+    const isOrganizationVerified = async (organizationAddress) => {
+        var status;
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            await charityContract.methods.isOrganizationVerified(organizationId).call({ from: wallet.address })
-                .then((status) => {
-                    status ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
+            await charityContract.methods.isOrganizationVerified(organizationAddress).call({ from: wallet.address })
+                .then((response) => {
+                    response ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
+                    status = response;
                 });
+            return status;
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -143,14 +146,14 @@ export const TransactionsProvider = ({ children }) => {
         }
     }
 
-    const revokeOrganization = async (organizationId) => {
+    const revokeOrganization = async (organizationAddress) => {
         try {
 
             if (!ethereum) return alert("Please install MetaMask.");
 
-            await charityContract.methods.revokeOrganization(organizationId).send({ from: wallet.address });
+            await charityContract.methods.revokeOrganization(organizationAddress).send({ from: wallet.address });
 
-            setOrganization({ address: organizationId, is_verified: false });
+            setOrganization({ address: organizationAddress, is_verified: false });
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -168,6 +171,8 @@ export const TransactionsProvider = ({ children }) => {
             if (!tokenAmount) throw new Error("Tokens count is required");
             if (!targetEth) throw new Error("Target is required");
             if (!receiver) throw new Error("Beneficiary is required");
+            if (!(await isOrganizationVerified(receiver))) throw new Error("Beneficiary is not validated");
+            if (!(await isOrganizationVerified(wallet.address))) throw new Error("Donor is not verified");
 
             const seed = web3.utils.randomHex(32);
 
@@ -183,16 +188,10 @@ export const TransactionsProvider = ({ children }) => {
                 seed: seed,
                 draft: true
             })
-
+            console.log(response)
             const _id = response?.data?.campaignId;
 
             if (_id) {
-                console.log(title,
-                    Math.floor(startingDate / 1000),
-                    Math.floor(deadline / 1000),
-                    tokenAmount,
-                    receiver,
-                    web3.utils.keccak256(seed))
                 const campaign = await charityContract.methods.createCampaign(
                     title,
                     Math.floor(startingDate / 1000),
