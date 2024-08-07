@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Layout, Typography, Menu, Button } from "antd";
-import { AuditOutlined, BarChartOutlined, EuroOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { AuditOutlined, BarChartOutlined, EuroOutlined, HomeOutlined, LoginOutlined, LogoutOutlined, QrcodeOutlined, UserOutlined } from "@ant-design/icons";
 import logo from "../logo.svg";
 import { Link, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -18,6 +18,11 @@ const defaultMenu = [
 		label: (<Link to='/campaigns'>Campaigns</Link>),
 		key: "/campaigns",
 		icon: <EuroOutlined />,
+	},
+    {
+		label: (<Link to='/redeem'>Redeem</Link>),
+		key: "/redeem",
+		icon: <QrcodeOutlined />,
 	},
 ];
 
@@ -134,8 +139,10 @@ const MainHeader = () => {
         location.pathname === "/" || location.pathname === ""
             ? "/home"
             //When reaching '/campaigns/campaingId' I overwrite the current to highlights Campaigns
-            : (location.pathname.includes("/campaigns/") ? '/campaigns' : location.pathname),
+            : (location.pathname.includes("/campaigns/") ? '/campaigns'
+            : (location.pathname.includes("/redeem/") ? '/redeem' : location.pathname)),
     );
+    const [disableOverflow, setDisableOverflow] = useState(false);
 
     // keeps the current updated
     useEffect(() => {
@@ -145,10 +152,34 @@ const MainHeader = () => {
                 let newCurrent = location.pathname
                 // When reaching '/campaigns/campaingId' I overwrite the current to highlights Campaigns
                 if (location.pathname.includes("/campaigns/")) newCurrent = '/campaigns'
+                // same for the redeem
+                else if (location.pathname.includes("/redeem/")) newCurrent = '/redeem'
                 setCurrent(newCurrent);
             }
         }
     }, [location, current]);
+
+    useEffect(() => {
+        // Function to check the window size and update the state
+        const handleResize = () => {
+            if (window.innerWidth > 800) {
+                setDisableOverflow(true);
+            } else {
+                setDisableOverflow(false);
+            }
+        };
+    
+        // Initial check
+        handleResize();
+    
+        // Add event listener for window resize
+        window.addEventListener('resize', handleResize);
+    
+        // Cleanup event listener on component unmount
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
 
     // when I click set the right key, might be not needed since the location will change due the Link component
     function handleClick(e) {
@@ -188,7 +219,7 @@ const MainHeader = () => {
 				    <h1 style={{ margin: 0 }}>CharityChain</h1>
                 </Link>
 			</div>
-			{selectedMenu !== null && <Menu onClick={handleClick} selectedKeys={[current]} mode="horizontal" style={{ borderBottom: "none" }} items={selectedMenu} />}
+			{selectedMenu !== null && <Menu disabledOverflow={disableOverflow} onClick={handleClick} selectedKeys={[current]} mode="horizontal" style={{ borderBottom: "none" }} items={selectedMenu} />}
 			{/* <Menu mode="horizontal" style={{ borderBottom: "none" }}>
 				<Menu.Item key="login">
 					<Button type="primary" icon={<LoginOutlined />}>

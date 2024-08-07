@@ -19,6 +19,9 @@ import NewCampaign from "./features/campaigns/NewCampaign.js";
 import CampaignsList from "./features/campaigns/CampaignsList";
 import CampaignsGrid from "./features/campaigns/CampaignsGrid";
 import Campaign from "./features/campaigns/Campaign";
+import HomePage from "./components/HomePage";
+import RedeemOverview from "./features/campaigns/RedeemOverview";
+import RedeemPage from "./features/campaigns/RedeemPage";
 
 function App() {
 	return (
@@ -47,7 +50,17 @@ function App() {
                     <Route path="login" element={<Login />} />
                     <Route path="logout" element={<Logout />}/>
                     <Route path="register" element={<Register />}/>
-                    <Route path="campaigns">
+                    <Route path="home" element={<HomePage />}/>
+
+                    </Route><Route path="redeem">
+                        <Route index element={<RedeemOverview />}/>
+                        <Route path=":token" element={<RedeemPage />} />
+                    </Route>
+
+                    {/* Protected Routes */}
+					<Route element={<PersistLogin />}>
+
+                        <Route path="campaigns">
                             <Route index element={<CampaignsGrid />} />
                             <Route path=":id">
                                 <Route index element={<Campaign />} />

@@ -120,7 +120,7 @@ const associateCampaignToBlockchain = asyncHandler(async (req, res) => {
 	const tokenEntities = tokens.map((token) => {
 		return new Token({ 
 			campaignId: campaign._id, 
-			hash: crypto.createHash('sha256').update(campaignId + token).digest('hex')
+			hash: crypto.createHash('sha256').update(campaign._id + token + campaignId).digest('hex')
 		});
 	});
 	

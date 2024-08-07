@@ -188,7 +188,9 @@ export const TransactionsProvider = ({ children }) => {
                 seed: seed,
                 draft: true
             })
-            console.log(response)
+
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+
             const _id = response?.data?.campaignId;
 
             if (_id) {
@@ -235,6 +237,9 @@ if (campaignId) return true
 
             // retrieve seed from db
             const response = await getCampaignDetails({ campaignId: campaign.id });
+
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+
             const target = response?.data?.target;
             const seed = response?.data?.seed;
 
@@ -243,7 +248,7 @@ if (campaignId) return true
 
             await charityContract.methods.startCampaign(campaign.address, seed).send({
                 from: wallet.address,
-                value: web3.utils.toWei(target, 'ether')
+                value: web3.utils.toWei(String(target), 'ether')
             });
 
             associateCampaigns(campaign.id, campaign.address);
@@ -263,9 +268,11 @@ if (campaignId) return true
             const response = await handleAssociation({
                 campaignId: campaignId,
                 campaignAddress: campaignAddress,
-                tokenPrice: campaignTokens[0].value,
+                tokenPrice: Number(campaignTokens[0].value),
                 tokens: campaignTokens.map((token) => token.tokenId)
             })
+
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
 
             console.log(response?.data);
 
@@ -369,12 +376,16 @@ if (campaignId) return true
         return donation;
     };
 
-    const redeemToken = async (campaignId, tokenId) => {
+    const redeemToken = async (campaignId, campaignAddress, tokenId) => {
         try {
             const response = await claimToken({
                 campaignId: campaignId,
+                campaignAddress: campaignAddress,
                 tokenId: tokenId
             });
+
+            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+
             console.log(response?.data);
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -395,9 +406,8 @@ if (campaignId) return true
             const response = await getCampaignDetails({ campaignId: campaign.id });
             const is_fundable = response?.data?.is_fundable;
             setCampaign((prevState) => ({ ...prevState, is_fundable: is_fundable }));
-            console.log(is_fundable);
         }
-        if (campaign.id) checkMinedBlock();
+        if (campaign.id && !campaign.is_fundable) checkMinedBlock();
     }, [block]);
 
     useEffect(() => {
@@ -424,7 +434,6 @@ if (campaignId) return true
         const organizationRevokedSubscription = charityContract.events.OrganizationRevoked();
         const campaignCreatedSubscription = charityContract.events.CampaignCreated();
         const campaignStartedSubscription = charityContract.events.CampaignStarted();
-        const tokenRedeemedSubscription = charityContract.events.TokenRedeemed();
         const refundClaimedSubscription = charityContract.events.RefundClaimed();
         const donationClaimedSubscription = charityContract.events.DonationClaimed();
 
@@ -446,10 +455,6 @@ if (campaignId) return true
             console.log(`Campaign [${event.returnValues.campaignId}] started`);
         });
 
-        tokenRedeemedSubscription.on("data", (event) => {
-            console.log(`Token for Campaign [${event.returnValues.campaignId}] redeemed`);
-        });
-
         refundClaimedSubscription.on("data", (event) => {
             console.log(`Refund of [${web3.utils.fromWei(event.returnValues.amount, 'ether')}] ETH claimed`);
         });
@@ -465,7 +470,6 @@ if (campaignId) return true
             organizationRevokedSubscription.unsubscribe();
             campaignCreatedSubscription.unsubscribe();
             campaignStartedSubscription.unsubscribe();
-            tokenRedeemedSubscription.unsubscribe();
             refundClaimedSubscription.unsubscribe();
             donationClaimedSubscription.unsubscribe();
         }
