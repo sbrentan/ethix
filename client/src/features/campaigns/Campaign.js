@@ -1,7 +1,8 @@
-import React from "react";
 import NotFoundResult from "../../components/NotFoundResult";
 import { useParams } from "react-router-dom";
 import { useGetCampaignsQuery } from "./campaignsApiSlice";
+import { TransactionContext } from "./../../context/TransactionContext";
+import React, {  useContext } from "react";
 import {
 	Avatar,
 	Card,
@@ -34,32 +35,41 @@ const Campaign = () => {
 	// id campaign
 	const { id } = useParams();
 
-	const { campaign, isCampaignLoading } = useGetCampaignsQuery(
+	const { campaignDB, isCampaignLoading } = useGetCampaignsQuery(
 		"campaignsList",
 		{
 			selectFromResult: ({ data }) => ({
-				campaign: data?.entities[id],
+				campaignDB: data?.entities[id],
 			}),
 		}
 	);
-
-	if (!campaign)
+	
+  const {
+		campaign,
+    startCampaign,
+		setCampaign,
+		getCampaignTokens,
+		claimRefund,
+  } = useContext(TransactionContext);
+	console.log(campaignDB)
+	if (!campaignDB)
 		return (
 			<>
-				<NotFoundResult subTitle="The campaign you are looking for cannot be found" />
+				<NotFoundResult subTitle="The campaignDB you are looking for cannot be found" />
 			</>
 		);
-
+		setCampaign()
 	const percent = Math.floor(Math.random() * 11) * 10;
 	let status = "active";
 	if (percent === 100) {
 		status = "";
-	} else if (isExpired(campaign.deadline)) {
+	} else if (isExpired(campaignDB.deadline)) {
 		status = "exception";
 	}
+	console.log(campaign)
 	const daysLeft = Math.floor(
-		(new Date(campaign.deadline).getTime() -
-			new Date(campaign.createdAt).getTime()) /
+		(new Date(campaignDB.deadline).getTime() -
+			new Date(campaignDB.startingDate).getTime()) /
 			(1000 * 60 * 60 * 24)
 	);
 	return (
@@ -70,13 +80,18 @@ const Campaign = () => {
 						<Space direction="vertical">
 							<Image width={200} src="error" preview={false} />
 							<Text>
-								A fundraising campaign by{" "}
-								<Text strong>{campaign.donor}</Text>
+								A fundraising campaignDB by{" "}
+								<Text strong>{campaignDB.donor}</Text>
 							</Text>
-							<Title>{campaign.title}</Title>
-							<Text>{campaign.description}</Text>
+							<Title>{campaignDB.title}</Title>
+							<Text>{campaignDB.description}</Text>
 						</Space>
 					</Card>
+						<Card>
+						<button type="button" id="start" onClick={startCampaign} disabled={!campaignDB.is_fundable}>Start Campaign</button>
+						<button type="button" onClick={() => getCampaignTokens(campaign.address)}>Get campaignDB tokens</button>
+						<button type="button" onClick={() => claimRefund(campaign.address)}>Claim refund</button>
+						</Card>
 				</Col>
 				<Col span={8}>
 					<Space
@@ -110,7 +125,7 @@ const Campaign = () => {
 								<Col span={12}>
 									<Text strong>
 										{format(
-											new Date(campaign.createdAt),
+											new Date(campaignDB.startingDate),
 											"dd/MM/yyyy"
 										)}
 									</Text>
@@ -123,7 +138,7 @@ const Campaign = () => {
 								<Col span={12}>
 									<Text strong>
 										{format(
-											new Date(campaign.deadline),
+											new Date(campaignDB.deadline),
 											"dd/MM/yyyy"
 										)}
 									</Text>
@@ -133,7 +148,7 @@ const Campaign = () => {
 						<Card>
 							<Meta
 								avatar={<Avatar icon={<UserOutlined />} />}
-								title={campaign.receiver}
+								title={campaignDB.receiver}
 								description="Description of beneficiary"
 							/>
 						</Card>

@@ -1,18 +1,26 @@
 import { Button, Col, Divider, Form, Input, Row, Typography, message } from "antd";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useContext } from "react";
 import { ROLES } from "../../config/roles";
 import { useRegisterDonorBeneficiaryMutation } from "./authApiSlice";
+import { TransactionContext } from ".//../../context/TransactionContext.js";
+import MetamaskButton from ".//../../components/MetamaskButton.js";
 
 const { Text, Title } = Typography;
 
 const RegisterDonor = ({ setSuccessRegistration }) => {
 	const [form] = Form.useForm();
+	let formDisabled = true;
     const [register, { isLoading, isSuccess, isError, error }] =
         useRegisterDonorBeneficiaryMutation();
 	const userRef = useRef();
 
     // for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+
+	const {
+		wallet,
+	} = useContext(TransactionContext);
+
 
     useEffect(() => {
 		if (isError) {
@@ -40,17 +48,23 @@ const RegisterDonor = ({ setSuccessRegistration }) => {
 		// const { username, password } = values;
 		// const data = { username, password, role: ROLES.Donor };
 		// specific check might be requested
-		await register({...values, role: ROLES.Donor});
+		await register({...values, wallet , role: ROLES.Donor});
 	};
 
 	return (
 		<>
             {contextHolder}
+            {!wallet.is_logged && (
+            <MetamaskButton></MetamaskButton>
+          )}
+          {wallet.is_logged && (
+            <p>Connected wallet: {wallet.address}</p>
+            ) && (formDisabled = false)}
 			<Text>
 				Register your business by using this form. Required fields are
 				marked with an asterisk (*).
 			</Text>
-			<Form form={form} layout="vertical" onFinish={handleSubmit}>
+			<Form form={form} layout="vertical" onFinish={handleSubmit} disabled={formDisabled}>
 				<Title level={5}>Company general information</Title>
 				<Row gutter={16}>
 					<Col span={12}>
