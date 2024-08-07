@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
 const Token = require("../models/Token");
 const crypto = require('crypto');
-const { web3 } = require("../config/web3");
+const { web3, WEB3_MANAGER_PRIVATE_KEY } = require("../config/web3");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -36,32 +36,63 @@ const getCampaign = asyncHandler(async (req, res) => {
 	// Tell the frontend when the reveal method is callable because the block number has changed
 	campaign.is_fundable = campaign.blockNumber < blockNumber;
 
+	// Remove `seed` from the response
+	delete campaign.seed;
+
 	res.json(campaign);
 });
 
-// @desc Create new campaign
 // @route POST /campaigns
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
-	const { target, title, image, description, deadline, donor, receiver, seed } = req.body;
-	const { draft } = req.params;
+	const { target, title, image, description, deadline, donor, receiver, draft } = req.body;
 
 	// Confirm data
-	if (!target || !title || !deadline || !donor || !receiver, !seed) {
+	if (!target || !title || !deadline || !donor || !receiver) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
 	// Check if the campaign is a draft and skip campaign creation if it is
 	if (draft) {
-		res.status(200).json({ message: "Validation passed" });
+		// Generate a seed for the campaign
+		const seed = web3.utils.randomHex(32);
+	
+		// sign seed with account manager signature
+		const signResult = await web3.eth.accounts.sign(seed, WEB3_MANAGER_PRIVATE_KEY);
+
+		// saving seed in session
+		req.session.seed = seed;
+
+		res.status(200).json({ message: "Validation passed", seedHash: web3.utils.keccak256(seed), signature: {
+				"r": signResult.r,
+				"s": signResult.s,
+				"v": signResult.v
+			}
+		});
 		return;
+	}
+
+	const seed = req.session.seed;
+	const seedHash = req.body.seedHash;
+	const campaignAddress = req.body.campaignAddress;
+	
+	// Confirm seed and seedHash are valid
+	if (!seed || !seedHash || seedHash !== web3.utils.keccak256(seed)) {
+		return res.status(400).json({ message: "Seed is not valid" });
+	}
+
+	// check if the campaignAddress is valid
+	if (!campaignAddress) {
+		return res.status(400).json({ message: "Campaign address is required" });
 	}
 
 	// Get current blockchain block number (used for to wait for CRR reveal method)
 	const blockNumber = Number(await web3.eth.getBlockNumber());
 
 	// Create and store new campaign
-	const campaign = await Campaign.create({ target, title, image, description, deadline, donor, receiver, seed, blockNumber });
+	const campaign = await Campaign.create({ 
+		target, title, image, description, deadline, donor, receiver, seed, blockNumber, campaignId: campaignAddress, createdBy: req.user._id
+	});
 
 	if (campaign) {
 		// created
@@ -71,50 +102,43 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	}
 });
 
-// @desc Associate a campaign to blockchain
-// @route POST /campaigns/:id/associate
+// @desc Generates a random wallet for a campaign
+// @route GET /campaigns/:id/wallet/random
 // @access Private: donor
-const associateCampaignToBlockchain = asyncHandler(async (req, res) => {
-	const campaign = await Campaign.findById(req.params.id).exec();
+const generateRandomWallet = asyncHandler(async (req, res) => {
+	campaign_id = req.params.id;
+	campaign = await Campaign.findOne(_id=campaign_id, ).exec();
+
 	if (!campaign) {
 		return res.status(400).json({ message: "Campaign not found" });
 	}
-
-	if (campaign.campaignId) {
-		return res.status(400).json({ message: "Campaign already associated to blockchain" });
+	campaignAddress = campaign.campaignId;
+	if (!campaignAddress) {
+		return res.status(400).json({ message: "Campaign not associated to blockchain" });
 	}
-	campaign.association_failed = true;
-	await campaign.save();
-
-	const { campaignId, tokenDonation, tokens } = req.body;
-
-	// Confirm data
-	if (!campaignId || !tokenDonation || !tokens) {
-		return res.status(400).json({ message: "All fields are required" });
+	if(campaign.createdBy != req.user._id) {
+		return res.status(400).json({ message: "User not authorized to generate wallet for this campaign" });
 	}
 
-	// ===================== associate to blockchain
-
-	// update campaign with blockchain data
-	campaign.campaignId = campaignId;
-	campaign.tokenDonation = tokenDonation;
-
-	// for each token, generate its hash and store it on db
-	const tokenEntities = tokens.map((token) => {
-		return new Token({ 
-			campaignId: campaign._id, 
-			hash: crypto.createHash('sha256').update(campaign._id + token + campaignId).digest('hex')
-		});
-	});
+	seed = campaign.seed;
+	if(!seed) {
+		return res.status(400).json({ message: "Seed not found" });
+	}
 	
-	await Token.insertMany(tokenEntities);
+	// Generate a random wallet
+	const wallet = web3.eth.accounts.create();
 
-	campaign.association_failed = false;
-	await campaign.save();
+	// Sign the public key of the wallet with the manager's private key
+	const signResult = await web3.eth.accounts.sign(web3.utils.keccak256(wallet.address + campaignAddress), WEB3_MANAGER_PRIVATE_KEY);
 
-	// TODO: add endpoint to edit campaign data in blockchain
+	// Save the wallet in the session
+	req.session.wallet = wallet;
 
-	res.json(campaign);
+	res.status(200).json({ address: wallet.address, campaign: campaign, signature: {
+		"r": signResult.r,
+		"s": signResult.s,
+		"v": signResult.v
+	}});
 });
 
 // @desc Update a campaign

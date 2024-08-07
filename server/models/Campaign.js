@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const CampaignSchema = new mongoose.Schema(
 	{
+        // Save who generated the campaign
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            ref: "User",
+        },
         // Blockchain campaign id. Initially empty, will be filled when the campaign is created on the blockchain. 
         campaignId: {
             type: String,

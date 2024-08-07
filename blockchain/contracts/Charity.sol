@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "./Campaign.sol";
 
 contract Charity {
+
     // Charity contract roles:
     //      - CampaignFactory: create new campaigns
     //      - OrganizationManager: verify and revoke organizations
@@ -18,7 +19,7 @@ contract Charity {
 
     // Campaign events
     event CampaignStarted(bytes32 campaignId); // useless since it's an input parameter of the startCampaign function
-    event CampaignCreated(bytes32 campaignId); 
+    event CampaignCreated(bytes32 campaignId);
     event RefundClaimed(uint256 amount);
     event DonationClaimed(uint256 amount);
 
@@ -103,15 +104,15 @@ contract Charity {
         uint256 _deadline,
         uint256 _tokensCount,
         address _beneficiary,
-        bytes32 _commitHash // is the hash of the seed
+        bytes32 _commitHash, // is the hash of the seed
+        Campaign.Signature calldata _signature
     ) external onlyVerifiedBeneficiary(_beneficiary) {
         // generate a unique ID for the campaign
-        bytes32 campaignId = generateCampaignId(
+        bytes32 campaignId = _generateCampaignId(
             msg.sender,
             _beneficiary,
             _title
         );
-        commits[campaignId] = Commit(_commitHash, block.number);
 
         // require that the campaignId doesn't already exist in the mapping
         require(!campaignExists(campaignId), "Campaign already exists");
@@ -125,6 +126,12 @@ contract Charity {
             _startingDate >= block.timestamp,
             "Starting date must be in the future"
         );
+
+        // verify the signature, checking if the owner generated the seed
+        require(ecrecover(_commitHash, _signature.v, _signature.r, _signature.s) == owner, "Invalid signature");
+
+        // save the commit hash and the block number for future CRR `reveal` verification
+        commits[campaignId] = Commit(_commitHash, block.number);
 
         // create the campaign, add it to the mapping and the list of campaigns IDs
         campaigns[campaignId] = new Campaign(
@@ -144,17 +151,19 @@ contract Charity {
     // fund and start an existing campaign
     // (corresponds to the `reveal` method in the CRR process)
     function startCampaign(
-        bytes32 campaignId,
-        bytes32 _seed
-    ) external payable onlyExistingCampaign(campaignId) {
-        Campaign campaign = campaigns[campaignId];
+        bytes32 _campaignId,
+        bytes32 _seed,
+        address _campaignWallet,
+        Campaign.Signature calldata _signature
+    ) external payable onlyExistingCampaign(_campaignId) {
+        Campaign campaign = campaigns[_campaignId];
 
         // require that a commit exists for the campaign
         require(
-            commits[campaignId].commitHash != 0,
+            commits[_campaignId].commitHash != 0,
             "Campaign has already been started"
         );
-        Commit memory commitData = commits[campaignId];
+        Commit memory commitData = commits[_campaignId];
 
         // require that the seed matches the commit
         require(
@@ -168,15 +177,18 @@ contract Charity {
             "Must wait at least 1 block after the commit block"
         );
 
+        // verify the signature, checking if the owner started the campaign
+        require(ecrecover(keccak256(abi.encodePacked(_seed, _campaignId)), _signature.v, _signature.r, _signature.s) == owner, "Invalid signature");
+
         // generate the seed
         bytes32 randomSeed = keccak256(
             abi.encodePacked(_seed, blockhash(block.number))
         );
 
         // start the campaign
-        campaign.start{value: msg.value}(randomSeed, msg.sender);
+        campaign.start{value: msg.value}(randomSeed, _campaignWallet, msg.sender);
 
-        emit CampaignStarted(campaignId);
+        emit CampaignStarted(_campaignId);
     }
 
     // returns the IDs of all campaigns
@@ -226,21 +238,42 @@ contract Charity {
 
     // redeem a token for an active campaign
     function redeemToken(
-        bytes32 campaignId,
-        bytes32 tokenId
-    ) external onlyExistingCampaign(campaignId) {
-        campaigns[campaignId].redeemToken(tokenId);
+        bytes32 _campaignId,
+        bytes32 _tokenId,
+        Campaign.Signature calldata _signature
+    ) external onlyExistingCampaign(_campaignId) onlyOwner {
+        bytes32 t2_token = _generateTokenHash(_campaignId, _tokenId);
+        campaigns[_campaignId].redeemToken(t2_token, _signature);
     }
 
     // function to check if a token is valid
     function isTokenValid( 
-        bytes32 campaignId,
-        bytes32 tokenId
+        bytes32 _campaignId,
+        bytes32 _tokenId,
+        Campaign.Signature calldata _signature
     ) external view returns (bool) {
-        if (!campaignExists(campaignId) || msg.sender != owner) {
+
+        if (!campaignExists(_campaignId) || msg.sender != owner) {
             return false;
         }
-        return campaigns[campaignId].isTokenValid(tokenId);
+
+        bytes32 t2_token = _generateTokenHash(_campaignId, _tokenId);
+        
+        return campaigns[_campaignId].isTokenValid(t2_token, _signature);
+    }
+
+    function generateTokenHashes(
+        bytes32 _campaignId,
+        bytes32[] calldata _tokensT1
+    ) external view onlyExistingCampaign(_campaignId) onlyOwner returns (bytes32[] memory) {
+        
+        bytes32[] memory t2_tokens = new bytes32[](_tokensT1.length);
+
+        for (uint i = 0; i < _tokensT1.length; i++) {
+            t2_tokens[i] = _generateTokenHash(_campaignId, _tokensT1[i]);
+        }
+
+        return t2_tokens;
     }
 
     // ====================================== UTILS FUNCTIONS ======================================
@@ -261,5 +294,10 @@ contract Charity {
                     campaignsIds.length
                 )
             );
+    }
+
+    // generate token hash for a single token
+    function _generateTokenHash(bytes32 _campaignId, bytes32 _tokenId) private view returns (bytes32) {
+        return campaigns[_campaignId].generateTokenHash(_tokenId);
     }
 }

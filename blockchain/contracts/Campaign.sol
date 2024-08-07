@@ -4,10 +4,17 @@ pragma solidity ^0.8.0;
 
 contract Campaign {
     // ====================================== STRUCTS ======================================
-    
+
     struct TokenBlock {
         uint256 blockNumber;
         uint256 blockTimestamp;
+    }
+
+    // create bytes65 type for signature
+    struct Signature {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
     }
 
     struct CampaignDetails {
@@ -21,7 +28,6 @@ contract Campaign {
         uint256 refunds;
         uint256 donations;
         uint256 tokensCount;
-
         // TODO: move below
         bool refundClaimed;
         bool donationClaimed;
@@ -32,13 +38,16 @@ contract Campaign {
     // ====================================== VARIABLES ======================================
 
     address public owner;
-    
+
+    // is the public wallet address used to verify the authenticity of the tokens generated
+    address private walletAddress;
+
     // seed used to generate the tokens
     bytes32 private seed;
 
     // campaign details
     CampaignDetails private campaignDetails;
-    
+
     // keep track of sensitive token info
     TokenBlock private tokenBlock;
 
@@ -47,9 +56,8 @@ contract Campaign {
 
     // keep track of the gas fees
     uint256 public gasFeesStorage;
-    uint256 constant public REDEEM_TOKEN_GAS_COST = 65000; // approximated gas cost to redeem a token
-    uint24 constant public REDEEM_TOKEN_COST_MULTIPLIER = 2; // gas cost multiplier to be sure to have enough gas to redeem a token
-
+    uint256 public constant REDEEM_TOKEN_GAS_COST = 65000; // approximated gas cost to redeem a token
+    uint24 public constant REDEEM_TOKEN_COST_MULTIPLIER = 2; // gas cost multiplier to be sure to have enough gas to redeem a token
 
     // ====================================== MODIFIERS ======================================
 
@@ -132,12 +140,11 @@ contract Campaign {
         campaignDetails.tokensCount = _tokensCount;
     }
 
-
     function start(
         bytes32 _seed,
+        address _walletAddress,
         address _from
     ) external payable onlyOwner onlyDonor(_from) {
-
         // require the campaign is not already funded
         require(
             campaignDetails.funded == false,
@@ -153,9 +160,10 @@ contract Campaign {
         );*/
 
         // compute the initial deposit after subtracting the gas fees for the tokens redeem
-        uint _initialDeposit = msg.value;// - gasFeesStorage;
+        uint _initialDeposit = msg.value; // - gasFeesStorage;
 
         seed = _seed;
+        walletAddress = _walletAddress;
         campaignDetails.initialDeposit = _initialDeposit;
         campaignDetails.refunds = _initialDeposit;
 
@@ -167,19 +175,21 @@ contract Campaign {
         campaignDetails.funded = true;
     }
 
+    function setWalletAddress(address _walletAddress) external onlyOwner {
+        walletAddress = _walletAddress;
+    }
 
     function getDetails() external view returns (CampaignDetails memory) {
         CampaignDetails memory _campaignDetails = campaignDetails;
-        
+
         // filter out sensitive control booleans
         delete _campaignDetails.funded;
         delete _campaignDetails.refundClaimed;
         delete _campaignDetails.donationClaimed;
         delete _campaignDetails.suspended;
-        
+
         return _campaignDetails;
     }
-
 
     // get the tokens of a campaign
     function getTokens(
@@ -200,9 +210,12 @@ contract Campaign {
 
         return _tokens;*/
 
-        return _generateTokenId(campaignDetails.campaignId, campaignDetails.tokensCount - 1);
+        return
+            _generateTokenId(
+                campaignDetails.campaignId,
+                campaignDetails.tokensCount - 1
+            );
     }
-
 
     // allow the donor to claim the refund
     function claimRefund(
@@ -218,13 +231,17 @@ contract Campaign {
         uint256 _refunds = 0;
         bytes32 _tokenId;
 
-        uint256 _tokenValue = campaignDetails.initialDeposit / campaignDetails.tokensCount;
-        uint256 _lastTokenValue = campaignDetails.initialDeposit % campaignDetails.tokensCount + _tokenValue;
+        uint256 _tokenValue = campaignDetails.initialDeposit /
+            campaignDetails.tokensCount;
+        uint256 _lastTokenValue = (campaignDetails.initialDeposit %
+            campaignDetails.tokensCount) + _tokenValue;
 
         for (uint i = 0; i < campaignDetails.tokensCount; i++) {
             _tokenId = _generateTokenId(campaignDetails.campaignId, i);
             if (!tokens[_tokenId]) {
-                _refunds += (i == campaignDetails.tokensCount - 1) ? _lastTokenValue : _tokenValue;
+                _refunds += (i == campaignDetails.tokensCount - 1)
+                    ? _lastTokenValue
+                    : _tokenValue;
             }
         }
 
@@ -248,13 +265,17 @@ contract Campaign {
         uint256 _donations = 0;
         bytes32 _tokenId;
 
-        uint256 _tokenValue = campaignDetails.initialDeposit / campaignDetails.tokensCount;
-        uint256 _lastTokenValue = campaignDetails.initialDeposit % campaignDetails.tokensCount + _tokenValue;
+        uint256 _tokenValue = campaignDetails.initialDeposit /
+            campaignDetails.tokensCount;
+        uint256 _lastTokenValue = (campaignDetails.initialDeposit %
+            campaignDetails.tokensCount) + _tokenValue;
 
         for (uint i = 0; i < campaignDetails.tokensCount; i++) {
             _tokenId = _generateTokenId(campaignDetails.campaignId, i);
             if (tokens[_tokenId]) {
-                _donations += (i == campaignDetails.tokensCount - 1) ? _lastTokenValue : _tokenValue;
+                _donations += (i == campaignDetails.tokensCount - 1)
+                    ? _lastTokenValue
+                    : _tokenValue;
             }
         }
 
@@ -264,12 +285,11 @@ contract Campaign {
         campaignDetails.donationClaimed = true;
     }
 
-
     // get the number of tokens redeemed
     function getRedeemedTokensCount() external view returns (uint256) {
         uint256 _redeemedTokens = 0;
         bytes32 _tokenId;
-        
+
         for (uint i = 0; i < campaignDetails.tokensCount; i++) {
             _tokenId = _generateTokenId(campaignDetails.campaignId, i);
             if (tokens[_tokenId]) _redeemedTokens++;
@@ -278,30 +298,27 @@ contract Campaign {
         return _redeemedTokens;
     }
 
-
     // allow users to reedem the tokens they bought
-    function redeemToken(
-        bytes32 tokenId
-    ) external {
+    function redeemToken(bytes32 t2_token, Signature calldata _signature) external {
         
-        require(isTokenValid(tokenId), "Token is not valid");
+        require(isTokenValid(t2_token, _signature), "Token is not valid");
 
         // redeem the token
-        tokens[tokenId] = true;
+        tokens[t2_token] = true;
     }
 
-
     // check if a token is valid
-    function isTokenValid(
-        bytes32 tokenId
-    ) public view returns (bool) {
+    function isTokenValid(bytes32 t2_token, Signature calldata _signature) public view returns (bool) {
         // check if the campaign contract has made the validation call
         if (msg.sender != owner) {
             return false;
         }
 
         // check if the campaign is live
-        if (block.timestamp < campaignDetails.startingDate || block.timestamp >= campaignDetails.deadline) {
+        if (
+            block.timestamp < campaignDetails.startingDate ||
+            block.timestamp >= campaignDetails.deadline
+        ) {
             return false;
         }
 
@@ -309,21 +326,33 @@ contract Campaign {
         if (!campaignDetails.funded) {
             return false;
         }
-
-        // check if the token exists
-        bytes32 _tokenId;
-        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            _tokenId = _generateTokenId(campaignDetails.campaignId, i);
-            // check if the token exists
-            if (_tokenId == tokenId) {
-                // check if the token has been redeemed
-                return !tokens[tokenId];
-            }
+        
+        // check if the token is generated by the campaign wallet
+        if(ecrecover(keccak256(abi.encodePacked(t2_token, campaignDetails.campaignId)), _signature.v, _signature.r, _signature.s) != walletAddress) {
+            return false;
         }
 
-        return false;
+        // check if the token has already been redeemed
+        if (tokens[t2_token]) {
+            return false;
+        }
+
+        return true;
     }
-    
+
+    function generateTokenHash(
+        bytes32 _rawToken
+    ) external view onlyOwner returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    _rawToken,
+                    seed,
+                    tokenBlock.blockTimestamp,
+                    blockhash(tokenBlock.blockNumber)
+                )
+            );
+    }
 
     // ====================================== UTILS FUNCTIONS ======================================
 
