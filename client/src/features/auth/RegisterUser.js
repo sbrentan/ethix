@@ -1,6 +1,7 @@
 import { Button, Form, Input, message } from "antd";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useContext } from "react";
 import { useRegisterMutation } from "./authApiSlice";
+import { TransactionContext } from ".//../../context/TransactionContext.js";
 
 const RegisterUser = ({ setSuccessRegistration }) => {
 	const [form] = Form.useForm();
@@ -10,6 +11,10 @@ const RegisterUser = ({ setSuccessRegistration }) => {
 
     // for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+
+	const {
+			wallet,
+		} = useContext(TransactionContext);
 
 	useEffect(() => {
 		if (isError) {
@@ -35,7 +40,7 @@ const RegisterUser = ({ setSuccessRegistration }) => {
 
     const handleSubmit = async (values) => {
 		const { username, password } = values;
-        const data = { username, password }
+        const data = { username, wallet, password }
         // console.log(data)
 		await register(data);
 	};
