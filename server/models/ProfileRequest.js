@@ -18,6 +18,10 @@ const profileRequestSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		address: {
+			type: String,
+			required: true,
+		},
 		role: {
 			type: String,
 			enum: [ROLES_LIST.donor, ROLES_LIST.beneficiary],

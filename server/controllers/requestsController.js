@@ -92,11 +92,12 @@ const createMyNewRequest = asyncHandler(async (req, res) => {
         // create the new profile request for the admin
         console.log(user)
         console.log(user._id.toString())
+				const address = user.address
 
         // do I fill the donorSchema or beneficiarySchema?
         const donorData = user.role === ROLES_LIST.donor ? {...values, user: user._id.toString()} : undefined
         const beneficiaryData = user.role === ROLES_LIST.beneficiary ? {...values, user: user._id.toString()} : undefined
-        const request = await ProfileRequest.create({ user: user._id.toString(), username, role: user.role, donorData, beneficiaryData})
+        const request = await ProfileRequest.create({ user: user._id.toString(), username, address, role: user.role, donorData, beneficiaryData})
     }
 
     res.status(200).json({ message: `New Request created!` });

@@ -10,10 +10,11 @@ const PublicProfile = require('../models/PublicProfile')
 // @route POST /auth/register
 // @access Public
 const register = asyncHandler(async (req, res) => {
-    const { username, password } = req.body
+    const { username, wallet, password } = req.body
+    const address = wallet.address;
 
     // Confirm data
-    if (!username || !password) {
+    if (!username || !password||!address) {
         return res.status(400).json({ message: 'All fields are required'})
     }
 
@@ -33,7 +34,7 @@ const register = asyncHandler(async (req, res) => {
     // User should be verified, while beneficiary and donors should have it as default false. waiting for an admin approval
     const verified = true
 
-    const user = await User.create({ username, "password": hashedPwd, role, verified })
+    const user = await User.create({ username, address, "password": hashedPwd, role, verified })
 
     if (!user) {
         return res.status(500).json({ message: 'Something went wrong' })
@@ -79,13 +80,12 @@ const registerDonorBeneficiary = asyncHandler(async (req, res) => {
         return res.status(500).json({ message: 'Something went wrong' })
     } else {
         // create the new profile request for the admin
-        console.log(user)
-        console.log(user._id.toString())
 
         // do I fill the donorSchema or beneficiarySchema?
         const donorData = role === ROLES_LIST.donor ? {...values, user: user._id.toString()} : undefined
         const beneficiaryData = role === ROLES_LIST.beneficiary ? {...values, user: user._id.toString()} : undefined
-        const request = await ProfileRequest.create({ user: user._id.toString(), username, role, donorData, beneficiaryData})
+
+        const request = await ProfileRequest.create({ user: user._id.toString(), username, address, role, donorData, beneficiaryData})
 
         // to create the public data
         const publicProfile = await PublicProfile.create({ user: user._id.toString()})
