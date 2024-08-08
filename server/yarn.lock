@@ -692,7 +692,7 @@ express-session@^1.18.0:
     safe-buffer "5.2.1"
     uid-safe "~2.1.5"
 
-"express@^4 || ^5", express@^4.19.2:
+express@^4.19.2:
   version "4.19.2"
   resolved "https://registry.npmjs.org/express/-/express-4.19.2.tgz"
   integrity sha512-5T6nhjsT+EOMzuck8JjBHARTHfMht0POzlA60WV2pMD3gyXw2LZnZ+ueGdNxG+0calOJcWKbpFcuzLZ91YWq9Q==
@@ -1253,7 +1253,7 @@ mongoose-plugin-autoinc@^1.1.9:
   resolved "https://registry.npmjs.org/mongoose-plugin-autoinc/-/mongoose-plugin-autoinc-1.1.9.tgz"
   integrity sha512-DCkXJjgdQhMJCoRd1xwgKUQCOb/VgC8t3ewZ3+0GNCqCdYD1nxIdnvecO1IWh3ER8KINL98A0b97DgRVwOMxsg==
 
-mongoose@^7.0.3, "mongoose@>=4.0.0 || >=5.0.0":
+mongoose@^7.0.3:
   version "7.7.0"
   resolved "https://registry.npmjs.org/mongoose/-/mongoose-7.7.0.tgz"
   integrity sha512-+HcoN/hmkB5IjAqWYA2ZAQeExGD8FNMe6L/eTYB04gqp9S2ZEngVivGkdtGrA4BYRf0suH+3rMNFW2JPOqC4Mg==
@@ -1762,11 +1762,6 @@ type-is@~1.6.18:
     media-typer "0.3.0"
     mime-types "~2.1.24"
 
-typescript@>=4.9.4:
-  version "5.5.3"
-  resolved "https://registry.npmjs.org/typescript/-/typescript-5.5.3.tgz"
-  integrity sha512-/hreyEujaB0w76zKo6717l3L0o/qEUtRgdvUBvlkhoWeOVMjMuHNHk0BRBzikzuGDqNmPQbg5ifMEqsHLiIUcQ==
-
 uid-safe@~2.1.5:
   version "2.1.5"
   resolved "https://registry.npmjs.org/uid-safe/-/uid-safe-2.1.5.tgz"
@@ -2096,7 +2091,7 @@ wrappy@1:
   resolved "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz"
   integrity sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
 
-ws@*, ws@^8.17.1:
+ws@^8.17.1:
   version "8.18.0"
   resolved "https://registry.npmjs.org/ws/-/ws-8.18.0.tgz"
   integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
@@ -2111,7 +2106,7 @@ yallist@^4.0.0:
   resolved "https://registry.npmjs.org/yallist/-/yallist-4.0.0.tgz"
   integrity sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==
 
-"zod@^3 >=3.19.1", zod@^3.21.4:
+zod@^3.21.4:
   version "3.23.8"
   resolved "https://registry.npmjs.org/zod/-/zod-3.23.8.tgz"
   integrity sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==
