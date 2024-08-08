@@ -83,35 +83,7 @@ const contentStyle = {
 	background: "#364d79",
 };
 
-const settings = {
-	infinite: false,
-	speed: 500,
-	slidesToShow: 3,
-	slidesToScroll: 1,
-	dots: false,
-	responsive: [
-		{
-			breakpoint: 1024,
-			settings: {
-				slidesToShow: 2,
-				slidesToScroll: 1,
-				initialSlide: 1,
-			},
-		},
-		{
-			breakpoint: 600,
-			settings: {
-				slidesToShow: 1,
-				slidesToScroll: 1,
-				initialSlide: 1,
-			},
-		},
-	],
-	nextArrow: <SampleNextArrow />,
-	prevArrow: <SamplePrevArrow />,
-};
-
-const CampaignsCarousel = () => {
+const CampaignsCarousel = ({ organization = "", name = ""}) => {
 	// state and filters
 	const [titleFilter, setTitleFilter] = useState("");
 	const [donorFilter, setDonorFilter] = useState("");
@@ -153,8 +125,9 @@ const CampaignsCarousel = () => {
 					(activeFilter === "false" && isExpired(campaign.deadline));
 
 				// TODO: donor and receiver filter
+                const organizationCondition = organization === "" || organization === campaign.donor || organization === campaign.receiver
 
-				return titleCondition && activeCondition;
+				return titleCondition && activeCondition && organizationCondition;
 			});
 		}
 		setFilteredCampaigns(filteredResult);
@@ -179,6 +152,44 @@ const CampaignsCarousel = () => {
 			});
 		}
 	}, [isError, error]);
+
+    const settings = organization !== "" ?
+    {
+        infinite: false,
+        speed: 500,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        dots: false,
+        nextArrow: <SampleNextArrow />,
+        prevArrow: <SamplePrevArrow />,
+    }
+    : {
+        infinite: false,
+        speed: 500,
+        slidesToShow: 3,
+        slidesToScroll: 1,
+        dots: false,
+        responsive: [
+            {
+                breakpoint: 1024,
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 1,
+                    initialSlide: 1,
+                },
+            },
+            {
+                breakpoint: 600,
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    initialSlide: 1,
+                },
+            },
+        ],
+        nextArrow: <SampleNextArrow />,
+        prevArrow: <SamplePrevArrow />,
+    };
 
 	let tableContent = <Empty />;
 	if (isSuccess) {
@@ -210,7 +221,7 @@ const CampaignsCarousel = () => {
 				style={{ width: "100%" }}
 				size={0}
 			>
-				<Title level={2}>Ongoing Campaigns</Title>
+				<Title level={2}>{organization ? `Ongoing Campaigns of ${name}` : "Ongoing Campaigns"}</Title>
 				<Link to="/campaigns">
 					<Title underline level={4} style={{ margin: 5 }}>
 						See All
