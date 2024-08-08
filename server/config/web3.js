@@ -37,8 +37,19 @@ const WEB3_CONTRACT = contract;
 const WEB3_CONTRACT_ADDRESS = contractAddress;
 
 
+
+// this is needed if you want to sign a message combined from two hex variables
+const encodePacked = function(walletAddress, campaignAddress) {
+    // Remove '0x' prefix and concatenate
+    const concatenated = walletAddress.substring(2) + campaignAddress.substring(2);
+    // Re-add '0x' and hash the packed data
+    return web3.utils.keccak256("0x" + concatenated);
+}
+
+
 module.exports = {
     web3,
+    encodePacked,
     WEB3_MANAGER_ACCOUNT,
     WEB3_CONTRACT,
     WEB3_CONTRACT_ADDRESS,

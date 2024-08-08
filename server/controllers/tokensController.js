@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const { WEB3_MANAGER_ACCOUNT, WEB3_CONTRACT_ADDRESS, WEB3_CONTRACT, web3 } = require("../config/web3");
+const { WEB3_MANAGER_ACCOUNT, encodePacked, WEB3_CONTRACT, web3 } = require("../config/web3");
 const TokenSalt = require("../models/TokenSalt");
 const Campaign = require("../models/Campaign");
 const crypto = require('crypto');
@@ -50,44 +50,54 @@ const generateTokens = asyncHandler(async (req, res) => {
         // Generate the seed(St) that is used to generate the tokens T1
         const tokenSeed = crypto.createHash('sha256').update(campaign.seed + new Date().getTime()).digest('hex');
 
+        console.log(campaign);
         // Generate the tokens T1
         const t1_tokens = Array.from({ length: campaign.tokensCount }, (_, i) => {
-            return crypto.createHash('sha256').update(tokenSeed + i).digest('hex');
+            return web3.utils.toHex(crypto.createHash('sha256').update(tokenSeed + i).digest('hex'));
         });
+        console.log('t1_tokens', t1_tokens);
         
         // generate randomlyh token indexes
-        const salts = Array.from({ length: campaign.tokensCount }, (_, i) => crypto.createHash('sha256').update(i + new Date().getTime()).digest('hex'));
+        const salts = Array.from({ length: campaign.tokensCount }, (_, i) => crypto.createHash('sha256').update(String(i + new Date().getTime())).digest('hex'));
+        console.log('salts', salts);
 
         // Create the TokenSalt objects to save on db
         const tokenSalts = t1_tokens.map((token, i) => {
             return {
                 campaignId: campaign._id,
                 hash: crypto.createHash('sha256').update(token).digest('hex'),
-                salt: tokenIndexes[i]
+                salt: salts[i]
             };
         });
         await TokenSalt.insertMany(tokenSalts);
+        console.log('tokenSalts', tokenSalts);
         
         // Generate the tokens T1.5
         const t15_tokens = t1_tokens.map((token, i) => {
-            return crypto.createHash('sha256').update(token + salts[i]).digest('hex');
+            return web3.utils.toHex(crypto.createHash('sha256').update(token + salts[i]).digest('hex'));
         });
+        console.log('t15_tokens', t15_tokens);
 
         // Generate the tokens T2
         // TODO: batch this call
         const t2_tokens = await WEB3_CONTRACT.methods.generateTokenHashes(campaignAddress, t15_tokens).call({ from: WEB3_MANAGER_ACCOUNT.address });
+        console.log('t2_tokens', t2_tokens);
 
         // Create the signature for the tokens
         const tokenSignatures = t2_tokens.map(token => {
-            return web3.eth.accounts.sign(_encodePacked(web3.utils.toHex(token), campaignAddress), wallet.privateKey);
+            return web3.eth.accounts.sign(encodePacked(web3.utils.toHex(token), campaignAddress), wallet.privateKey);
         });
+        console.log('tokenSignatures', tokenSignatures);
 
-        res.json({ signed_tokens: t1_tokens.map((token, i) => {
+        signed_tokens = t1_tokens.map((token, i) => {
             return {
                 token: token,
                 signature: tokenSignatures[i].signature,
             };
-        }) });
+        });
+        console.log('signed_tokens', signed_tokens);
+
+        res.json({ signedTokens: signedTokens });
         
     } catch (error) {
         console.log('Error generating tokens:', error);

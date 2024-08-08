@@ -1,7 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
-const { web3, WEB3_MANAGER_PRIVATE_KEY, WEB3_MANAGER_ACCOUNT } = require("../config/web3");
-const { recoverAddress, getBytes, hashMessage } =  require("ethers");
+const { web3, WEB3_MANAGER_PRIVATE_KEY, encodePacked } = require("../config/web3");
 const User = require("../models/User");
 
 // @desc Get all campaigns
@@ -45,10 +44,10 @@ const getCampaign = asyncHandler(async (req, res) => {
 // @route POST /campaigns
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
-	const { target, title, image, description, deadline, donor, receiver, draft } = req.body;
+	const { target, tokensCount, title, image, description, deadline, donor, receiver, draft } = req.body;
 
 	// Confirm data
-	if (!target || !title || !deadline || !donor || !receiver) {
+	if (!target || !title || !deadline || !donor || !receiver || !tokensCount) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
@@ -97,7 +96,8 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 
 	// Create and store new campaign
 	const campaign = await Campaign.create({ 
-		target, title, image, description, deadline, donor, receiver, seed, blockNumber, campaignId: campaignAddress, createdBy: logged_user
+		target, title, image, description, deadline, donor, receiver, tokensCount,
+		seed, blockNumber, campaignId: campaignAddress, createdBy: logged_user
 	});
 
 	if (campaign) {
@@ -137,7 +137,7 @@ const generateRandomWallet = asyncHandler(async (req, res) => {
 	const wallet = web3.eth.accounts.create();
 
 	// Sign the public key of the wallet with the manager's private key
-	combinedHash = _encodePacked(wallet.address, campaignAddress);
+	combinedHash = encodePacked(wallet.address, campaignAddress);
 	const signResult = await web3.eth.accounts.sign(combinedHash, WEB3_MANAGER_PRIVATE_KEY);
 
 	// Save the wallet in the session
@@ -195,14 +195,6 @@ const deleteCampaign = asyncHandler(async (req, res) => {
 
 	res.json({ message: "Campaign removed" });
 });
-
-// this is needed if you want to sign a message combined from two hex variables
-function _encodePacked(walletAddress, campaignAddress) {
-    // Remove '0x' prefix and concatenate
-    const concatenated = walletAddress.substring(2) + campaignAddress.substring(2);
-    // Re-add '0x' and hash the packed data
-    return web3.utils.keccak256("0x" + concatenated);
-}
 
 module.exports = {
 	getAllCampaigns,

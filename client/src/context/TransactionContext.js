@@ -179,6 +179,7 @@ export const TransactionsProvider = ({ children }) => {
                 description: description, // optional
                 image: image, // optional
                 deadline: deadline,
+                tokensCount: tokens,
                 donor: donor,
                 receiver: receiver,
                 draft: true
@@ -215,6 +216,7 @@ export const TransactionsProvider = ({ children }) => {
 
             const response = await initCampaign({
                 target: target,
+                tokensCount: tokens,
                 title: title,
                 description: description,
                 image: image,
