@@ -19,18 +19,9 @@ const MyProfileRequest = () => {
 		refetch: refetchRequest,
 	} = useGetMyProfileRequestsQuery();
 
-	const { isDonor, isBeneficiary, verified: v } = useAuth();
-	const verified = false;
+	const { isDonor, isBeneficiary, verified } = useAuth();
 
 	if (!request) return <p>Waiting for data...</p>;
-
-	const description = (
-		<Text>
-			{verified
-				? "Your account has been verified."
-				: "Your account is not yet verified. Check your latest request below."}
-		</Text>
-	);
 
 	let content = <></>;
 	if (verified) {
@@ -73,14 +64,6 @@ const MyProfileRequest = () => {
 	// try to get Profile request
 	return (
 		<div style={{ marginLeft: "0.8rem", marginTop: "0.8rem" }}>
-			<Space direction="horizontal">
-				<Title>Profile</Title>
-				{verified && (
-					<CheckCircleTwoTone style={{ fontSize: "150%" }} />
-				)}
-			</Space>
-			<br />
-			{description}
 			{content}
 		</div>
 	);

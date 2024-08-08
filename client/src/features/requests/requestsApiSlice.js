@@ -8,6 +8,10 @@ const profileRequestsAdapter = createEntityAdapter({})
 
 const initialState = profileRequestsAdapter.getInitialState()
 
+const publicProfilesAdapter = createEntityAdapter({})
+
+const initialPublicProfileState = publicProfilesAdapter.getInitialState()
+
 export const profileRequestsApiSlice = apiSlice.injectEndpoints({
     endpoints: builder => ({
         getProfileRequests: builder.query({
@@ -70,6 +74,58 @@ export const profileRequestsApiSlice = apiSlice.injectEndpoints({
                 body: { ...newCredentials }
             })
         }),
+        getPublicProfiles: builder.query({
+            query: () => ({
+                url: '/profiles',
+                validateStatus: (response, result) => {
+                    return response.status === 200 && !result.isError
+                },
+            }),
+            transformResponse: responseData => {
+                const loadedPublicProfiles = responseData.map(publicProfile => {
+                    publicProfile.id = publicProfile._id
+                    return publicProfile
+                });
+                return publicProfilesAdapter.setAll(initialPublicProfileState, loadedPublicProfiles)
+            },
+            providesTags: (result, error, arg) => {
+                if (result?.ids) {
+                    return [
+                        { type: 'PublicProfile', id: 'LIST' },
+                        ...result.ids.map(id => ({ type: 'PublicProfile', id }))
+                    ]
+                } else return [{ type: 'PublicProfile', id: 'LIST' }]
+            }
+        }),
+        getPublicProfileByUser: builder.query({
+            query: ({ userId }) => ({
+                url: `/profiles/${userId}`,
+                validateStatus: (response, result) => {
+                    return response.status === 200 && !result.isError
+                },
+            }),
+        }),
+        getMyPublicProfile: builder.query({
+            query: () => ({
+                url: '/profiles/myprofile',
+                validateStatus: (response, result) => {
+                    return response.status === 200 && !result.isError
+                },
+            }),
+            providesTags: (result, error, arg) => {
+                return [{ type: 'PublicProfile', id: 'LIST' }]
+            }
+        }),
+        updateMyPublicProfile: builder.mutation({
+            query: publicData => ({
+                url: '/profiles/myprofile',
+                method: 'PATCH',
+                body: { ...publicData }
+            }),
+            invalidatesTags: (result, error, arg) => [
+                { type: 'PublicProfile', id: 'LIST' }
+            ]
+        }),
     }),
 })
 
@@ -79,4 +135,8 @@ export const {
     useDeleteProfileRequestMutation,
     useGetMyProfileRequestsQuery,
     useCreateMyNewRequestMutation,
+    useGetPublicProfilesQuery,
+    useGetPublicProfileByUserQuery,
+    useGetMyPublicProfileQuery,
+    useUpdateMyPublicProfileMutation,
 } = profileRequestsApiSlice

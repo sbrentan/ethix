@@ -1,5 +1,5 @@
 import NotFoundResult from "../../components/NotFoundResult";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useGetCampaignsQuery } from "./campaignsApiSlice";
 import { TransactionContext } from "./../../context/TransactionContext";
 import React, {  useContext } from "react";
@@ -8,6 +8,7 @@ import {
 	Card,
 	Col,
 	Divider,
+	Flex,
 	Image,
 	Progress,
 	Row,
@@ -16,6 +17,7 @@ import {
 } from "antd";
 import { EuroCircleOutlined, UserOutlined } from "@ant-design/icons";
 import { format } from "date-fns";
+import { useGetPublicProfileByUserQuery } from "../requests/requestsApiSlice";
 
 const { Text, Title } = Typography;
 const { Meta } = Card;
@@ -43,6 +45,9 @@ const Campaign = () => {
 			}),
 		}
 	);
+
+	const { data: profileBeneficiary, profileBeneficiaryLoading } = useGetPublicProfileByUserQuery({userId: campaignDB?.receiver })
+	const { data: profileDonor, profileDonorLoading } = useGetPublicProfileByUserQuery({userId: campaignDB?.donor })
 	
   const {
 		campaign,
@@ -78,10 +83,14 @@ const Campaign = () => {
 				<Col span={16}>
 					<Card>
 						<Space direction="vertical">
-							<Image width={200} src="error" preview={false} />
+                            <Image
+								src={campaignDB?.image ? campaignDB?.image : "error"}
+								width={'100%'}
+								preview={campaignDB?.image ? true : false}
+							/>
 							<Text>
-								A fundraising campaignDB by{" "}
-								<Text strong>{campaignDB.donor}</Text>
+								A fundraising campaign by{" "}
+								<Text strong>{profileDonor?.publicName ? <Link to={`/organizations/${profileDonor._id}`}>{profileDonor?.publicName}</Link> : campaignDB.donor}</Text>
 							</Text>
 							<Title>{campaignDB.title}</Title>
 							<Text>{campaignDB.description}</Text>
@@ -147,9 +156,9 @@ const Campaign = () => {
 						</Card>
 						<Card>
 							<Meta
-								avatar={<Avatar icon={<UserOutlined />} />}
-								title={campaignDB.receiver}
-								description="Description of beneficiary"
+								avatar={<Avatar icon={profileBeneficiary?.publicImage ? <Image src={profileBeneficiary?.publicImage} preview={false} /> : <UserOutlined />} />}
+								title={profileBeneficiary?.publicName ? <Link to={`/organizations/${profileBeneficiary._id}`}>{profileBeneficiary.publicName}</Link> : campaignDB.receiver}
+								description={profileBeneficiary?.publicDescription ? profileBeneficiary.publicDescription : "Description of Beneficiary"}
 							/>
 						</Card>
 					</Space>

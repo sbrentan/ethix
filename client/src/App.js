@@ -22,6 +22,9 @@ import Campaign from "./features/campaigns/Campaign";
 import HomePage from "./components/HomePage";
 import RedeemOverview from "./features/campaigns/RedeemOverview";
 import RedeemPage from "./features/campaigns/RedeemPage";
+import MyProfile from "./features/users/MyProfile.js";
+import PublicProfile from "./features/organizations/PublicProfile.js";
+import OrganizationsGrid from "./features/organizations/OrganizationsGrid.js";
 
 function App() {
     return (
@@ -30,21 +33,8 @@ function App() {
                 <Route path="/" element={<MainLayout />}>
                     {/* public routes */}
                     <Route index element={
-                        <div className="App">
-                            <header className="App-header">
-                                <img src={logo} className="App-logo" alt="logo" width={100} />
-                                <p>
-                                    Edit <code>src/App.js</code> and save to reload.
-                                </p>
-                                <a
-                                    className="App-link"
-                                    href="https://reactjs.org"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Learn React
-                                </a>
-                            </header>
+                        <div className="App" style={{ margin: 30}}>
+                            This element needs to be replaced by the Homepage
                         </div>
                     } />
                     <Route path="login" element={<Login />} />
@@ -57,13 +47,18 @@ function App() {
                         <Route path=":token" element={<RedeemPage />} />
                     </Route>
 
-                    {/* Protected Routes */}
-                    <Route element={<PersistLogin />}>
 
                         <Route path="campaigns">
                             <Route index element={<CampaignsGrid />} />
                             <Route path=":id">
                                 <Route index element={<Campaign />} />
+                            </Route>
+                        </Route>
+
+                        <Route path="organizations">
+                            <Route index element={<OrganizationsGrid />} />
+                            <Route path=":id">
+                                <Route index element={<PublicProfile />} />
                             </Route>
                         </Route>
 
@@ -100,7 +95,7 @@ function App() {
                                     />
                                     <Route
                                         path="profile"
-                                        element={<MyProfileRequest />}
+                                        element={<MyProfile />}
                                     />
                                     <Route
                                         path="donorCampaigns"
@@ -131,7 +126,7 @@ function App() {
                                     />
                                     <Route
                                         path="profile"
-                                        element={<MyProfileRequest />}
+                                        element={<MyProfile />}
                                     />
                                 </Route>
                             </Route>
@@ -169,7 +164,6 @@ function App() {
                         {/* 404 Page not Found */}
                         <Route path="*" element={<NotFoundResult />} />
 
-                        </Route>
                     </Route>
             </Routes>
         </>
