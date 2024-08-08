@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "./Campaign.sol";
 
 contract Charity {
-
     // Charity contract roles:
     //      - CampaignFactory: create new campaigns
     //      - OrganizationManager: verify and revoke organizations
@@ -92,8 +91,8 @@ contract Charity {
         return verifiedOrganizations[_organization];
     }
 
-    function campaignExists(bytes32 campaignId) private view returns (bool) {
-        return address(campaigns[campaignId]) != address(0);
+    function campaignExists(bytes32 _campaignId) private view returns (bool) {
+        return address(campaigns[_campaignId]) != address(0);
     }
 
     // create a new campaign for a verified organization
@@ -105,9 +104,7 @@ contract Charity {
         uint256 _tokensCount,
         address _beneficiary,
         bytes32 _commitHash, // is the hash of the seed
-        bytes32 r,
-        bytes32 s,
-        uint8 v
+        Campaign.Signature calldata _signature
     ) external onlyVerifiedBeneficiary(_beneficiary) {
         // generate a unique ID for the campaign
         bytes32 campaignId = _generateCampaignId(
@@ -130,7 +127,10 @@ contract Charity {
         );
 
         // verify the signature, checking if the owner generated the seed
-        require(_signatureVerified(_commitHash, r, s, v, owner), "Invalid signature");
+        require(
+            _signatureVerified(_commitHash, _signature, owner),
+            "Invalid signature"
+        );
 
         // save the commit hash and the block number for future CRR `reveal` verification
         commits[campaignId] = Commit(_commitHash, block.number);
@@ -156,9 +156,7 @@ contract Charity {
         bytes32 _campaignId,
         bytes32 _seed,
         address _campaignWallet,
-        bytes32 r,
-        bytes32 s,
-        uint8 v
+        Campaign.Signature calldata _signature
     ) external payable onlyExistingCampaign(_campaignId) {
         Campaign campaign = campaigns[_campaignId];
 
@@ -182,7 +180,14 @@ contract Charity {
         );
 
         // verify the signature, checking if the owner started the campaign
-        require(_signatureVerified(keccak256(abi.encodePacked(_seed, _campaignId)), r, s, v, owner), "Invalid signature");
+        require(
+            _signatureVerified(
+                keccak256(abi.encodePacked(_seed, _campaignId)),
+                _signature,
+                owner
+            ),
+            "Invalid signature"
+        );
 
         // generate the seed
         bytes32 randomSeed = keccak256(
@@ -190,7 +195,11 @@ contract Charity {
         );
 
         // start the campaign
-        campaign.start{value: msg.value}(randomSeed, _campaignWallet, msg.sender);
+        campaign.start{value: msg.value}(
+            randomSeed,
+            _campaignWallet,
+            msg.sender
+        );
 
         emit CampaignStarted(_campaignId);
     }
@@ -202,42 +211,37 @@ contract Charity {
 
     // returns the details of an active campaign given the campaignId
     function getCampaign(
-        bytes32 campaignId
+        bytes32 _campaignId
     )
         external
         view
-        onlyExistingCampaign(campaignId)
+        onlyExistingCampaign(_campaignId)
         returns (Campaign.CampaignDetails memory)
     {
-        return campaigns[campaignId].getDetails();
+        return campaigns[_campaignId].getDetails();
     }
 
     // returns the tokens of an active campaign given the campaignId
     function getCampaignTokens(
-        bytes32 campaignId
-    )
-        external
-        view
-        onlyExistingCampaign(campaignId)
-        returns (bytes32)
-    {
-        return campaigns[campaignId].getTokens(msg.sender);
+        bytes32 _campaignId
+    ) external view onlyExistingCampaign(_campaignId) returns (bytes32) {
+        return campaigns[_campaignId].getTokens(msg.sender);
     }
 
     // claim a refund for an ended campaign
     function claimRefund(
-        bytes32 campaignId
-    ) external onlyExistingCampaign(campaignId) {
-        campaigns[campaignId].claimRefund(msg.sender);
-        emit RefundClaimed(campaigns[campaignId].getDetails().refunds);
+        bytes32 _campaignId
+    ) external onlyExistingCampaign(_campaignId) {
+        campaigns[_campaignId].claimRefund(msg.sender);
+        emit RefundClaimed(campaigns[_campaignId].getDetails().refunds);
     }
 
     // claim a donation for an ended campaign
     function claimDonation(
-        bytes32 campaignId
-    ) external onlyExistingCampaign(campaignId) {
-        campaigns[campaignId].claimDonation(msg.sender);
-        emit DonationClaimed(campaigns[campaignId].getDetails().donations);
+        bytes32 _campaignId
+    ) external onlyExistingCampaign(_campaignId) {
+        campaigns[_campaignId].claimDonation(msg.sender);
+        emit DonationClaimed(campaigns[_campaignId].getDetails().donations);
     }
 
     // redeem a token for an active campaign
@@ -251,26 +255,30 @@ contract Charity {
     }
 
     // function to check if a token is valid
-    function isTokenValid( 
+    function isTokenValid(
         bytes32 _campaignId,
         bytes32 _tokenId,
         Campaign.Signature calldata _signature
     ) external view returns (bool) {
-
         if (!campaignExists(_campaignId) || msg.sender != owner) {
             return false;
         }
 
         bytes32 t2_token = _generateTokenHash(_campaignId, _tokenId);
-        
+
         return campaigns[_campaignId].isTokenValid(t2_token, _signature);
     }
 
     function generateTokenHashes(
         bytes32 _campaignId,
         bytes32[] calldata _tokensT1
-    ) external view onlyExistingCampaign(_campaignId) onlyOwner returns (bytes32[] memory) {
-        
+    )
+        external
+        view
+        onlyExistingCampaign(_campaignId)
+        onlyOwner
+        returns (bytes32[] memory)
+    {
         bytes32[] memory t2_tokens = new bytes32[](_tokensT1.length);
 
         for (uint i = 0; i < _tokensT1.length; i++) {
@@ -301,18 +309,21 @@ contract Charity {
     }
 
     // generate token hash for a single token
-    function _generateTokenHash(bytes32 _campaignId, bytes32 _tokenId) private view returns (bytes32) {
+    function _generateTokenHash(
+        bytes32 _campaignId,
+        bytes32 _tokenId
+    ) private view returns (bytes32) {
         return campaigns[_campaignId].generateTokenHash(_tokenId);
     }
 
     function _signatureVerified(
         bytes32 _commitHash,
-        bytes32 r,
-        bytes32 s,
-        uint8 v,
-        address sender
-    ) private pure returns(bool) {
-        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _commitHash));
-        return ecrecover(prefixedHash, v, r, s) == sender;
+        Campaign.Signature calldata _signature,
+        address _sender
+    ) private pure returns (bool) {
+        bytes32 _prefixedHash = keccak256(
+            abi.encodePacked("\x19Ethereum Signed Message:\n32", _commitHash)
+        );
+        return ecrecover(_prefixedHash, _signature.v, _signature.r, _signature.s) == _sender;
     }
 }

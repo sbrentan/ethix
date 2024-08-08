@@ -13,7 +13,10 @@ export const api = apiSlice.injectEndpoints({
             })
         }),
         generateRandomWallet: builder.mutation({
-            query: params => `/campaigns/${params?.campaignId}/wallet/random`
+            query: params => ({
+                url: `/campaigns/${params?.campaignId}/wallet/random`,
+                method: 'POST'
+            })
         }),
         generateCampaignTokens: builder.mutation({
             query: params => ({

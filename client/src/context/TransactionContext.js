@@ -202,9 +202,11 @@ export const TransactionsProvider = ({ children }) => {
                 tokens,
                 beneficiary,
                 _seedHash,
-                _signature.r,
-                _signature.s,
-                _signature.v
+                {
+                    r: _signature.r,
+                    s: _signature.s,
+                    v: _signature.v
+                }
             ).send({ from: wallet.address });
 
             const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
@@ -247,9 +249,8 @@ export const TransactionsProvider = ({ children }) => {
 
             const walletAddress = wallet_response?.data?.address;
             const walletSignature = wallet_response?.data?.signature;
-            const campaign = wallet_response?.data?.campaign;
-            const seed = campaign?.seed;
-            const target = campaign?.target;
+            const seed = wallet_response?.data?.campaign?.seed;
+            const target = wallet_response?.data?.campaign?.target;
 
             if (!walletAddress) throw new Error("No wallet address found");
             if (!walletSignature) throw new Error("No wallet signature found");
@@ -260,7 +261,11 @@ export const TransactionsProvider = ({ children }) => {
                 campaign.address, 
                 seed,
                 walletAddress, // public key
-                walletSignature // verify the sender
+                {
+                    r: walletSignature.r,
+                    s: walletSignature.s,
+                    v: walletSignature.v
+                }
             ).send({ 
                 from: wallet.address, 
                 value: web3.utils.toWei(String(target), 'ether')

@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
 const { web3, WEB3_MANAGER_PRIVATE_KEY, WEB3_MANAGER_ACCOUNT } = require("../config/web3");
 const { recoverAddress, getBytes, hashMessage } =  require("ethers");
+const User = require("../models/User");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -55,23 +56,24 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	if (draft) {
 		// Generate a seed for the campaign
 		const seed = web3.utils.randomHex(32);
+		const seedHash = web3.utils.keccak256(seed);
 	
 		// sign seed with account manager signature
-		const signResult = await web3.eth.accounts.sign(web3.utils.keccak256(seed), WEB3_MANAGER_PRIVATE_KEY);
-		console.log(signResult);
+		const signResult = await web3.eth.accounts.sign(seedHash, WEB3_MANAGER_PRIVATE_KEY);
 
 		// saving seed in session
 		req.session.seed = seed;
 
 		// const seedHash = web3.utils.keccak256("\\x19Ethereum Signed Message:\n" + seed.length + seed);
-		const seedHash = web3.utils.keccak256(seed);
 
-		return res.status(200).json({ message: "Validation passed", seedHash: seedHash, signature: {
+		res.status(200).json({ message: "Validation passed", seedHash: seedHash, signature: {
 				"r": signResult.r,
 				"s": signResult.s,
 				"v": signResult.v
 			}
 		});	
+
+		return;
 	}
 
 	const seed = req.session.seed;
@@ -91,9 +93,11 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	// Get current blockchain block number (used for to wait for CRR reveal method)
 	const blockNumber = Number(await web3.eth.getBlockNumber());
 
+	logged_user = await User.findOne({username: req.user}).exec();
+
 	// Create and store new campaign
 	const campaign = await Campaign.create({ 
-		target, title, image, description, deadline, donor, receiver, seed, blockNumber, campaignId: campaignAddress, createdBy: req.user._id
+		target, title, image, description, deadline, donor, receiver, seed, blockNumber, campaignId: campaignAddress, createdBy: logged_user
 	});
 
 	if (campaign) {
@@ -109,7 +113,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 // @access Private: donor
 const generateRandomWallet = asyncHandler(async (req, res) => {
 	campaign_id = req.params.id;
-	campaign = await Campaign.findOne(_id=campaign_id, ).exec();
+	campaign = await Campaign.findById(campaign_id).exec();
 
 	if (!campaign) {
 		return res.status(400).json({ message: "Campaign not found" });
@@ -118,7 +122,9 @@ const generateRandomWallet = asyncHandler(async (req, res) => {
 	if (!campaignAddress) {
 		return res.status(400).json({ message: "Campaign not associated to blockchain" });
 	}
-	if(campaign.createdBy != req.user._id) {
+
+	logged_user = await User.findOne({username: req.user}).exec();
+	if(!campaign.createdBy.equals(logged_user._id)) {
 		return res.status(400).json({ message: "User not authorized to generate wallet for this campaign" });
 	}
 
@@ -136,11 +142,7 @@ const generateRandomWallet = asyncHandler(async (req, res) => {
 	// Save the wallet in the session
 	req.session.wallet = wallet;
 
-	res.status(200).json({ address: wallet.address, campaign: campaign, signature: {
-		"r": signResult.r,
-		"s": signResult.s,
-		"v": signResult.v
-	}});
+	res.status(200).json({ address: wallet.address, campaign: campaign, signature: signResult });
 });
 
 // @desc Update a campaign
@@ -197,6 +199,7 @@ module.exports = {
 	getAllCampaigns,
 	getCampaign,
 	createNewCampaign,
+	generateRandomWallet,
 	updateCampaign,
 	deleteCampaign,
 };

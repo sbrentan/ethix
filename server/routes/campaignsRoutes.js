@@ -39,4 +39,11 @@ router
 		tokensController.generateTokens
 	);
 
+router
+	.route("/:id/wallet/random")
+	.post(
+		verifyRoles(ROLES_LIST.donor),
+		campaignsController.generateRandomWallet
+	);
+
 module.exports = router;

@@ -1,22 +1,29 @@
 const express = require('express')
 const app = express()
-const path = require('path')
-const { logger, logEvents } = require('./middleware/logger')
-const errorHandler = require('./middleware/errorHandler')
+
+const session = require('express-session');
 const cookieParser = require('cookie-parser')
+
+const path = require('path')
 const cors = require('cors')
 const corsOptions = require('./config/corsOptions')
+
+const { logger, logEvents } = require('./middleware/logger')
+const errorHandler = require('./middleware/errorHandler')
+
 const routes = require('./routes'); // Import the combined router from routes/index.js
-const session = require('express-session');
 
 app.use(logger)
+app.use(express.json());
+
 app.use(cors(corsOptions))
-app.use(express.json())
+
 app.use(cookieParser())
+
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: false
 }));
 
 app.use('/', express.static(path.join(__dirname, 'public')))
