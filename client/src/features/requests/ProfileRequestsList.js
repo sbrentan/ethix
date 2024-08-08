@@ -12,7 +12,7 @@ import {
 	Radio,
 	Modal,
 } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { ROLES } from "../../config/roles";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
@@ -22,9 +22,14 @@ import {
 } from "./requestsApiSlice";
 import BeneficiaryProfile from "../../components/BeneficiaryProfile";
 import DonorProfile from "../../components/DonorProfile";
+import Web3 from 'web3';
+import { CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS } from './../../utils/constants';
+import { TransactionContext } from ".//../../context/TransactionContext.js";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
+
+const { ethereum } = window;
 
 // for the warning: Each child in a list should have a unique "key" prop.
 const generateRowKey = (request) => {
@@ -33,6 +38,15 @@ const generateRowKey = (request) => {
 };
 
 const ProfileRequestsList = () => {
+
+	const {
+		wallet,
+		createCampaign,
+	} = useContext(TransactionContext);
+
+	const web3 = new Web3(ethereum);
+	const charityContract = new web3.eth.Contract(CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS);
+	
 	const [filteredProfileRequests, setFilteredProfileRequests] = useState([]);
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
@@ -107,10 +121,16 @@ const ProfileRequestsList = () => {
 		} // eslint-disable-next-line
 	}, [updateIsSuccess, updateIsError, updateError]);
 
-	const onFinish = async (state, id) => {
-        await updateProfilerequest({ id, state})
-        setSelectedProfileRequest(null)
-        setShowViewModal(false)
+	const onFinish = async (state, address, id) => {
+		
+		if (!ethereum) return alert("Please install MetaMask.");
+
+		console.log(normalizedProfilerequests)
+		await charityContract.methods.verifyOrganization(address).send({ from: wallet.address });		//check on blockchain if the organization is verified
+
+		await updateProfilerequest({ id, state}) //update the request
+		setSelectedProfileRequest(null)
+		setShowViewModal(false)
     };
 
 	// Columns of the Table
@@ -262,13 +282,13 @@ const ProfileRequestsList = () => {
 						}}
 					>
 						<Space direction="horizontal">
-							<Button danger type="primary" onClick={() => onFinish("rejected", selectedProfileRequest.id)}>
+							<Button danger type="primary" onClick={() => onFinish("rejected",selectedProfileRequest.address, selectedProfileRequest.id)}>
 								Reject
 							</Button>
 							<Button
 								type="primary"
 								style={{ background: "#74B72E" }}
-								onClick={() => onFinish("accepted", selectedProfileRequest.id)}
+								onClick={() => onFinish("accepted",selectedProfileRequest.address, selectedProfileRequest.id)}
 							>
 								Accept
 							</Button>
