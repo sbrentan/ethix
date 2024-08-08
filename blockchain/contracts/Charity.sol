@@ -182,7 +182,7 @@ contract Charity {
         // verify the signature, checking if the owner started the campaign
         require(
             _signatureVerified(
-                keccak256(abi.encodePacked(_seed, _campaignId)),
+                keccak256(abi.encodePacked(_campaignWallet, _campaignId)),
                 _signature,
                 owner
             ),

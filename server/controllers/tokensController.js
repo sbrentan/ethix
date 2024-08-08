@@ -79,7 +79,7 @@ const generateTokens = asyncHandler(async (req, res) => {
 
         // Create the signature for the tokens
         const tokenSignatures = t2_tokens.map(token => {
-            return web3.eth.accounts.sign(web3.utils.keccak256(token + campaignAddress), wallet.privateKey);
+            return web3.eth.accounts.sign(_encodePacked(web3.utils.toHex(token), campaignAddress), wallet.privateKey);
         });
 
         res.json({ signed_tokens: t1_tokens.map((token, i) => {

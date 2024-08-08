@@ -137,7 +137,8 @@ const generateRandomWallet = asyncHandler(async (req, res) => {
 	const wallet = web3.eth.accounts.create();
 
 	// Sign the public key of the wallet with the manager's private key
-	const signResult = await web3.eth.accounts.sign(web3.utils.keccak256(wallet.address + campaignAddress), WEB3_MANAGER_PRIVATE_KEY);
+	combinedHash = _encodePacked(wallet.address, campaignAddress);
+	const signResult = await web3.eth.accounts.sign(combinedHash, WEB3_MANAGER_PRIVATE_KEY);
 
 	// Save the wallet in the session
 	req.session.wallet = wallet;
@@ -194,6 +195,14 @@ const deleteCampaign = asyncHandler(async (req, res) => {
 
 	res.json({ message: "Campaign removed" });
 });
+
+// this is needed if you want to sign a message combined from two hex variables
+function _encodePacked(walletAddress, campaignAddress) {
+    // Remove '0x' prefix and concatenate
+    const concatenated = walletAddress.substring(2) + campaignAddress.substring(2);
+    // Re-add '0x' and hash the packed data
+    return web3.utils.keccak256("0x" + concatenated);
+}
 
 module.exports = {
 	getAllCampaigns,
