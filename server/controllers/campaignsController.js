@@ -1,8 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
-const Token = require("../models/Token");
-const crypto = require('crypto');
-const { web3, WEB3_MANAGER_PRIVATE_KEY } = require("../config/web3");
+const { web3, WEB3_MANAGER_PRIVATE_KEY, WEB3_MANAGER_ACCOUNT } = require("../config/web3");
+const { recoverAddress, getBytes, hashMessage } =  require("ethers");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -58,18 +57,21 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 		const seed = web3.utils.randomHex(32);
 	
 		// sign seed with account manager signature
-		const signResult = await web3.eth.accounts.sign(seed, WEB3_MANAGER_PRIVATE_KEY);
+		const signResult = await web3.eth.accounts.sign(web3.utils.keccak256(seed), WEB3_MANAGER_PRIVATE_KEY);
+		console.log(signResult);
 
 		// saving seed in session
 		req.session.seed = seed;
 
-		res.status(200).json({ message: "Validation passed", seedHash: web3.utils.keccak256(seed), signature: {
+		// const seedHash = web3.utils.keccak256("\\x19Ethereum Signed Message:\n" + seed.length + seed);
+		const seedHash = web3.utils.keccak256(seed);
+
+		return res.status(200).json({ message: "Validation passed", seedHash: seedHash, signature: {
 				"r": signResult.r,
 				"s": signResult.s,
 				"v": signResult.v
 			}
-		});
-		return;
+		});	
 	}
 
 	const seed = req.session.seed;
@@ -195,7 +197,6 @@ module.exports = {
 	getAllCampaigns,
 	getCampaign,
 	createNewCampaign,
-	associateCampaignToBlockchain,
 	updateCampaign,
 	deleteCampaign,
 };

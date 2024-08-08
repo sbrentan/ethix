@@ -173,7 +173,7 @@ export const TransactionsProvider = ({ children }) => {
             if (!target) throw new Error("Target is required");
             if (!beneficiary) throw new Error("Beneficiary is required");
 
-            const response = await initCampaign({
+            const draft_response = await initCampaign({
                 target: target,
                 title: title,
                 description: description, // optional
@@ -184,48 +184,52 @@ export const TransactionsProvider = ({ children }) => {
                 draft: true
             })
 
-            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+            if (draft_response?.error?.data?.message) throw new Error(draft_response?.error?.data?.message);
 
-            const _id = response?.data?.campaignId;
-            const _seedHash = response?.data?.seedHash;
-            const _signature = response?.data?.signature;
+            const _seedHash = draft_response?.data?.seedHash;
+            const _signature = draft_response?.data?.signature;
 
-            if (_id) {
-                const campaign = await charityContract.methods.createCampaign(
-                    title,
-                    Math.floor(startdate / 1000),
-                    Math.floor(deadline / 1000),
-                    tokens,
-                    beneficiary,
-                    _seedHash,
-                    _signature
-                ).send({ from: wallet.address });
+            console.log(_seedHash);
+            console.log(_signature);
 
-                const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
-                setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
-                console.log(campaignAddress);
+            if (!_seedHash) throw new Error("No seed hash found");
+            if (!_signature) throw new Error("No signature found");
 
-                const response = await initCampaign({
-                    target: target,
-                    title: title,
-                    description: description,
-                    image: image,
-                    deadline: deadline,
-                    donor: donor,
-                    receiver: receiver,
-                    seedHash: _seedHash,
-                    campaignAddress: campaignAddress,
-                    draft: false
-                })
+            const campaign = await charityContract.methods.createCampaign(
+                title,
+                Math.floor(startdate / 1000),
+                Math.floor(deadline / 1000),
+                tokens,
+                beneficiary,
+                _seedHash,
+                _signature.r,
+                _signature.s,
+                _signature.v
+            ).send({ from: wallet.address });
 
-                const campaignId = response?.data?.campaignId;
+            const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
+            setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
+            console.log(campaignAddress);
 
-                if (!campaignId) throw new Error("No campaign id found");
+            const response = await initCampaign({
+                target: target,
+                title: title,
+                description: description,
+                image: image,
+                deadline: deadline,
+                donor: donor,
+                receiver: receiver,
+                seedHash: _seedHash,
+                campaignAddress: campaignAddress,
+                draft: false
+            })
 
-                setCampaign((prevState) => ({ ...prevState, id: campaignId, is_created: true }));
-                console.log(campaignId);
+            const campaignId = response?.data?.campaignId;
 
-            } else throw new Error("No campaign id found");
+            if (!campaignId) throw new Error("No campaign id found");
+
+            setCampaign((prevState) => ({ ...prevState, id: campaignId, is_created: true }));
+            console.log(campaignId);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -423,7 +427,7 @@ export const TransactionsProvider = ({ children }) => {
         checkMinedBlock();
 
         // Subscriptions to contract events
-
+        
         const organizationVerifiedSubscription = charityContract.events.OrganizationVerified();
         const organizationRevokedSubscription = charityContract.events.OrganizationRevoked();
         const campaignCreatedSubscription = charityContract.events.CampaignCreated();
@@ -487,7 +491,6 @@ export const TransactionsProvider = ({ children }) => {
             setCampaign,
             createCampaign,
             startCampaign,
-            associateCampaigns,
             getCampaign,
             getCampaignsIds,
             getCampaignTokens,

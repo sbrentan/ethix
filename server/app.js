@@ -7,11 +7,17 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors')
 const corsOptions = require('./config/corsOptions')
 const routes = require('./routes'); // Import the combined router from routes/index.js
+const session = require('express-session');
 
 app.use(logger)
 app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+}));
 
 app.use('/', express.static(path.join(__dirname, 'public')))
 app.use('/', routes); // Use the combined router from routes/index.js

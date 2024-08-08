@@ -25,7 +25,7 @@ const retrieveBlockchainError = (error) => {
 
 
 // @desc Generate all tokens for a campaign
-// @route POST /campaing/:id/tokens
+// @route POST /campaign/:id/tokens
 // @access Donor
 const generateTokens = asyncHandler(async (req, res) => {
     const campaignId = req.params.id;
@@ -193,4 +193,5 @@ const checkTokenHash = async (campaignId, tokenId, campaignAddress) => {
 
 module.exports = {
     redeemToken,
+    generateTokens
 };

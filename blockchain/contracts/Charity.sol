@@ -105,7 +105,9 @@ contract Charity {
         uint256 _tokensCount,
         address _beneficiary,
         bytes32 _commitHash, // is the hash of the seed
-        Campaign.Signature calldata _signature
+        bytes32 r,
+        bytes32 s,
+        uint8 v
     ) external onlyVerifiedBeneficiary(_beneficiary) {
         // generate a unique ID for the campaign
         bytes32 campaignId = _generateCampaignId(
@@ -128,7 +130,7 @@ contract Charity {
         );
 
         // verify the signature, checking if the owner generated the seed
-        require(ecrecover(_commitHash, _signature.v, _signature.r, _signature.s) == owner, "Invalid signature");
+        require(_signatureVerified(_commitHash, r, s, v, owner), "Invalid signature");
 
         // save the commit hash and the block number for future CRR `reveal` verification
         commits[campaignId] = Commit(_commitHash, block.number);
@@ -154,7 +156,9 @@ contract Charity {
         bytes32 _campaignId,
         bytes32 _seed,
         address _campaignWallet,
-        Campaign.Signature calldata _signature
+        bytes32 r,
+        bytes32 s,
+        uint8 v
     ) external payable onlyExistingCampaign(_campaignId) {
         Campaign campaign = campaigns[_campaignId];
 
@@ -178,7 +182,7 @@ contract Charity {
         );
 
         // verify the signature, checking if the owner started the campaign
-        require(ecrecover(keccak256(abi.encodePacked(_seed, _campaignId)), _signature.v, _signature.r, _signature.s) == owner, "Invalid signature");
+        require(_signatureVerified(keccak256(abi.encodePacked(_seed, _campaignId)), r, s, v, owner), "Invalid signature");
 
         // generate the seed
         bytes32 randomSeed = keccak256(
@@ -299,5 +303,16 @@ contract Charity {
     // generate token hash for a single token
     function _generateTokenHash(bytes32 _campaignId, bytes32 _tokenId) private view returns (bytes32) {
         return campaigns[_campaignId].generateTokenHash(_tokenId);
+    }
+
+    function _signatureVerified(
+        bytes32 _commitHash,
+        bytes32 r,
+        bytes32 s,
+        uint8 v,
+        address sender
+    ) private pure returns(bool) {
+        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _commitHash));
+        return ecrecover(prefixedHash, v, r, s) == sender;
     }
 }
