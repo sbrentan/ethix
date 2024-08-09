@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const TokenSchema = new mongoose.Schema(
+const TokenSaltSchema = new mongoose.Schema(
 	{
         campaignId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -11,15 +11,18 @@ const TokenSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        salt: {
+            type: String,
+            required: true,
+        },
         redeemed: {
             type: Boolean,
-            required: true,
-            default: false
-        }
+            default: false,
+        },
 	},
     {
 		timestamps: true,
 	}
 );
 
-module.exports = mongoose.model("Token", TokenSchema);
+module.exports = mongoose.model("TokenSalt", TokenSaltSchema);

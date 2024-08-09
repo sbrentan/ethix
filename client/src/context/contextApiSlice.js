@@ -12,26 +12,23 @@ export const api = apiSlice.injectEndpoints({
                 body: { ...params }
             })
         }),
-        associateCampaigns: builder.mutation({
+        generateRandomWallet: builder.mutation({
             query: params => ({
-                url: `/campaigns/${params?.campaignId}/associate`,
-                method: 'POST',
-                body: {
-                    campaignId: params?.campaignAddress,
-                    tokenDonation: params?.tokenPrice,
-                    tokens: params?.tokens
-                }
+                url: `/campaigns/${params?.campaignId}/wallet/random`,
+                method: 'POST'
+            })
+        }),
+        generateCampaignTokens: builder.mutation({
+            query: params => ({
+                url: `/campaigns/${params?.campaignId}/tokens`,
+                method: 'POST'
             })
         }),
         redeemToken: builder.mutation({
             query: params => ({
                 url: '/tokens/redeem',
                 method: 'POST',
-                body: { 
-                    campaignId: params?.campaignId, 
-                    campaignAddress: params?.campaignAddress, 
-                    tokenId: params?.tokenId 
-                }
+                body: { ...params }
             })
         })
     })
@@ -40,6 +37,7 @@ export const api = apiSlice.injectEndpoints({
 export const {
     useGetCampaignMutation,
     useCreateCampaignMutation,
-    useAssociateCampaignsMutation,
+    useGenerateRandomWalletMutation,
+    useGenerateCampaignTokensMutation,
     useRedeemTokenMutation
 } = api;
