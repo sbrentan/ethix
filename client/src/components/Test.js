@@ -103,7 +103,7 @@ const Test = () => {
           <p>Current token: {tokenId}</p>
           <p>Current token: {tokenSignature}</p>
 
-          <button type="button" onClick={() => redeemToken(campaign.id, campaign.address, tokenId, tokenSignature)}>Reedem</button>
+          <button type="button" onClick={() => redeemToken(campaign.id, tokenId, tokenSignature)}>Redeem</button>
 
           <br /><hr /><br />
 
