@@ -221,13 +221,6 @@ contract Charity {
         return campaigns[_campaignId].getDetails();
     }
 
-    // returns the tokens of an active campaign given the campaignId
-    function getCampaignTokens(
-        bytes32 _campaignId
-    ) external view onlyExistingCampaign(_campaignId) returns (bytes32) {
-        return campaigns[_campaignId].getTokens(msg.sender);
-    }
-
     // claim a refund for an ended campaign
     function claimRefund(
         bytes32 _campaignId
@@ -324,6 +317,12 @@ contract Charity {
         bytes32 _prefixedHash = keccak256(
             abi.encodePacked("\x19Ethereum Signed Message:\n32", _commitHash)
         );
-        return ecrecover(_prefixedHash, _signature.v, _signature.r, _signature.s) == _sender;
+        return
+            ecrecover(
+                _prefixedHash,
+                _signature.v,
+                _signature.r,
+                _signature.s
+            ) == _sender;
     }
 }

@@ -24,15 +24,10 @@ contract Campaign {
         uint256 deadline; //timestamp format
         address payable donor;
         address payable beneficiary;
+        uint256 tokensCount;
         uint256 initialDeposit; // initial deposit for the campaign
         uint256 refunds;
         uint256 donations;
-        uint256 tokensCount;
-        // TODO: move below
-        bool refundClaimed;
-        bool donationClaimed;
-        bool funded;
-        bool suspended; // TODO: add a flag to suspend the campaign
     }
 
     // ====================================== VARIABLES ======================================
@@ -41,6 +36,11 @@ contract Campaign {
 
     // is the public wallet address used to verify the authenticity of the tokens generated
     address private walletAddress;
+
+    bool private refundClaimed;
+    bool private donationClaimed;
+    bool private funded;
+    bool private suspended; // TODO: add a flag to suspend the campaign
 
     // seed used to generate the tokens
     bytes32 private seed;
@@ -52,6 +52,7 @@ contract Campaign {
     TokenBlock private tokenBlock;
 
     // keep track of all tokens redeeming status (redeemed or not)
+    uint256 public redeemedTokensCount;
     mapping(bytes32 => bool) private tokens;
 
     // keep track of the gas fees
@@ -83,7 +84,7 @@ contract Campaign {
     }
 
     modifier onlyFundedCampaign() {
-        require(campaignDetails.funded, "Campaign has not been funded yet");
+        require(funded, "Campaign has not been funded yet");
         _;
     }
 
@@ -108,12 +109,12 @@ contract Campaign {
     }
 
     modifier onlyNotRefunded() {
-        require(!campaignDetails.refundClaimed, "Refunds already claimed");
+        require(!refundClaimed, "Refunds already claimed");
         _;
     }
 
     modifier onlyNotDonated() {
-        require(!campaignDetails.donationClaimed, "Donations already claimed");
+        require(!donationClaimed, "Donations already claimed");
         _;
     }
 
@@ -146,10 +147,7 @@ contract Campaign {
         address _from
     ) external payable onlyOwner onlyDonor(_from) {
         // require the campaign is not already funded
-        require(
-            campaignDetails.funded == false,
-            "Campaign has already been funded"
-        );
+        require(!funded, "Campaign has already been funded");
 
         /*uint256 redeemTransactionCost = REDEEM_TOKEN_GAS_COST * REDEEM_TOKEN_COST_MULTIPLIER * tx.gasprice;
         gasFeesStorage = redeemTransactionCost * campaignDetails.tokensCount;
@@ -172,7 +170,7 @@ contract Campaign {
         tokenBlock.blockTimestamp = block.timestamp;
 
         // set the campaign as funded
-        campaignDetails.funded = true;
+        funded = true;
     }
 
     function setWalletAddress(address _walletAddress) external onlyOwner {
@@ -180,41 +178,7 @@ contract Campaign {
     }
 
     function getDetails() external view returns (CampaignDetails memory) {
-        CampaignDetails memory _campaignDetails = campaignDetails;
-
-        // filter out sensitive control booleans
-        delete _campaignDetails.funded;
-        delete _campaignDetails.refundClaimed;
-        delete _campaignDetails.donationClaimed;
-        delete _campaignDetails.suspended;
-
-        return _campaignDetails;
-    }
-
-    // get the tokens of a campaign
-    function getTokens(
-        address _from
-    )
-        external
-        view
-        onlyOwner
-        onlyDonor(_from)
-        onlyFundedCampaign
-        returns (bytes32)
-    {
-        /*bytes32[] memory _tokens = new bytes32[](campaignDetails.tokensCount);
-
-        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            _tokens[i] = _generateTokenId(campaignDetails.campaignId, i);
-        }
-
-        return _tokens;*/
-
-        return
-            _generateTokenId(
-                campaignDetails.campaignId,
-                campaignDetails.tokensCount - 1
-            );
+        return campaignDetails;
     }
 
     // allow the donor to claim the refund
@@ -228,27 +192,22 @@ contract Campaign {
         onlyNotRefunded
         onlyFundedCampaign
     {
-        uint256 _refunds = 0;
-        bytes32 _tokenId;
-
         uint256 _tokenValue = campaignDetails.initialDeposit /
             campaignDetails.tokensCount;
         uint256 _lastTokenValue = (campaignDetails.initialDeposit %
             campaignDetails.tokensCount) + _tokenValue;
 
-        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            _tokenId = _generateTokenId(campaignDetails.campaignId, i);
-            if (!tokens[_tokenId]) {
-                _refunds += (i == campaignDetails.tokensCount - 1)
-                    ? _lastTokenValue
-                    : _tokenValue;
-            }
-        }
+        uint256 _refunds = 0;
+        if (redeemedTokensCount < campaignDetails.tokensCount)
+            _refunds =
+                _lastTokenValue +
+                (_tokenValue *
+                    ((campaignDetails.tokensCount - 1) - redeemedTokensCount));
 
         // transfer the refunds to the donor
         campaignDetails.refunds = _refunds;
         campaignDetails.donor.transfer(_refunds);
-        campaignDetails.refundClaimed = true;
+        refundClaimed = true;
     }
 
     // allow the beneficiary to claim the donation
@@ -262,40 +221,17 @@ contract Campaign {
         onlyNotDonated
         onlyFundedCampaign
     {
-        uint256 _donations = 0;
-        bytes32 _tokenId;
-
         uint256 _tokenValue = campaignDetails.initialDeposit /
             campaignDetails.tokensCount;
-        uint256 _lastTokenValue = (campaignDetails.initialDeposit %
-            campaignDetails.tokensCount) + _tokenValue;
 
-        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            _tokenId = _generateTokenId(campaignDetails.campaignId, i);
-            if (tokens[_tokenId]) {
-                _donations += (i == campaignDetails.tokensCount - 1)
-                    ? _lastTokenValue
-                    : _tokenValue;
-            }
-        }
+        uint256 _donations = campaignDetails.initialDeposit;
+        if (redeemedTokensCount < campaignDetails.tokensCount)
+            _donations = _tokenValue * redeemedTokensCount;
 
         // transfer the balance to the beneficiary
         campaignDetails.donations = _donations;
         campaignDetails.beneficiary.transfer(_donations);
-        campaignDetails.donationClaimed = true;
-    }
-
-    // get the number of tokens redeemed
-    function getRedeemedTokensCount() external view returns (uint256) {
-        uint256 _redeemedTokens = 0;
-        bytes32 _tokenId;
-
-        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            _tokenId = _generateTokenId(campaignDetails.campaignId, i);
-            if (tokens[_tokenId]) _redeemedTokens++;
-        }
-
-        return _redeemedTokens;
+        donationClaimed = true;
     }
 
     // allow users to reedem the tokens they bought
@@ -307,6 +243,7 @@ contract Campaign {
 
         // redeem the token
         tokens[t2_token] = true;
+        redeemedTokensCount += 1;
     }
 
     // check if a token is valid
@@ -328,7 +265,7 @@ contract Campaign {
         }
 
         // check if the campaign is funded
-        if (!campaignDetails.funded) {
+        if (!funded) {
             return false;
         }
 
@@ -393,6 +330,12 @@ contract Campaign {
         bytes32 _prefixedHash = keccak256(
             abi.encodePacked("\x19Ethereum Signed Message:\n32", _commitHash)
         );
-        return ecrecover(_prefixedHash, _signature.v, _signature.r, _signature.s) == _sender;
+        return
+            ecrecover(
+                _prefixedHash,
+                _signature.v,
+                _signature.r,
+                _signature.s
+            ) == _sender;
     }
 }
