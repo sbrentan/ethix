@@ -130,10 +130,10 @@ const DashboardOrganization = ({ role }) => {
 			ellipsis: true,
 		},
 		{
-			title: "Creation Date",
-			dataIndex: "createdAt",
-			key: "createdAt",
-			render: (createdAt) => format(new Date(createdAt), "dd/MM/yyyy"),
+			title: "Starting Date",
+			dataIndex: "startingDate",
+			key: "startingDate",
+			render: (startingDate) => format(new Date(startingDate), "dd/MM/yyyy"),
 		},
 		{
 			title: "Deadline",
@@ -163,7 +163,7 @@ const DashboardOrganization = ({ role }) => {
 									setShowGenerateTokensModal(true);
 								}}
 							>
-								Generate Tokens
+								Start
 							</Button>
 						)}
 					</Space>
@@ -192,10 +192,10 @@ const DashboardOrganization = ({ role }) => {
 			ellipsis: true,
 		},
 		{
-			title: "Creation Date",
-			dataIndex: "createdAt",
-			key: "createdAt",
-			render: (createdAt) => format(new Date(createdAt), "dd/MM/yyyy"),
+			title: "Starting Date",
+			dataIndex: "startingDate",
+			key: "startingDate",
+			render: (startingDate) => format(new Date(startingDate), "dd/MM/yyyy"),
 		},
 		{
 			title: "Deadline",
@@ -344,13 +344,13 @@ const DashboardOrganization = ({ role }) => {
 					</Row>
 					<Row>
 						<Col span={12}>
-							<Text strong>Creation Date:</Text>
+							<Text strong>Starting Date:</Text>
 						</Col>
 						<Col span={12}>
 							<Text>
 								{format(
-									new Date(selectedCampaign.createdAt),
-									"dd/MM/yyyy"
+									new Date(selectedCampaign.startingDate),
+									"dd/MM/yyyy HH:mm"
 								)}
 							</Text>
 						</Col>
@@ -363,7 +363,7 @@ const DashboardOrganization = ({ role }) => {
 							<Text>
 								{format(
 									new Date(selectedCampaign.deadline),
-									"dd/MM/yyyy"
+									"dd/MM/yyyy HH:mm"
 								)}
 							</Text>
 						</Col>
@@ -377,6 +377,7 @@ const DashboardOrganization = ({ role }) => {
 					setSelectedCampaign={setSelectedCampaign}
 					showModal={showClaimModal}
 					setShowModal={setShowClaimModal}
+                    messageApi={messageApi}
 				/>
 			)}
 			{showGenerateTokensModal && selectedCampaign && (
@@ -385,6 +386,7 @@ const DashboardOrganization = ({ role }) => {
 					setSelectedCampaign={setSelectedCampaign}
 					showModal={showGenerateTokensModal}
 					setShowModal={setShowGenerateTokensModal}
+                    messageApi={messageApi}
 				/>
 			)}
 		</div>

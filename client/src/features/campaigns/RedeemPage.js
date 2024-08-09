@@ -43,16 +43,11 @@ const RedeemPage = () => {
 				if (!decoded) {	// || !decoded.exp || Date.now() > (decoded.exp * 1000)) {
 					setInvalidToken(true);
 				} else {
-					const { campaignId, campaignAddress, tokenId } = decoded;
-                    console.log({
-                    	campaignId,
-                    	campaignAddress,
-                    	tokenId,
-                    })
+					const { campaignId, tokenId, signature } = decoded;
                     redeemToken({
                     	campaignId,
-                    	campaignAddress,
-                    	tokenId,
+                    	token: tokenId,
+                    	signature: signature
                     });
 					setCampaignId(campaignId);
 				}

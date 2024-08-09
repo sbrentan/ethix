@@ -16,7 +16,10 @@ export const campaignsApiSlice = apiSlice.injectEndpoints({
                 url: '/campaigns',
                 method: 'POST',
                 body: { ...createCampaign }
-            })
+            }),
+            invalidatesTags: (result, error, arg) => [
+                { type: 'Campaign', id: 'LIST' }
+            ]
         }),
         getCampaigns: builder.query({
             query: () => ({

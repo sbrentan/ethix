@@ -4,6 +4,7 @@ const TokenSalt = require("../models/TokenSalt");
 const Campaign = require("../models/Campaign");
 const crypto = require('crypto');
 const ethUtil = require('ethereumjs-util');
+const jwt = require('jsonwebtoken')
 
 const retrieveBlockchainError = (error) => {
     try{
@@ -97,7 +98,24 @@ const generateTokens = asyncHandler(async (req, res) => {
         });
         console.log('signed_tokens', signed_tokens);
 
-        res.json({ signedTokens: signed_tokens });
+        const expirationTime = Math.floor(campaign.deadline.getTime() / 1000);
+        const secretKey = process.env.REFRESH_TOKEN_SECRET + "";
+        const jwt_tokens = signed_tokens.map((token) => {
+            return {
+                token: jwt.sign({
+                        campaignId: campaignId,
+                        campaignAddress: campaignAddress,
+                        tokenId: token.token,
+                        signature: token.signature,
+                    },
+                    secretKey,
+                    { expiresIn: expirationTime
+                })
+            }
+        })
+        console.log(jwt_tokens)
+
+        res.json({ signedTokens: jwt_tokens });
         
     } catch (error) {
         console.log('Error generating tokens:', error);
@@ -140,9 +158,7 @@ const redeemToken = asyncHandler(async (req, res) => {
     } catch (error) {
         console.log('salt not present on db');
         console.log('Error redeeming token:', error);
-        res.json({ message: "Error redeeming token: " + error.message });
-        res.status(400);
-        return;
+        return res.status(400).json({ message: "Error redeeming token: " + error.message });
     }
     console.log("tokenSalt", tokenSalt);
 
@@ -155,9 +171,7 @@ const redeemToken = asyncHandler(async (req, res) => {
         const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).call({ from: WEB3_MANAGER_ACCOUNT.address });
         console.log("isTokenValid", isTokenValid);
         if (!isTokenValid) {
-            res.json({ message: "Token not valid" });
-            res.status(400);
-            return;
+            return res.status(400).json({ message: "Token not valid" });
         }
         
         // Redeem the token

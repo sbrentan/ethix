@@ -20,12 +20,10 @@ const ClaimModal = ({
 	setSelectedCampaign,
 	showModal,
 	setShowModal,
+    messageApi
 }) => {
 	const [campaignBlock, setCampaignBlock] = useState(null);
 	const { ethPrice, loading, errorEth } = useEthPrice("eur");
-
-	// for antd message
-	const [messageApi, contextHolder] = message.useMessage();
 
 	//  ------ THIS BLOCK CAN BE REMOVED IF THE DATA OF THE CAMPAIGN FROM THE DB ARE INTEGRATED WITH THE DATA FROM BLOCKCAHIN ----//
 	// ------- you will still need to swap all campaignBlock with campaign in the return to display the data ---------------------//
@@ -64,7 +62,7 @@ const ClaimModal = ({
 			if (!campaign || !campaign.campaignId)
 				throw new Error("Missing required data");
 			const amountClaimed = await claimRefund(campaign.campaignId);
-			if (!amountClaimed || amountClaimed <= 0) {
+			if (!amountClaimed || amountClaimed === 0) {
 				messageApi.open({
 					key: "error",
 					type: "error",
@@ -75,9 +73,11 @@ const ClaimModal = ({
 				messageApi.open({
 					key: "success",
 					type: "success",
-					content: `Refund has been successfully claimed: ${amountClaimed}`,
+					content: `Refund has been successfully claimed: ${amountClaimed.toString()}`,
 					duration: 5,
 				});
+				setShowModal(false);
+				setSelectedCampaign(null);
 			}
 		} catch (error) {
 			let errorMessage = error.data
@@ -97,7 +97,7 @@ const ClaimModal = ({
 			if (!campaign || !campaign.campaignId)
 				throw new Error("Missing required data");
 			const amountClaimed = await claimDonation(campaign.campaignId);
-			if (!amountClaimed || amountClaimed <= 0) {
+			if (!amountClaimed || amountClaimed === 0) {
 				messageApi.open({
 					key: "error",
 					type: "error",
@@ -108,9 +108,11 @@ const ClaimModal = ({
 				messageApi.open({
 					key: "success",
 					type: "success",
-					content: `Donation has been successfully claimed: ${amountClaimed}`,
+					content: `Donation has been successfully claimed: ${amountClaimed.toString()}`,
 					duration: 5,
 				});
+				setShowModal(false);
+				setSelectedCampaign(null);
 			}
 		} catch (error) {
 			let errorMessage = error.data
@@ -207,7 +209,7 @@ const ClaimModal = ({
 							<Text>{campaignBlock.tokensCount.toString()}</Text>
 						</Col>
 					</Row>
-					<br />
+					{/* <br />
 					<Row>
 						<Col span={12}>
 							<Text strong>Number of Donations:</Text>
@@ -233,17 +235,18 @@ const ClaimModal = ({
 									: "Calculating Exchange Rate"}
 							</Text>
 						</Col>
-					</Row>
+					</Row> */}
 					{role === "Donor" && (
 						<>
 							<br />
-							<Row>
+							{/* <Row>
 								<Col span={12}>
 									<Text strong>Codes Not Redeemd:</Text>
 								</Col>
 								<Col span={12}>
 									<Text>
-										{campaignBlock.refunds.toString()}
+										{Number(campaignBlock.tokensCount) -
+											Number(campaignBlock.donations)}
 									</Text>
 								</Col>
 							</Row>
@@ -260,14 +263,13 @@ const ClaimModal = ({
 														Number(
 															campaignBlock.tokensCount
 														)) *
-													Number(
-														campaignBlock.refunds
-													)
+                                                        Number(campaignBlock.tokensCount) -
+                                                        Number(campaignBlock.donations)
 											  ).toFixed(2)
 											: "Calculating Exchange Rate"}
 									</Text>
 								</Col>
-							</Row>
+							</Row> */}
 						</>
 					)}
 					<div
@@ -283,46 +285,46 @@ const ClaimModal = ({
 								<Button
 									type="primary"
 									size="large"
-									disabled={
-										campaignBlock.refundClaimed ||
-										campaignBlock.refunds.toString() === "0"
-									}
+									// disabled={
+									// 	campaignBlock.refundClaimed ||
+									// 	campaignBlock.donations === campaignBlock.tokensCount
+									// }
 									onClick={() => onClickClaimRefund()}
 								>
 									Claim Refund
 								</Button>
-								{campaignBlock.refundClaimed && (
+								{/* {campaignBlock.refundClaimed && (
 									<Text type="danger">Already claimed</Text>
 								)}
-								{campaignBlock.refunds.toString() === "0" && (
+								{campaignBlock.donations === campaignBlock.tokensCount && (
 									<Text type="danger">
 										Unfortunately there is no refund
 										available
 									</Text>
-								)}
+								)} */}
 							</Space>
 						) : (
 							<Space direction="vertical">
 								<Button
 									type="primary"
 									size="large"
-									disabled={
-										campaignBlock.donationClaimed ||
-										campaignBlock.donations.toString() ===
-											"0"
-									}
+									// disabled={
+									// 	campaignBlock.donationClaimed ||
+									// 	campaignBlock.donations.toString() ===
+									// 		"0"
+									// }
 									onClick={() => onClickClaimDonation()}
 								>
 									Claim Dontations
 								</Button>
-								{campaignBlock.donationClaimed && (
+								{/* {campaignBlock.donationClaimed && (
 									<Text type="danger">Already claimed</Text>
 								)}
 								{campaignBlock.donations.toString() === "0" && (
 									<Text type="danger">
 										Unfortunately no donations has been made
 									</Text>
-								)}
+								)} */}
 							</Space>
 						)}
 					</div>
