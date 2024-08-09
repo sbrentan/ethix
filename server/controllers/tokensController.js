@@ -152,7 +152,7 @@ const redeemToken = asyncHandler(async (req, res) => {
     try {
         // TODO: batch these calls
         // Check if the token is valid on blockchain
-        const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).send({ from: WEB3_MANAGER_ACCOUNT.address });
+        const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).call({ from: WEB3_MANAGER_ACCOUNT.address });
         console.log("isTokenValid", isTokenValid);
         if (!isTokenValid) {
             res.json({ message: "Token not valid" });
