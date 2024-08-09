@@ -260,7 +260,7 @@ const ProfileRequestsList = () => {
 				columns={columns}
 				dataSource={tableSource}
 				rowKey={generateRowKey}
-				pagination={filteredProfileRequests.length < 100 ? false : true}
+				pagination={filteredProfileRequests.length < 20 ? false : true}
 			/>
 		);
 	}

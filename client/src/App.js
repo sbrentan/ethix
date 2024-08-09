@@ -25,6 +25,7 @@ import RedeemPage from "./features/campaigns/RedeemPage";
 import MyProfile from "./features/users/MyProfile.js";
 import PublicProfile from "./features/organizations/PublicProfile.js";
 import OrganizationsGrid from "./features/organizations/OrganizationsGrid.js";
+import DashboardOrganization from "./features/campaigns/DashboardOrganization.js";
 
 function App() {
     return (
@@ -91,7 +92,7 @@ function App() {
                                     <Route index element={<>Donor</>} />
                                     <Route
                                         path="dashboard"
-                                        element={<p>dashboard</p>}
+                                        element={<DashboardOrganization role="Donor" />}
                                     />
                                     <Route
                                         path="profile"
@@ -118,7 +119,7 @@ function App() {
                                     <Route index element={<>Beneficiary</>} />
                                     <Route
                                         path="dashboard"
-                                        element={<p>dashboard</p>}
+                                        element={<DashboardOrganization role="Beneficiary" />}
                                     />
                                     <Route
                                         path="beneficiaryCampaigns"

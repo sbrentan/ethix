@@ -154,7 +154,7 @@ const CampaignsList = () => {
 						setShowViewModal(true);
 					}}
 				>
-					View Request
+					View Campaign
 				</Button>
 			),
 		},
@@ -197,9 +197,9 @@ const CampaignsList = () => {
 			<Space direction="horizontal">
 				<Title>Campaigns</Title>
 			</Space>
-			<div>
+			<div style={{ margin: 20}}>
 				{/*	FILTERS SECTION */}
-				<Row>
+				<Row gutter={10}>
 					<Col span={5}>
 						<Input
 							name="titleFilter"
@@ -260,7 +260,7 @@ const CampaignsList = () => {
 								Active
 							</Option>
 							<Option value="false" key="expired">
-								Expired
+								Ended
 							</Option>
 						</Select>
 					</Col>
