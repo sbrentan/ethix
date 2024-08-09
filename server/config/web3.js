@@ -10,8 +10,8 @@ if (!process.env.WEB3_MANAGER_PRIVATE_KEY) {
     console.error('WEB3_MANAGER_PRIVATE_KEY not found in .env');
     process.exit(1);
 }
-const privateKey = process.env.WEB3_MANAGER_PRIVATE_KEY;
-const account = web3.eth.accounts.privateKeyToAccount(privateKey);
+const WEB3_MANAGER_PRIVATE_KEY = process.env.WEB3_MANAGER_PRIVATE_KEY;
+const account = web3.eth.accounts.privateKeyToAccount(WEB3_MANAGER_PRIVATE_KEY);
 web3.eth.accounts.wallet.add(account);
 web3.eth.defaultAccount = account.address;
 const WEB3_MANAGER_ACCOUNT = account;
@@ -37,9 +37,21 @@ const WEB3_CONTRACT = contract;
 const WEB3_CONTRACT_ADDRESS = contractAddress;
 
 
+
+// this is needed if you want to sign a message combined from two hex variables
+const encodePacked = function(walletAddress, campaignAddress) {
+    // Remove '0x' prefix and concatenate
+    const concatenated = walletAddress.substring(2) + campaignAddress.substring(2);
+    // Re-add '0x' and hash the packed data
+    return web3.utils.keccak256("0x" + concatenated);
+}
+
+
 module.exports = {
     web3,
+    encodePacked,
     WEB3_MANAGER_ACCOUNT,
     WEB3_CONTRACT,
-    WEB3_CONTRACT_ADDRESS
+    WEB3_CONTRACT_ADDRESS,
+    WEB3_MANAGER_PRIVATE_KEY
 };

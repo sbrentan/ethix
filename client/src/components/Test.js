@@ -38,6 +38,7 @@ const Test = () => {
 
   const [campaignsIds, setCampaignsIds] = useState([]);
   const [tokenId, setTokenId] = useState(null);
+  const [tokenSignature, setTokenSignature] = useState(null);
 
   return (
     <>
@@ -98,9 +99,11 @@ const Test = () => {
           <br /><hr /><br />
 
           <input placeholder="Token ID" type="text" onChange={(e) => setTokenId(e.target.value)} />
+          <input placeholder="Token Signature" type="text" onChange={(e) => setTokenSignature(e.target.value)} />
           <p>Current token: {tokenId}</p>
+          <p>Current token: {tokenSignature}</p>
 
-          <button type="button" onClick={() => redeemToken(campaign.id, campaign.address, tokenId)}>Reedem</button>
+          <button type="button" onClick={() => redeemToken(campaign.id, tokenId, tokenSignature)}>Redeem</button>
 
           <br /><hr /><br />
 

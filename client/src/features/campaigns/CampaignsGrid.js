@@ -62,7 +62,7 @@ const CampaignsGrid = () => {
 		let filteredResult = [];
 		if (isSuccess) {
 			const { ids, entities } = normalizedCampaigns;
-			filteredResult = ids.filter((campaignId, index) => {
+			filteredResult = ids.filter((campaignId) => {
 				const campaign = entities[campaignId];
 
 				const titleCondition =
@@ -79,7 +79,7 @@ const CampaignsGrid = () => {
 
 				// TODO: donor and receiver filter
 
-				return titleCondition && activeCondition && index < 10;
+				return titleCondition && activeCondition;
 			});
 		}
 		setFilteredCampaigns(filteredResult);

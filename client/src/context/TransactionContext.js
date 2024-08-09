@@ -4,7 +4,8 @@ import Web3 from 'web3';
 import {
     useGetCampaignMutation,
     useCreateCampaignMutation,
-    useAssociateCampaignsMutation,
+    useGenerateRandomWalletMutation,
+    useGenerateCampaignTokensMutation,
     useRedeemTokenMutation
 } from './contextApiSlice';
 
@@ -62,7 +63,8 @@ export const TransactionsProvider = ({ children }) => {
     // Move to specific components
     const [getCampaignDetails] = useGetCampaignMutation();
     const [initCampaign] = useCreateCampaignMutation();
-    const [handleAssociation] = useAssociateCampaignsMutation();
+    const [generateRandomWallet] = useGenerateRandomWalletMutation();
+    const [generateCampaignTokens] = useGenerateCampaignTokensMutation();
     const [claimToken] = useRedeemTokenMutation();
 
     /* ------------------------ FUNCTIONS ------------------------ */
@@ -172,58 +174,71 @@ export const TransactionsProvider = ({ children }) => {
             if (!targetEth) throw new Error("Target is required");
             if (!receiver) throw new Error("Beneficiary is required");
             if (!(await isOrganizationVerified(receiver))) throw new Error("Beneficiary is not validated");
-            if (!(await isOrganizationVerified(wallet.address))) throw new Error("Donor is not verified");
 
-            const seed = web3.utils.randomHex(32);
-
-            const response = await initCampaign({
+            const draft_response = await initCampaign({
                 target: targetEth,
                 title: title,
                 description: description, // optional
                 image: image, // optional
                 startingDate: startingDate,
                 deadline: deadline,
+                tokensCount: tokenAmount,
                 donor: donor,
                 receiver: receiverId,
-                seed: seed,
                 draft: true
             })
 
-            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+            if (draft_response?.error?.data?.message) throw new Error(draft_response?.error?.data?.message);
 
-            const _id = response?.data?.campaignId;
+            const _seedHash = draft_response?.data?.seedHash;
+            const _signature = draft_response?.data?.signature;
 
-            if (_id) {
-                const campaign = await charityContract.methods.createCampaign(
-                    title,
-                    Math.floor(startingDate / 1000),
-                    Math.floor(deadline / 1000),
-                    tokenAmount,
-                    receiver,
-                    web3.utils.keccak256(seed)
-                ).send({ from: wallet.address });
+            console.log(_seedHash);
+            console.log(_signature);
 
-                const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
-                setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
-                console.log(campaignAddress);
+            if (!_seedHash) throw new Error("No seed hash found");
+            if (!_signature) throw new Error("No signature found");
 
-                const response = await initCampaign({
-                    target: targetEth,
-                    title: title,
-                    description: description,
-                    image: image,
-                    startingDate: startingDate,
-                    deadline: deadline,
-                    donor: donor,
-                    receiver: receiverId,
-                    seed: seed,
-                    draft: false
-                })
+            const campaign = await charityContract.methods.createCampaign(
+                title,
+                Math.floor(startingDate / 1000),
+                Math.floor(deadline / 1000),
+                tokenAmount,
+                receiver,
+                _seedHash,
+                {
+                    r: _signature.r,
+                    s: _signature.s,
+                    v: _signature.v
+                }
+            ).send({ from: wallet.address });
 
-                const campaignId = response?.data?.campaignId;
-                setCampaign((prevState) => ({ ...prevState, id: campaignId, is_fundable:true, is_created: true }));
-if (campaignId) return true
-            } else throw new Error("No campaign id found");
+            const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
+            setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
+            console.log(campaignAddress);
+
+            const response = await initCampaign({
+                target: targetEth,
+                tokensCount: tokenAmount,
+                title: title,
+                description: description,
+                image: image,
+                startingDate: startingDate,
+                deadline: deadline,
+                donor: donor,
+                receiver: receiverId,
+                seedHash: _seedHash,
+                campaignAddress: campaignAddress,
+                draft: false
+            })
+
+            const campaignId = response?.data?.campaignId;
+
+            if (!campaignId) throw new Error("No campaign id found");
+
+            setCampaign((prevState) => ({ ...prevState, id: campaignId, is_created: true }));
+            console.log(campaignId);
+            if (campaignId) return true
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -235,54 +250,49 @@ if (campaignId) return true
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            // retrieve seed from db
-            const response = await getCampaignDetails({ campaignId: campaign.id });
+            const wallet_response = await generateRandomWallet({ campaignId: campaign.id });
 
-            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
+            if (wallet_response?.error?.data?.message) throw new Error(wallet_response?.error?.data?.message);
 
-            const target = response?.data?.target;
-            const seed = response?.data?.seed;
+            const walletAddress = wallet_response?.data?.address;
+            const walletSignature = wallet_response?.data?.signature;
+            const seed = wallet_response?.data?.campaign?.seed;
+            const target = wallet_response?.data?.campaign?.target;
 
+            if (!walletAddress) throw new Error("No wallet address found");
+            if (!walletSignature) throw new Error("No wallet signature found");
             if (!seed) throw new Error("No seed found");
             if (!target) throw new Error("No target found");
 
-            await charityContract.methods.startCampaign(campaign.address, seed).send({
-                from: wallet.address,
+            await charityContract.methods.startCampaign(
+                campaign.address, 
+                seed,
+                walletAddress, // public key
+                {
+                    r: walletSignature.r,
+                    s: walletSignature.s,
+                    v: walletSignature.v
+                }
+            ).send({ 
+                from: wallet.address, 
                 value: web3.utils.toWei(String(target), 'ether')
             });
+            
+            const token_response = await generateCampaignTokens({ campaignId: campaign.id });
 
-            associateCampaigns(campaign.id, campaign.address);
+            if (token_response?.error?.data?.message) throw new Error(token_response?.error?.data?.message);
+
+            const signed_tokens = token_response?.data?.signedTokens;
+
+            console.log(signed_tokens);
+
+            // TODO: create qr codes in some way
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
         }
     };
-
-    const associateCampaigns = async (campaignId, campaignAddress) => {
-        try {
-            const campaignTokens = await getCampaignTokens(campaignAddress);
-
-            if (!campaignTokens || campaignTokens.length === 0) throw new Error("No tokens found");
-
-            const response = await handleAssociation({
-                campaignId: campaignId,
-                campaignAddress: campaignAddress,
-                tokenPrice: Number(campaignTokens[0].value),
-                tokens: campaignTokens.map((token) => token.tokenId)
-            })
-
-            if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
-
-            console.log(response?.data);
-
-            const association_failed = response?.data?.association_failed;
-            setCampaign((prevState) => ({ ...prevState, is_started: true, is_association_failed: association_failed }));
-        } catch (error) {
-            let errorMessage = error.data ? error.data.message : (error.message || error);
-            console.error(errorMessage);
-        }
-    }
 
     const getCampaignsIds = async () => {
 
@@ -376,12 +386,12 @@ if (campaignId) return true
         return donation;
     };
 
-    const redeemToken = async (campaignId, campaignAddress, tokenId) => {
+    const redeemToken = async (campaignId, tokenId, tokenSignature) => {
         try {
             const response = await claimToken({
                 campaignId: campaignId,
-                campaignAddress: campaignAddress,
-                tokenId: tokenId
+                token: tokenId,
+                signature: tokenSignature
             });
 
             if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
@@ -429,7 +439,7 @@ if (campaignId) return true
         checkMinedBlock();
 
         // Subscriptions to contract events
-
+        
         const organizationVerifiedSubscription = charityContract.events.OrganizationVerified();
         const organizationRevokedSubscription = charityContract.events.OrganizationRevoked();
         const campaignCreatedSubscription = charityContract.events.CampaignCreated();
@@ -493,7 +503,6 @@ if (campaignId) return true
             setCampaign,
             createCampaign,
             startCampaign,
-            associateCampaigns,
             getCampaign,
             getCampaignsIds,
             getCampaignTokens,
