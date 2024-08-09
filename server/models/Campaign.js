@@ -44,6 +44,11 @@ const CampaignSchema = new mongoose.Schema(
             type: String,
             required: false
         },
+        // The start of the campaign (equal to the startingDate stored in the contract)
+        startingDate: {
+            type: Date,
+            required: true
+        },
         // The deadline of the campaign (equal to the deadline stored in the contract)
         deadline: {
             type: Date,

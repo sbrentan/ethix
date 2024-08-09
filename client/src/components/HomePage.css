@@ -1,0 +1,9 @@
+/* Add this to your CSS file */
+.css-dev-only-do-not-override-m4timi .ant-timeline .ant-timeline-item-head {
+    background-color: transparent !important;
+    /* border: none !important; */
+}
+
+:where(.css-dev-only-do-not-override-d2lrxs).ant-timeline .ant-timeline-item-head {
+    background-color: transparent;
+  }

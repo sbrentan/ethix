@@ -1,16 +1,22 @@
 import { Button, Col, Divider, Form, Input, Row, Typography, message } from "antd";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useContext } from "react";
 import { ROLES } from "../../config/roles";
 import { useRegisterDonorBeneficiaryMutation } from "./authApiSlice";
+import { TransactionContext } from ".//../../context/TransactionContext.js";
+import MetamaskButton from ".//../../components/MetamaskButton.js";
 
 const { Text, Title } = Typography
 
 const RegisterBeneficiary = ({ setSuccessRegistration }) => {
 	const [form] = Form.useForm();
+    let formDisabled = true;
     const [register, { isLoading, isSuccess, isError, error }] =
         useRegisterDonorBeneficiaryMutation();
 	const userRef = useRef();
 
+    const {
+        wallet,
+      } = useContext(TransactionContext);
     // for antd message
 	const [messageApi, contextHolder] = message.useMessage();
 
@@ -40,14 +46,20 @@ const RegisterBeneficiary = ({ setSuccessRegistration }) => {
 		// const { username, password } = values;
 		// const data = { username, password, role: ROLES.Beneficiary };
 		// // specific check might be requested
-		await register({...values, role: ROLES.Beneficiary });
+		await register({...values, wallet , role: ROLES.Beneficiary });
 	};
 
 	return (
 		<>
             {contextHolder}
-			<Text>Register your non-profit organization by using this form. Required fields are marked with an asterisk (*).</Text>
-			<Form form={form} layout="vertical" onFinish={handleSubmit}>
+            {!wallet.is_logged && (
+            <MetamaskButton></MetamaskButton>
+          )}
+          {wallet.is_logged && (
+            <p>Connected wallet: {wallet.address}</p>
+            ) && (formDisabled = false)}
+			<br style={{height:"120px"}}></br><Text>Register your non-profit organization by using this form. Required fields are marked with an asterisk (*).</Text>
+			<Form form={form} layout="vertical" onFinish={handleSubmit} disabled={formDisabled}>
                 <Title level={5}>Beneficiary general information</Title>
                 <Row gutter={16}>
                     <Col span={12}>

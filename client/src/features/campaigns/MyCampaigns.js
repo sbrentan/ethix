@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useGetCampaignsQuery } from "./campaignsApiSlice";
+import { useGetDonorCampaignsQuery } from "./campaignsApiSlice";
+import { Link, useLocation } from "react-router-dom";
+import { PlusCircleOutlined } from "@ant-design/icons";
+import useAuth from './../../hooks/useAuth'
+
+
 import {
 	Button,
 	Col,
@@ -37,6 +42,8 @@ const isExpired = (deadline) => {
 };
 
 const CampaignsGrid = () => {
+	
+	const { isDonor} = useAuth()
 	// state and filters
 	const [titleFilter, setTitleFilter] = useState("");
 	const [donorFilter, setDonorFilter] = useState("");
@@ -54,7 +61,7 @@ const CampaignsGrid = () => {
 		isSuccess,
 		isError,
 		error,
-	} = useGetCampaignsQuery("campaignsList", {});
+	} = useGetDonorCampaignsQuery("campaignsList", {});
 
 	// When campaigns or the filter change it perform a filters evaluation
 	// Filtered result is the ID lists of the filtered campaigns
@@ -62,7 +69,7 @@ const CampaignsGrid = () => {
 		let filteredResult = [];
 		if (isSuccess) {
 			const { ids, entities } = normalizedCampaigns;
-			filteredResult = ids.filter((campaignId, index) => {
+			filteredResult = ids.filter((campaignId) => {
 				const campaign = entities[campaignId];
 
 				const titleCondition =
@@ -79,7 +86,7 @@ const CampaignsGrid = () => {
 
 				// TODO: donor and receiver filter
 
-				return titleCondition && activeCondition && index < 10;
+				return titleCondition && activeCondition;
 			});
 		}
 		setFilteredCampaigns(filteredResult);
@@ -95,7 +102,7 @@ const CampaignsGrid = () => {
 
 	// Error Overlay
 	useEffect(() => {
-		if (isError) {
+		if (isError && error?.data?.message!="No campaigns found") {
 			messageApi.open({
 				key: "error",
 				type: "error",
@@ -108,7 +115,7 @@ const CampaignsGrid = () => {
     let errContent = null;
 	let tableSource = null;
 	let tableContent = <Empty />
-	if (isError) {
+	if (isError && error?.data?.message!="No campaigns found") {
 		errContent = (
 			<Text type="danger" strong>
 				Errore nella ricezione dei dati: {error?.data?.message}
@@ -117,27 +124,39 @@ const CampaignsGrid = () => {
 		//if (!preventPolling) setPreventPolling(true)
 	} else if (isSuccess) {
 		//if (preventPolling) setPreventPolling(false)
-		if (filteredCampaigns.length) {            
-            tableContent = (<>
-                <Row gutter={[0, 0]}>
-                    {filteredCampaigns.map((campaignId) => (
-                        <Col key={campaignId} span={12}>
-                            <CampaignCard key={campaignId} campaignId={campaignId} />
-                        </Col>
-                    ))}
-                </Row>
-            </>)
+		if (filteredCampaigns.length) {
+			const { entities } = normalizedCampaigns;
+			tableSource = filteredCampaigns
+				.map((campaignId) => entities[campaignId])
+				.filter((entity) => entity !== undefined);
 		}
+
+		tableContent = (<>
+            <Row gutter={[15, 15]}>
+                {filteredCampaigns.map((campaignId) => (
+                    <Col key={campaignId} span={12}>
+                        <CampaignCard key={campaignId} campaignId={campaignId} />
+                    </Col>
+                ))}
+            </Row>
+        </>)
 	}
 
-    return (
-        <div style={{ margin: 30 }}>
-            {contextHolder}
-            <Title>Campaigns</Title>
-            {errContent}
-            <div>{tableContent}</div>
-        </div>
-    )
+	return (
+		<div style={{ margin: 30 }}>
+			{contextHolder}
+			<Title>My Campaigns</Title>
+			{isDonor && (<Link to="/donor/newCampaign">
+				<Button type="primary" icon={<PlusCircleOutlined />}>
+					New Campaign
+				</Button>
+			</Link>
+			)}
+			<br></br>
+			{errContent}
+			<div  style={{margin : 10 ,}}>{tableContent}</div>
+		</div>
+	)
 }
 
 export default CampaignsGrid

@@ -141,6 +141,7 @@ contract Campaign {
         campaignDetails.tokensCount = _tokensCount;
     }
 
+
     function start(
         bytes32 _seed,
         address _walletAddress,
@@ -177,9 +178,11 @@ contract Campaign {
         walletAddress = _walletAddress;
     }
 
+
     function getDetails() external view returns (CampaignDetails memory) {
         return campaignDetails;
     }
+
 
     // allow the donor to claim the refund
     function claimRefund(
@@ -210,6 +213,7 @@ contract Campaign {
         refundClaimed = true;
     }
 
+
     // allow the beneficiary to claim the donation
     function claimDonation(
         address _from
@@ -233,6 +237,20 @@ contract Campaign {
         campaignDetails.beneficiary.transfer(_donations);
         donationClaimed = true;
     }
+
+
+    // get the number of tokens redeemed
+    function getRedeemedTokensCount() external view returns (uint256) {
+        uint256 _redeemedTokens = 0;
+
+        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
+            if (tokens[tokensIds[i]].redeemed)
+                _redeemedTokens++;
+        }
+
+        return _redeemedTokens;
+    }
+
 
     // allow users to reedem the tokens they bought
     function redeemToken(
@@ -303,6 +321,7 @@ contract Campaign {
                 )
             );
     }
+
 
     // ====================================== UTILS FUNCTIONS ======================================
 

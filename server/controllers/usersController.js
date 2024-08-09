@@ -13,6 +13,16 @@ const getAllUsers = asyncHandler(async (req, res) => {
 	}
 	res.json(users);
 });
+// @desc Get beneficiaries
+// @route GET /users/beneficiaries
+// @access Private: donor
+const getBeneficiaryUser = asyncHandler(async (req, res) => {
+	const users = await User.find({role: "Beneficiary"}).select("-password").lean();
+	if (!users?.length) {
+		return res.status(400).json({ message: "No beneficiaries found" });
+	}
+	res.json(users);
+});
 
 // @desc Create new user
 // @route POST /users
@@ -139,7 +149,8 @@ const deleteUser = asyncHandler(async (req, res) => {
 
 module.exports = {
 	getAllUsers,
+	getBeneficiaryUser,
 	createNewUser,
 	updateUser,
-	deleteUser,
+	deleteUser
 };

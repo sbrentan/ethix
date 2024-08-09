@@ -172,8 +172,7 @@ const redeemToken = asyncHandler(async (req, res) => {
     } catch (error) {
         console.log('Error redeeming token:', error);
         errorMessage = retrieveBlockchainError(error);
-        res.json({ message: "Error redeeming token: " + errorMessage });
-        res.status(400);
+        return res.status(400).json({ message: "Error redeeming token: " + errorMessage });
     }
 });
 

@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
 const { web3, WEB3_MANAGER_PRIVATE_KEY, encodePacked } = require("../config/web3");
 const User = require("../models/User");
+const { beneficiary } = require("../config/roles_list");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -41,13 +42,26 @@ const getCampaign = asyncHandler(async (req, res) => {
 	res.json(campaign);
 });
 
+// @desc Get a campaign
+// @route GET /campaigns/userCampaigns
+// @access Donor
+const getUserCampaigns = asyncHandler(async (req, res) => {
+	let userId = req.userId;
+	console.log("userid:"+userId)
+	const campaigns = await Campaign.find({$or:[{donor: userId},{receiver: userId}]}).exec();
+	if (!campaigns?.length) {
+		return res.status(400).json({ message: "No campaigns found" });
+	}
+	res.json(campaigns);
+});
+
 // @route POST /campaigns
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
-	const { target, tokensCount, title, image, description, deadline, donor, receiver, draft } = req.body;
+	const { target, tokensCount, title, image, description, startingDate, deadline, receiver, draft } = req.body;
 
 	// Confirm data
-	if (!target || !title || !deadline || !donor || !receiver || !tokensCount) {
+	if (!target || !title || !deadline || !receiver || !tokensCount) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
@@ -92,12 +106,12 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	// Get current blockchain block number (used for to wait for CRR reveal method)
 	const blockNumber = Number(await web3.eth.getBlockNumber());
 
-	logged_user = await User.findOne({username: req.user}).exec();
+	let donor = req.userId;
 
 	// Create and store new campaign
 	const campaign = await Campaign.create({ 
-		target, title, image, description, deadline, donor, receiver, tokensCount,
-		seed, blockNumber, campaignId: campaignAddress, createdBy: logged_user
+		target, title, image, description, startingDate, deadline, donor, receiver, tokensCount,
+		seed, blockNumber, campaignId: campaignAddress, createdBy: donor
 	});
 
 	if (campaign) {
@@ -203,4 +217,5 @@ module.exports = {
 	generateRandomWallet,
 	updateCampaign,
 	deleteCampaign,
+	getUserCampaigns,
 };

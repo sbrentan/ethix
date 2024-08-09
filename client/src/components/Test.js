@@ -66,18 +66,18 @@ const Test = () => {
           <p>{JSON.stringify(formData)}</p>
 
           <button type="button" onClick={() => createCampaign('66a7a899d8d441aa09810736', '66841d794229eb671102d6b1')}>Create Campaign</button>
-          <button type="button" id="start" onClick={startCampaign} disabled={!campaign.is_fundable}>Start Campaign</button>
+          <button type="button" id="start" onClick={startCampaign} disabled={!campaign?.is_fundable}>Start Campaign</button>
 
-          <p>Current camapign id: {campaign.id}</p>
-          <p>Current camapign address: {campaign.address}</p>
+          <p>Current camapign id: {campaign?.id}</p>
+          <p>Current camapign address: {campaign?.address}</p>
 
           <br /><hr /><br />
 
           <input placeholder="Campaign ID" type="text" onChange={(e) => setCampaign((prevState) => ({ ...prevState, id: e.target.value }))} />
           <input placeholder="Campaign Address" type="text" onChange={(e) => setCampaign((prevState) => ({ ...prevState, address: e.target.value }))} />
 
-          <p>Current campaign (DB): {campaign.id}</p>
-          <p>Current campaign (Blockchain): {campaign.address}</p>
+          <p>Current campaign (DB): {campaign?.id}</p>
+          <p>Current campaign (Blockchain): {campaign?.address}</p>
 
           <br /><hr /><br />
 

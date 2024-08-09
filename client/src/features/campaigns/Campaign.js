@@ -1,12 +1,14 @@
-import React from "react";
 import NotFoundResult from "../../components/NotFoundResult";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useGetCampaignsQuery } from "./campaignsApiSlice";
+import { TransactionContext } from "./../../context/TransactionContext";
+import React, {  useContext } from "react";
 import {
 	Avatar,
 	Card,
 	Col,
 	Divider,
+	Flex,
 	Image,
 	Progress,
 	Row,
@@ -15,6 +17,7 @@ import {
 } from "antd";
 import { EuroCircleOutlined, UserOutlined } from "@ant-design/icons";
 import { format } from "date-fns";
+import { useGetPublicProfileByUserQuery } from "../requests/requestsApiSlice";
 
 const { Text, Title } = Typography;
 const { Meta } = Card;
@@ -34,32 +37,44 @@ const Campaign = () => {
 	// id campaign
 	const { id } = useParams();
 
-	const { campaign, isCampaignLoading } = useGetCampaignsQuery(
+	const { campaignDB, isCampaignLoading } = useGetCampaignsQuery(
 		"campaignsList",
 		{
 			selectFromResult: ({ data }) => ({
-				campaign: data?.entities[id],
+				campaignDB: data?.entities[id],
 			}),
 		}
 	);
 
-	if (!campaign)
+	const { data: profileBeneficiary, profileBeneficiaryLoading } = useGetPublicProfileByUserQuery({userId: campaignDB?.receiver })
+	const { data: profileDonor, profileDonorLoading } = useGetPublicProfileByUserQuery({userId: campaignDB?.donor })
+	
+  const {
+		campaign,
+    startCampaign,
+		setCampaign,
+		getCampaignTokens,
+		claimRefund,
+  } = useContext(TransactionContext);
+	console.log(campaignDB)
+	if (!campaignDB)
 		return (
 			<>
-				<NotFoundResult subTitle="The campaign you are looking for cannot be found" />
+				<NotFoundResult subTitle="The campaignDB you are looking for cannot be found" />
 			</>
 		);
-
+		setCampaign()
 	const percent = Math.floor(Math.random() * 11) * 10;
 	let status = "active";
 	if (percent === 100) {
 		status = "";
-	} else if (isExpired(campaign.deadline)) {
+	} else if (isExpired(campaignDB.deadline)) {
 		status = "exception";
 	}
+	console.log(campaign)
 	const daysLeft = Math.floor(
-		(new Date(campaign.deadline).getTime() -
-			new Date(campaign.createdAt).getTime()) /
+		(new Date(campaignDB.deadline).getTime() -
+			new Date(campaignDB.startingDate).getTime()) /
 			(1000 * 60 * 60 * 24)
 	);
 	return (
@@ -68,15 +83,24 @@ const Campaign = () => {
 				<Col span={16}>
 					<Card>
 						<Space direction="vertical">
-							<Image width={200} src="error" preview={false} />
+                            <Image
+								src={campaignDB?.image ? campaignDB?.image : "error"}
+								width={'100%'}
+								preview={campaignDB?.image ? true : false}
+							/>
 							<Text>
 								A fundraising campaign by{" "}
-								<Text strong>{campaign.donor}</Text>
+								<Text strong>{profileDonor?.publicName ? <Link to={`/organizations/${profileDonor._id}`}>{profileDonor?.publicName}</Link> : campaignDB.donor}</Text>
 							</Text>
-							<Title>{campaign.title}</Title>
-							<Text>{campaign.description}</Text>
+							<Title>{campaignDB.title}</Title>
+							<Text>{campaignDB.description}</Text>
 						</Space>
 					</Card>
+						<Card>
+						<button type="button" id="start" onClick={startCampaign} disabled={!campaignDB.is_fundable}>Start Campaign</button>
+						<button type="button" onClick={() => getCampaignTokens(campaign.address)}>Get campaignDB tokens</button>
+						<button type="button" onClick={() => claimRefund(campaign.address)}>Claim refund</button>
+						</Card>
 				</Col>
 				<Col span={8}>
 					<Space
@@ -110,7 +134,7 @@ const Campaign = () => {
 								<Col span={12}>
 									<Text strong>
 										{format(
-											new Date(campaign.createdAt),
+											new Date(campaignDB.startingDate),
 											"dd/MM/yyyy"
 										)}
 									</Text>
@@ -123,7 +147,7 @@ const Campaign = () => {
 								<Col span={12}>
 									<Text strong>
 										{format(
-											new Date(campaign.deadline),
+											new Date(campaignDB.deadline),
 											"dd/MM/yyyy"
 										)}
 									</Text>
@@ -132,9 +156,9 @@ const Campaign = () => {
 						</Card>
 						<Card>
 							<Meta
-								avatar={<Avatar icon={<UserOutlined />} />}
-								title={campaign.receiver}
-								description="Description of beneficiary"
+								avatar={<Avatar icon={profileBeneficiary?.publicImage ? <Image src={profileBeneficiary?.publicImage} preview={false} /> : <UserOutlined />} />}
+								title={profileBeneficiary?.publicName ? <Link to={`/organizations/${profileBeneficiary._id}`}>{profileBeneficiary.publicName}</Link> : campaignDB.receiver}
+								description={profileBeneficiary?.publicDescription ? profileBeneficiary.publicDescription : "Description of Beneficiary"}
 							/>
 						</Card>
 					</Space>

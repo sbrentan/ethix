@@ -131,13 +131,16 @@ export const TransactionsProvider = ({ children }) => {
     };
 
     const isOrganizationVerified = async (organizationAddress) => {
+        var status;
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
             await charityContract.methods.isOrganizationVerified(organizationAddress).call({ from: wallet.address })
-                .then((status) => {
-                    status ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
+                .then((response) => {
+                    response ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
+                    status = response;
                 });
+            return status;
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -160,28 +163,29 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const createCampaign = async (donor, receiver) => {
+    const createCampaign = async (title, description, image, startingDate, deadline, targetEth, tokenAmount, donor, receiverId, receiver) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            const { title, description, image, startdate, deadline, tokens, target, beneficiary } = formData;
-
             if (!title) throw new Error("Title is required");
-            if (!startdate) throw new Error("Start date is required");
+            if (!startingDate) throw new Error("Start date is required");
             if (!deadline) throw new Error("Deadline is required");
-            if (!tokens) throw new Error("Tokens count is required");
-            if (!target) throw new Error("Target is required");
-            if (!beneficiary) throw new Error("Beneficiary is required");
+            if (!tokenAmount) throw new Error("Tokens count is required");
+            if (!targetEth) throw new Error("Target is required");
+            if (!receiver) throw new Error("Beneficiary is required");
+            if (!(await isOrganizationVerified(receiver))) throw new Error("Beneficiary is not validated");
+            if (!(await isOrganizationVerified(wallet.address))) throw new Error("Donor is not verified");
 
             const draft_response = await initCampaign({
-                target: target,
+                target: targetEth,
                 title: title,
                 description: description, // optional
                 image: image, // optional
+                startingDate: startingDate,
                 deadline: deadline,
                 tokensCount: tokens,
                 donor: donor,
-                receiver: receiver,
+                receiver: receiverId,
                 draft: true
             })
 
@@ -198,10 +202,10 @@ export const TransactionsProvider = ({ children }) => {
 
             const campaign = await charityContract.methods.createCampaign(
                 title,
-                Math.floor(startdate / 1000),
+                Math.floor(startingDate / 1000),
                 Math.floor(deadline / 1000),
-                tokens,
-                beneficiary,
+                tokenAmount,
+                receiver,
                 _seedHash,
                 {
                     r: _signature.r,
@@ -215,14 +219,15 @@ export const TransactionsProvider = ({ children }) => {
             console.log(campaignAddress);
 
             const response = await initCampaign({
-                target: target,
-                tokensCount: tokens,
+                target: targetEth,
+                tokensCount: tokenAmount,
                 title: title,
                 description: description,
                 image: image,
+                startingDate: startingDate,
                 deadline: deadline,
                 donor: donor,
-                receiver: receiver,
+                receiver: receiverId,
                 seedHash: _seedHash,
                 campaignAddress: campaignAddress,
                 draft: false
@@ -234,6 +239,7 @@ export const TransactionsProvider = ({ children }) => {
 
             setCampaign((prevState) => ({ ...prevState, id: campaignId, is_created: true }));
             console.log(campaignId);
+            if (campaignId) return true
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);

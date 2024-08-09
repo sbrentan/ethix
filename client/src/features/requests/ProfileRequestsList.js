@@ -11,8 +11,9 @@ import {
 	Space,
 	Radio,
 	Modal,
+    Form,
 } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { ROLES } from "../../config/roles";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
@@ -22,9 +23,14 @@ import {
 } from "./requestsApiSlice";
 import BeneficiaryProfile from "../../components/BeneficiaryProfile";
 import DonorProfile from "../../components/DonorProfile";
+import Web3 from 'web3';
+import { CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS } from './../../utils/constants';
+import { TransactionContext } from ".//../../context/TransactionContext.js";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
+
+const { ethereum } = window;
 
 // for the warning: Each child in a list should have a unique "key" prop.
 const generateRowKey = (request) => {
@@ -33,6 +39,15 @@ const generateRowKey = (request) => {
 };
 
 const ProfileRequestsList = () => {
+
+	const {
+		wallet,
+		createCampaign,
+	} = useContext(TransactionContext);
+
+	const web3 = new Web3(ethereum);
+	const charityContract = new web3.eth.Contract(CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS);
+	
 	const [filteredProfileRequests, setFilteredProfileRequests] = useState([]);
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
@@ -107,11 +122,59 @@ const ProfileRequestsList = () => {
 		} // eslint-disable-next-line
 	}, [updateIsSuccess, updateIsError, updateError]);
 
-	const onFinish = async (state, id) => {
-        await updateProfilerequest({ id, state})
-        setSelectedProfileRequest(null)
-        setShowViewModal(false)
+	const onFinish = async (state, address, id) => {
+		if (!ethereum) return alert("Please install MetaMask.");
+        try {
+            if (!address) throw new Error("Address is missing")
+            if (state === "accepted") {
+		        await charityContract.methods.verifyOrganization(address).send({ from: wallet.address });
+            } else if (state === "rejected") {
+                await charityContract.methods.revokeOrganization(address).send({ from: wallet.address });
+            }
+		    await updateProfilerequest({ id, state}) //update the request		//check on blockchain if the organization is verified
+            
+            setSelectedProfileRequest(null)
+            setShowViewModal(false)
+        } catch (err) {
+            messageApi.open({
+				key: "error",
+				type: "error",
+				content: err.message,
+				duration: 5,
+			});
+        }
     };
+
+    const checkIfVerified = async (address) => {
+        try {
+            if (!ethereum) return alert("Please install MetaMask.");
+
+            if (!address) throw new Error("Address is missing")
+
+            await charityContract.methods.isOrganizationVerified(address).call({ from: wallet.address })
+                .then((response) => {
+                    response ? messageApi.open({
+                        key: "warning",
+                        type: "warning",
+                        content: "Organization is Verified",
+                        duration: 5,
+                    }) : messageApi.open({
+                        key: "warning",
+                        type: "warning",
+                        content: "Organization is NOT Verified",
+                        duration: 5,
+                    });
+                });
+        } catch (error) {
+            let errorMessage = error.data ? error.data.message : (error.message || error);
+            messageApi.open({
+				key: "error",
+				type: "error",
+				content: errorMessage,
+				duration: 5,
+			});
+        }
+    }
 
 	// Columns of the Table
 	const columns = [
@@ -148,7 +211,16 @@ const ProfileRequestsList = () => {
 			title: "Action",
 			dataIndex: "action",
 			render: (action, record) => (
+                <Space direction="horizontal" size={10}>
 				<Button
+					onClick={() => {
+						checkIfVerified(record?.address)
+					}}
+				>
+					Check Verification
+				</Button>
+				<Button
+                style={{ background: "#e5e5e5" }}
 					onClick={() => {
 						setSelectedProfileRequest(record);
 						setShowViewModal(true);
@@ -156,7 +228,9 @@ const ProfileRequestsList = () => {
 				>
 					View Request
 				</Button>
+                </Space>
 			),
+            width: 100,
 		},
 	];
 
@@ -251,6 +325,26 @@ const ProfileRequestsList = () => {
 							profile={selectedProfileRequest.beneficiaryData}
 						/>
 					)}
+                    <Form initialValues={{address: selectedProfileRequest?.address}} disabled={true} layout="vertical">
+                        <Row>
+                            <Col span={24}>
+                                <Form.Item
+                                    label="Address"
+                                    name="address"
+                                    required
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message: "Insert the address",
+                                        },
+                                    ]}
+                                >
+                                    <Input />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
+
 					{/* {selectedProfileRequest.state === "waiting" && */}
 					{true &&
                     <div
@@ -262,13 +356,13 @@ const ProfileRequestsList = () => {
 						}}
 					>
 						<Space direction="horizontal">
-							<Button danger type="primary" onClick={() => onFinish("rejected", selectedProfileRequest.id)}>
+							<Button danger type="primary" onClick={() => onFinish("rejected",selectedProfileRequest.address, selectedProfileRequest.id)}>
 								Reject
 							</Button>
 							<Button
 								type="primary"
 								style={{ background: "#74B72E" }}
-								onClick={() => onFinish("accepted", selectedProfileRequest.id)}
+								onClick={() => onFinish("accepted",selectedProfileRequest.address, selectedProfileRequest.id)}
 							>
 								Accept
 							</Button>
