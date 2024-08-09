@@ -97,7 +97,7 @@ const generateTokens = asyncHandler(async (req, res) => {
         });
         console.log('signed_tokens', signed_tokens);
 
-        res.json({ signedTokens: signedTokens });
+        res.json({ signedTokens: signed_tokens });
         
     } catch (error) {
         console.log('Error generating tokens:', error);
@@ -130,16 +130,21 @@ const redeemToken = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error("Campaign not associated with a blockchain campaign");
     }
+    const campaignAddress = campaign.campaignId;
 
     // check if the token salt is present in db
+    console.log('campaignId', campaignId);
+    console.log('token', token);
     try{
-        tokenSalt, t15_token = await recoverT15Token(campaignId, tokenId);
+        [tokenSalt, t15_token] = await recoverT15Token(campaignId, token);
     } catch (error) {
-        // console.log('Error redeeming token:', error);
+        console.log('salt not present on db');
+        console.log('Error redeeming token:', error);
         res.json({ message: "Error redeeming token: " + error.message });
         res.status(400);
         return;
     }
+    console.log("tokenSalt", tokenSalt);
 
     // signature is 65 bytes long, convert it to r, s, v
     const { v, r, s } = ethUtil.fromRpcSig(signature);
@@ -148,6 +153,7 @@ const redeemToken = asyncHandler(async (req, res) => {
         // TODO: batch these calls
         // Check if the token is valid on blockchain
         const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).send({ from: WEB3_MANAGER_ACCOUNT.address });
+        console.log("isTokenValid", isTokenValid);
         if (!isTokenValid) {
             res.json({ message: "Token not valid" });
             res.status(400);
@@ -174,14 +180,18 @@ const redeemToken = asyncHandler(async (req, res) => {
 const recoverT15Token = async (campaignId, t1_token) => {
     hashed_token = crypto.createHash('sha256').update(t1_token).digest('hex');
     tokenSalt = await TokenSalt.findOne({ campaignId: campaignId, hash: hashed_token }).exec();
+    
+    console.log("t1_token", t1_token);
+    console.log("tokenSalt", tokenSalt);
     if(!tokenSalt)
         throw new Error("Token not valid");
     if(tokenSalt.redeemed)
         throw new Error("Token already redeemed");
 
-    t15_token = crypto.createHash('sha256').update(t1_token + tokenSalt.salt).digest('hex');
+    t15_token = web3.utils.toHex(crypto.createHash('sha256').update(t1_token + tokenSalt.salt).digest('hex'));
+    console.log('t15_token', t15_token);
 
-    return tokenSalt, t15_token;
+    return [tokenSalt, t15_token];
 }
 
 const checkTokenHash = async (campaignId, tokenId, campaignAddress) => {

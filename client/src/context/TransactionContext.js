@@ -381,12 +381,12 @@ export const TransactionsProvider = ({ children }) => {
         return donation;
     };
 
-    const redeemToken = async (campaignId, tokenId, signature) => {
+    const redeemToken = async (campaignId, tokenId, tokenSignature) => {
         try {
             const response = await claimToken({
                 campaignId: campaignId,
                 token: tokenId,
-                signature: signature
+                signature: tokenSignature
             });
 
             if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
