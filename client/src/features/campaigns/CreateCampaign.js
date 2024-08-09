@@ -198,10 +198,10 @@ function range(start, end) {
               style={{
                 width: '100%',
               }}
-            disabledDate={(current) => {
-              return current && current.valueOf() < Date.now();
+            // disabledDate={(current) => {
+            //   return current && current.valueOf() < Date.now();
 
-            }}
+            // }}
             />
             </Form.Item>
           </Col>

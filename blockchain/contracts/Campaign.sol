@@ -238,20 +238,6 @@ contract Campaign {
         donationClaimed = true;
     }
 
-
-    // get the number of tokens redeemed
-    function getRedeemedTokensCount() external view returns (uint256) {
-        uint256 _redeemedTokens = 0;
-
-        for (uint i = 0; i < campaignDetails.tokensCount; i++) {
-            if (tokens[tokensIds[i]].redeemed)
-                _redeemedTokens++;
-        }
-
-        return _redeemedTokens;
-    }
-
-
     // allow users to reedem the tokens they bought
     function redeemToken(
         bytes32 t2_token,

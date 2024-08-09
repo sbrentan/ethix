@@ -108,7 +108,6 @@ contract Charity {
     ) external onlyVerifiedBeneficiary(_beneficiary) {
         // generate a unique ID for the campaign
         bytes32 campaignId = _generateCampaignId(
-        bytes32 campaignId = _generateCampaignId(
             msg.sender,
             _beneficiary,
             _title

@@ -183,7 +183,7 @@ export const TransactionsProvider = ({ children }) => {
                 image: image, // optional
                 startingDate: startingDate,
                 deadline: deadline,
-                tokensCount: tokens,
+                tokensCount: tokenAmount,
                 donor: donor,
                 receiver: receiverId,
                 draft: true
