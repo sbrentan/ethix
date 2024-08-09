@@ -52,6 +52,7 @@ router
 router
 	.route("/:id/wallet/random")
 	.post(
+		verifyJWT,
 		verifyRoles(ROLES_LIST.donor),
 		campaignsController.generateRandomWallet
 	);

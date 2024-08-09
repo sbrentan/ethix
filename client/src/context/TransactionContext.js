@@ -174,7 +174,6 @@ export const TransactionsProvider = ({ children }) => {
             if (!targetEth) throw new Error("Target is required");
             if (!receiver) throw new Error("Beneficiary is required");
             if (!(await isOrganizationVerified(receiver))) throw new Error("Beneficiary is not validated");
-            if (!(await isOrganizationVerified(wallet.address))) throw new Error("Donor is not verified");
 
             const draft_response = await initCampaign({
                 target: targetEth,
