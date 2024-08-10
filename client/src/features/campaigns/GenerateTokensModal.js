@@ -11,9 +11,12 @@ import {
 	Typography,
 } from "antd";
 import { format } from "date-fns";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { TransactionContext } from "../../context/TransactionContext";
 import ExcelJS from "exceljs";
+
+import QRCode from "qrcode";
+import jsPDF from "jspdf";
 
 const { Text, Title } = Typography;
 
@@ -38,7 +41,7 @@ const GenerateTokensModal = ({
 	const [tokensList, setTokensList] = useState([]);
 
 	const { startCampaign } = useContext(TransactionContext);
-
+	
 	const exportToExcel = () => {
 		if (!Array.isArray(tokensList) || !tokensList.length) {
 			return messageApi.open({
@@ -127,6 +130,38 @@ const GenerateTokensModal = ({
 			setShowModal(false);
 			setSelectedCampaign(null);
 		});
+	};
+
+	const exportToPdf = async () => {
+		if (!Array.isArray(tokensList) || !tokensList.length) {
+			return messageApi.open({
+				key: "error",
+				type: "error",
+				content: "Nessun dato disponibile da scaricare",
+				duration: 5,
+			});
+		}
+
+		const doc = new jsPDF();
+		const qrCodeData = [];
+
+		try {
+			for (const token of tokensList) {
+				// Generate QR code as data URL using the qrcode library
+				const url = process.env.REACT_APP_BASE_URL + "/redeem/" + token.token;
+				const imageData = await QRCode.toDataURL(url);
+				qrCodeData.push(imageData);
+			}
+	
+			qrCodeData.forEach((image, index) => {
+				doc.addImage(image, 'JPEG', 10, 10 + (index * 60), 50, 50);
+			});
+	
+			doc.save('qr_codes.pdf');
+		} catch (error) {
+			console.error("Error generating QR codes or PDF:", error);
+		}
+
 	};
 
 	const handleStart = async () => {
@@ -307,7 +342,18 @@ const GenerateTokensModal = ({
 								exportToExcel();
 							}}
 						>
-							DOWNLOAD TOKENS
+							DOWNLOAD TOKENS (Excel format)
+						</Button>
+						<br></br>
+						<Button
+							size="large"
+							type="primary"
+							shape="round"
+							onClick={() => {
+								exportToPdf();
+							}}
+						>
+							DOWNLOAD TOKENS (Pdf format)
 						</Button>
 					</Flex>
 				</Space>

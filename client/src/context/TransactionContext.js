@@ -413,32 +413,7 @@ export const TransactionsProvider = ({ children }) => {
         return () => ethereum.removeListener('accountsChanged', checkIfWalletIsConnect);
     }, [wallet]);
 
-    // useEffect(() => {
-    //     const checkMinedBlock = async () => {
-    //         const response = await getCampaignDetails({ campaignId: campaign.id });
-    //         const is_fundable = response?.data?.is_fundable;
-    //         setCampaign((prevState) => ({ ...prevState, is_fundable: is_fundable }));
-    //     }
-    //     if (campaign.id && !campaign.is_fundable) checkMinedBlock();
-    // }, [block]);
-
     useEffect(() => {
-
-        // Subscription to new blocks mined event
-
-        // const checkMinedBlock = async () => {
-        //     const minedBlockSubscription = await web3.eth.subscribe('newBlockHeaders');
-
-        //     minedBlockSubscription.on('data', async (blockHeader) => {
-        //         setBlock(Number(blockHeader.number));
-        //     });
-
-        //     return () => minedBlockSubscription.unsubscribe();
-        // };
-
-        // Call async functions
-
-        // checkMinedBlock();
 
         // Subscriptions to contract events
         

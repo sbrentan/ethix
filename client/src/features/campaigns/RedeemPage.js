@@ -77,7 +77,7 @@ const RedeemPage = () => {
 			status="error"
 			title="Code not redeemed."
 			subTitle={`There was an error redeeming the code${
-				error ? `: ${error.data.message}.` : `.`
+				error ? `: ${error?.data?.message}.` : `.`
 			}`}
 			extra={[
 				<Link to="/home">
