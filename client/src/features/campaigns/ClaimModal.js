@@ -27,34 +27,34 @@ const ClaimModal = ({
 
 	//  ------ THIS BLOCK CAN BE REMOVED IF THE DATA OF THE CAMPAIGN FROM THE DB ARE INTEGRATED WITH THE DATA FROM BLOCKCAHIN ----//
 	// ------- you will still need to swap all campaignBlock with campaign in the return to display the data ---------------------//
-	const { getCampaign, claimRefund, claimDonation } =
+	const { claimRefund, claimDonation } =
 		useContext(TransactionContext);
 
-	useEffect(() => {
-		async function fetchDataOnBlockChain(campaign) {
-			console.log("A");
-			console.log(campaign);
-			if (campaign && campaign.campaignId) {
-				console.log("B");
-				const campaignFromBlockchain = await getCampaign(
-					campaign.campaignId
-				);
-				if (!campaignFromBlockchain) {
-					messageApi.open({
-						key: "error",
-						type: "error",
-						content: "Error in retrieving the blockchain",
-						duration: 5,
-					});
-				} else {
-					setCampaignBlock(campaignFromBlockchain);
-				}
-				console.log("C");
-			}
-			console.log("D");
-		}
-		fetchDataOnBlockChain(campaign);
-	}, [campaign]);
+	// useEffect(() => {
+	// 	async function fetchDataOnBlockChain(campaign) {
+	// 		console.log("A");
+	// 		console.log(campaign);
+	// 		if (campaign && campaign.campaignId) {
+	// 			console.log("B");
+	// 			const campaignFromBlockchain = await getCampaign(
+	// 				campaign.campaignId
+	// 			);
+	// 			if (!campaignFromBlockchain) {
+	// 				messageApi.open({
+	// 					key: "error",
+	// 					type: "error",
+	// 					content: "Error in retrieving the blockchain",
+	// 					duration: 5,
+	// 				});
+	// 			} else {
+	// 				setCampaignBlock(campaignFromBlockchain);
+	// 			}
+	// 			console.log("C");
+	// 		}
+	// 		console.log("D");
+	// 	}
+	// 	fetchDataOnBlockChain(campaign);
+	// }, [campaign]);
 	// --------------------------------------------------------------------------------------------------------------------------- //
 
 	const onClickClaimRefund = async () => {
@@ -199,14 +199,14 @@ const ClaimModal = ({
 					</Text>
 				</Col>
 			</Row>
-			{campaignBlock && (
+			{campaign.blockchain_data && (
 				<>
 					<Row>
 						<Col span={12}>
 							<Text strong>Number of redeemable Codes:</Text>
 						</Col>
 						<Col span={12}>
-							<Text>{campaignBlock.tokensCount.toString()}</Text>
+							<Text>{campaign.blockchain_data.tokensCount.toString()}</Text>
 						</Col>
 					</Row>
 					{/* <br />
