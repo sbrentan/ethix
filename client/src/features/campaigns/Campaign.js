@@ -97,9 +97,9 @@ const Campaign = () => {
 						</Space>
 					</Card>
 						<Card>
-						<button type="button" id="start" onClick={startCampaign} disabled={!campaignDB.is_fundable}>Start Campaign</button>
+						{/* <button type="button" id="start" onClick={startCampaign} disabled={!campaignDB.is_fundable}>Start Campaign</button>
 						<button type="button" onClick={() => getCampaignTokens(campaign.address)}>Get campaignDB tokens</button>
-						<button type="button" onClick={() => claimRefund(campaign.address)}>Claim refund</button>
+						<button type="button" onClick={() => claimRefund(campaign.address)}>Claim refund</button> */}
 						</Card>
 				</Col>
 				<Col span={8}>

@@ -26,7 +26,7 @@ const getCampaign = asyncHandler(async (req, res) => {
 		return res.status(400).json({ message: "Campaign not found" });
 	}
 	
-	[campaign] = await _injectBlockchainCampaign([campaigns]);
+	[campaign] = await _injectBlockchainCampaign([campaign]);
 
 	res.json(campaign);
 });
