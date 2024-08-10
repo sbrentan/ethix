@@ -77,7 +77,7 @@ const Campaign = () => {
 				Math.floor(
 					campaign.blockchain_data.redeemedTokensCount /
 						campaign.blockchain_data.tokensCount
-				) * 100;
+				* 100);
 			if (percent < 1 && campaign.blockchain_data.redeemedTokensCount > 0) percent = 1;
 		} catch (error) {
 			console.log(error);

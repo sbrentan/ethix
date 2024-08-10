@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { TransactionContext } from "../../context/TransactionContext";
 import ExcelJS from "exceljs";
-
+import { useEthPrice } from "use-eth-price";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
 
@@ -37,10 +37,13 @@ const GenerateTokensModal = ({
 	showModal,
 	setShowModal,
 	messageApi,
+    refetch
 }) => {
 	const [tokensList, setTokensList] = useState([]);
+    const [canClose, setCanClose] = useState(true)
 
 	const { startCampaign } = useContext(TransactionContext);
+    const { ethPrice, loading, errorEth } = useEthPrice("eur");
 	
 	const exportToExcel = () => {
 		if (!Array.isArray(tokensList) || !tokensList.length) {
@@ -73,6 +76,7 @@ const GenerateTokensModal = ({
 		tokensList.forEach((token, index) => {
 			worksheet.addRow({
 				...token,
+                nr: index,
 			});
 		});
 
@@ -126,9 +130,7 @@ const GenerateTokensModal = ({
 			// Revoke the URL to free up memory
 			URL.revokeObjectURL(url);
 
-			setTokensList([]);
-			setShowModal(false);
-			setSelectedCampaign(null);
+			setCanClose(true)
 		});
 	};
 
@@ -158,6 +160,7 @@ const GenerateTokensModal = ({
 			});
 	
 			doc.save('qr_codes.pdf');
+            setCanClose(true)
 		} catch (error) {
 			console.error("Error generating QR codes or PDF:", error);
 		}
@@ -183,6 +186,7 @@ const GenerateTokensModal = ({
 			});
 		} else {
 			setTokensList(returnedTokens);
+            setCanClose(false)
 			messageApi.open({
 				key: "success",
 				type: "success",
@@ -192,12 +196,21 @@ const GenerateTokensModal = ({
 		}
 	};
 
+    let targetEuro = null;
+	let valueOfToken = null;
+	if (ethPrice) {
+		targetEuro = (campaign.target * ethPrice).toFixed(2);
+        valueOfToken = ((campaign.target / campaign.tokensCount)* ethPrice).toFixed(2);
+	}
+
 	return (
 		<Modal
 			onCancel={() => {
-				if (tokensList.length === 0) {
+				if (canClose) {
 					setShowModal(false);
 					setSelectedCampaign(null);
+                    setTokensList([])
+                    refetch()
 				} else {
 					messageApi.open({
 						key: "warning",
@@ -237,7 +250,7 @@ const GenerateTokensModal = ({
 					<Text strong>Donor:</Text>
 				</Col>
 				<Col span={12}>
-					<Text strong>{campaign.donor}</Text>
+					<Text strong>{campaign.donorPublicName ? campaign.donorPublicName : campaign.donor}</Text>
 				</Col>
 			</Row>
 			<Row>
@@ -245,7 +258,7 @@ const GenerateTokensModal = ({
 					<Text strong>Beneficiary:</Text>
 				</Col>
 				<Col span={12}>
-					<Text strong>{campaign.receiver}</Text>
+					<Text strong>{campaign.receiverPublicName ? campaign.receiverPublicName : campaign.receiver}</Text>
 				</Col>
 			</Row>
 			<Row>
@@ -274,8 +287,50 @@ const GenerateTokensModal = ({
 					</Text>
 				</Col>
 			</Row>
+            <br/>
+			<Row>
+				<Col span={12}>
+					<Text strong>Number of Redeemable Codes:</Text>
+				</Col>
+				<Col span={12}>
+					<Text>
+						{campaign.tokensCount}
+					</Text>
+				</Col>
+			</Row>
+			<Row>
+				<Col span={12}>
+					<Text strong>Value of a Code:</Text>
+				</Col>
+				<Col span={12}>
+					<Text>
+						{valueOfToken}
+					</Text>
+				</Col>
+			</Row>
+			<Row>
+				<Col span={12}>
+					<Text strong>Total Value Campaing (EUR):</Text>
+				</Col>
+				<Col span={12}>
+					<Text>
+						{targetEuro}
+					</Text>
+				</Col>
+			</Row>
+			<Row>
+				<Col span={12}>
+					<Text strong>Total Value Campaing (ETH):</Text>
+				</Col>
+				<Col span={12}>
+					<Text>
+						{campaign.target}
+					</Text>
+				</Col>
+			</Row>
+
 			<Divider />
-			<Title level={4}>Generating Tokens Details</Title>
+			<Title level={4}>Generating Codes Details</Title>
 			<Text style={{ fontSize: 16 }}>
 				If you haven't started the campaign yet, press FUND to finance
 				the campaign and <Text strong>start the donations</Text>.<br />
@@ -332,6 +387,7 @@ const GenerateTokensModal = ({
 						align="center"
 						justify="center"
 						style={{ marginTop: 20 }}
+                        gap="middle"
 					>
 						<br />
 						<Button

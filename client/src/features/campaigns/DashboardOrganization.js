@@ -18,6 +18,7 @@ import useAuth from "../../hooks/useAuth";
 import ClaimModal from "./ClaimModal";
 import GenerateTokensModal from "./GenerateTokensModal";
 import { useGetPublicProfilesQuery } from "../requests/requestsApiSlice";
+import { useEthPrice } from "use-eth-price";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
@@ -54,6 +55,7 @@ const DashboardOrganization = ({ role }) => {
 
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+	const { ethPrice, loading, errorEth } = useEthPrice("eur");
 
 	const {
 		data: normalizedCampaigns,
@@ -326,6 +328,18 @@ const DashboardOrganization = ({ role }) => {
 		);
 	}
 
+    let targetEuro = null;
+	let valueOfToken = null;
+    let codesNotRedeemed = null
+    if (selectedCampaign){
+	if (ethPrice) {
+		targetEuro = (selectedCampaign.target * ethPrice).toFixed(2);
+        valueOfToken = ((selectedCampaign.target / selectedCampaign.tokensCount)* ethPrice).toFixed(2);
+	}
+    if (selectedCampaign.blockchain_data) {
+        codesNotRedeemed = selectedCampaign.blockchain_data.tokensCount - selectedCampaign.blockchain_data.redeemedTokensCount
+    }}
+
 	return (
 		<div style={{ margin: 20 }}>
 			{contextHolder}
@@ -423,6 +437,89 @@ const DashboardOrganization = ({ role }) => {
 							</Text>
 						</Col>
 					</Row>
+                    {selectedCampaign.blockchain_data && (
+                    <>
+                        <Row>
+                            <Col span={12}>
+                                <Text strong>Number of redeemable Codes:</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text>{selectedCampaign.blockchain_data.tokensCount.toString()}</Text>
+                            </Col>
+                        </Row>
+                        <br />
+                        <Row>
+                            <Col span={12}>
+                                <Text strong>Number of Donations:</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text>{selectedCampaign.blockchain_data.redeemedTokensCount.toString()}</Text>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col span={12}>
+                                <Text strong>Amount of Donations (ETH):</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text>
+                                    {ethPrice
+                                        ? ((selectedCampaign.blockchain_data.redeemedTokensCount * valueOfToken) / ethPrice).toFixed(2)
+                                        : "Calculating Exchange Rate"}
+                                </Text>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col span={12}>
+                                <Text strong>Amount of Donations (EUR):</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text>
+                                    {ethPrice
+                                        ? (selectedCampaign.blockchain_data.redeemedTokensCount * valueOfToken).toFixed(2)
+                                        : "Calculating Exchange Rate"}
+                                </Text>
+                            </Col>
+                        </Row>
+                        {role === "Donor" && (
+                            <>
+                                <br />
+                                <Row>
+                                    <Col span={12}>
+                                        <Text strong>Codes Not Redeemd:</Text>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Text>
+                                            {codesNotRedeemed}
+                                        </Text>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={12}>
+                                        <Text strong>Refund available (ETH):</Text>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Text>
+                                            {ethPrice
+                                                ? (valueOfToken * codesNotRedeemed) / ethPrice
+                                                : "Calculating Exchange Rate"}
+                                        </Text>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col span={12}>
+                                        <Text strong>Refund available (EUR):</Text>
+                                    </Col>
+                                    <Col span={12}>
+                                        <Text>
+                                            {ethPrice
+                                                ? (valueOfToken * codesNotRedeemed).toFixed(2)
+                                                : "Calculating Exchange Rate"}
+                                        </Text>
+                                    </Col>
+                                </Row>
+                            </>
+                        )}
+                    </>)}
 				</Modal>
 			)}
 			{showClaimModal && selectedCampaign && (

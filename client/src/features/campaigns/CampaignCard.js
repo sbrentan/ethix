@@ -37,7 +37,7 @@ const CampaignCard = ({ campaignId }) => {
 		let percent = Math.floor(Math.random() * 11) * 10;
         if (campaign && campaign.blockchain_data) {
             try { 
-                percent = (Math.floor(campaign.blockchain_data.redeemedTokensCount / campaign.blockchain_data.tokensCount)) * 100
+                percent = Math.floor(campaign.blockchain_data.redeemedTokensCount / campaign.blockchain_data.tokensCount * 100)
                 console.log(percent)
                 if (percent < 1 && campaign.blockchain_data.redeemedTokensCount > 0) percent = 1
             } catch (error) {console.log(error)}
