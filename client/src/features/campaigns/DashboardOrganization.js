@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import useAuth from "../../hooks/useAuth";
 import ClaimModal from "./ClaimModal";
 import GenerateTokensModal from "./GenerateTokensModal";
+import { useGetPublicProfilesQuery } from "../requests/requestsApiSlice";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
@@ -61,7 +62,13 @@ const DashboardOrganization = ({ role }) => {
 		isSuccess,
 		isError,
 		error,
+		refetch,
 	} = useGetCampaignsQuery("campaignsList", {});
+
+    const {
+		data: normalizedPublicProfiles,
+		isSuccess: isProfileSuccess,
+	} = useGetPublicProfilesQuery("publicProfilesList", {});
 
 	// When campaigns or the filter change it perform a filters evaluation
 	// Filtered result is the ID lists of the filtered campaigns
@@ -120,20 +127,21 @@ const DashboardOrganization = ({ role }) => {
 		{
 			title: "Donor",
 			dataIndex: "donor",
-			key: "donor",
 			ellipsis: true,
+            render: (action, record) => (record.donorPublicName ? record.donorPublicName : record.donor)
 		},
 		{
 			title: "Beneficiary",
 			dataIndex: "receiver",
-			key: "receiver",
 			ellipsis: true,
+            render: (action, record) => (record.receiverPublicName ? record.receiverPublicName : record.receiver)
 		},
 		{
 			title: "Starting Date",
 			dataIndex: "startingDate",
 			key: "startingDate",
-			render: (startingDate) => format(new Date(startingDate), "dd/MM/yyyy"),
+			render: (startingDate) =>
+				format(new Date(startingDate), "dd/MM/yyyy"),
 		},
 		{
 			title: "Deadline",
@@ -157,11 +165,16 @@ const DashboardOrganization = ({ role }) => {
 						</Button>
 						{role === "Donor" && (
 							<Button
-								style={{ background: "#e5e5e5" }}
+								// style={{ background: "#e5e5e5" }}
+								type="primary"
 								onClick={() => {
 									setSelectedCampaign(record);
 									setShowGenerateTokensModal(true);
 								}}
+								disabled={
+									record?.blockchain_data?.funded ||
+									!record.is_fundable
+								}
 							>
 								Start
 							</Button>
@@ -182,20 +195,21 @@ const DashboardOrganization = ({ role }) => {
 		{
 			title: "Donor",
 			dataIndex: "donor",
-			key: "donor",
 			ellipsis: true,
-		},
+            render: (action, record) => (record.donorPublicName ? record.donorPublicName : record.donor)
+        },
 		{
 			title: "Beneficiary",
 			dataIndex: "receiver",
-			key: "receiver",
 			ellipsis: true,
-		},
+            render: (action, record) => (record.receiverPublicName ? record.receiverPublicName : record.receiver)
+        },
 		{
 			title: "Starting Date",
 			dataIndex: "startingDate",
 			key: "startingDate",
-			render: (startingDate) => format(new Date(startingDate), "dd/MM/yyyy"),
+			render: (startingDate) =>
+				format(new Date(startingDate), "dd/MM/yyyy"),
 		},
 		{
 			title: "Deadline",
@@ -207,14 +221,29 @@ const DashboardOrganization = ({ role }) => {
 			title: "Action",
 			dataIndex: "action",
 			render: (action, record) => (
-				<Button
-					onClick={() => {
-						setSelectedCampaign(record);
-						setShowClaimModal(true);
-					}}
-				>
-					{role === "Donor" ? "Claim Refund" : "Claim Donations"}
-				</Button>
+				<Space>
+					<Button
+						onClick={() => {
+							setSelectedCampaign(record);
+							setShowViewModal(true);
+						}}
+					>
+						Details
+					</Button>
+					<Button
+						onClick={() => {
+							setSelectedCampaign(record);
+							setShowClaimModal(true);
+						}}
+						disabled={
+							role === "Donor"
+								? record?.blockchain_data?.refundClaimed
+								: record?.blockchain_data?.donationClaimed
+						}
+					>
+						{role === "Donor" ? "Claim" : "Claim"}
+					</Button>
+				</Space>
 			),
 		},
 	];
@@ -237,19 +266,45 @@ const DashboardOrganization = ({ role }) => {
 	} else if (isSuccess) {
 		if (filteredCampaigns.length) {
 			const { entities } = normalizedCampaigns;
-			tableSourceActive = filteredCampaigns
-				.map((id) => entities[id])
-				.filter(
-					(entity) =>
-						entity !== undefined && !isExpired(entity.deadline)
-				);
+            // tableSourceActive = filteredCampaigns
+            //     .map((id) => entities[id])
+            //     .filter(
+            //         (entity) =>
+            //             entity !== undefined && !isExpired(entity.deadline)
+            //     );
 
-			tableSourceEnded = filteredCampaigns
-				.map((id) => entities[id])
-				.filter(
-					(entity) =>
-						entity !== undefined && isExpired(entity.deadline)
-				);
+            // tableSourceEnded = filteredCampaigns
+            //     .map((id) => entities[id])
+            //     .filter(
+            //         (entity) =>
+            //             entity !== undefined && isExpired(entity.deadline)
+            //     );
+                let profiles = []
+                if (isProfileSuccess && normalizedPublicProfiles?.entities) {
+                    const { ids, entities: entitiesProfiles } = normalizedPublicProfiles
+                    profiles = ids.map((id) => entitiesProfiles[id])
+                }
+                const { tableSourceActiveRed, tableSourceEndedRed } = filteredCampaigns.reduce(
+                    (result, id) => {
+                        const entity = entities[id];
+                        if (entity !== undefined) {
+                            let donorPublicName = null
+                            let receiverPublicName = null
+                            donorPublicName = profiles.find((profile) => profile.user === entity.donor)?.publicName
+                            receiverPublicName = profiles.find((profile) => profile.user === entity.receiver)?.publicName
+                            
+                            if (isExpired(entity.deadline)) {
+                                result.tableSourceEndedRed.push({...entity, donorPublicName, receiverPublicName});
+                            } else {
+                                result.tableSourceActiveRed.push({...entity, donorPublicName, receiverPublicName});
+                            }
+                        }
+                        return result;
+                    },
+                    { tableSourceActiveRed: [], tableSourceEndedRed: [] }
+                );
+                tableSourceActive = tableSourceActiveRed
+                tableSourceEnded = tableSourceEndedRed
 		}
 
 		tableContentActive = (
@@ -328,7 +383,7 @@ const DashboardOrganization = ({ role }) => {
 						</Col>
 						<Col span={12}>
 							<Text strong={role === "Donor"}>
-								{selectedCampaign.donor}
+								{selectedCampaign.donorPublicName ? selectedCampaign.donorPublicName : selectedCampaign.donor}
 							</Text>
 						</Col>
 					</Row>
@@ -338,7 +393,7 @@ const DashboardOrganization = ({ role }) => {
 						</Col>
 						<Col span={12}>
 							<Text strong={role === "Beneficiary"}>
-								{selectedCampaign.receiver}
+								{selectedCampaign.receiverPublicName ? selectedCampaign.receiverPublicName : selectedCampaign.receiver}
 							</Text>
 						</Col>
 					</Row>
@@ -377,7 +432,8 @@ const DashboardOrganization = ({ role }) => {
 					setSelectedCampaign={setSelectedCampaign}
 					showModal={showClaimModal}
 					setShowModal={setShowClaimModal}
-                    messageApi={messageApi}
+					messageApi={messageApi}
+					refetch={refetch}
 				/>
 			)}
 			{showGenerateTokensModal && selectedCampaign && (
@@ -386,7 +442,8 @@ const DashboardOrganization = ({ role }) => {
 					setSelectedCampaign={setSelectedCampaign}
 					showModal={showGenerateTokensModal}
 					setShowModal={setShowGenerateTokensModal}
-                    messageApi={messageApi}
+					messageApi={messageApi}
+					refetch={refetch}
 				/>
 			)}
 		</div>

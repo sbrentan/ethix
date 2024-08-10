@@ -20,7 +20,8 @@ const ClaimModal = ({
 	setSelectedCampaign,
 	showModal,
 	setShowModal,
-    messageApi
+    messageApi,
+    refetch
 }) => {
 	const [campaignBlock, setCampaignBlock] = useState(null);
 	const { ethPrice, loading, errorEth } = useEthPrice("eur");
@@ -73,11 +74,12 @@ const ClaimModal = ({
 				messageApi.open({
 					key: "success",
 					type: "success",
-					content: `Refund has been successfully claimed: ${amountClaimed.toString()}`,
+					content: `Refund has been successfully claimed`,
 					duration: 5,
 				});
 				setShowModal(false);
 				setSelectedCampaign(null);
+                refetch()
 			}
 		} catch (error) {
 			let errorMessage = error.data
@@ -108,11 +110,12 @@ const ClaimModal = ({
 				messageApi.open({
 					key: "success",
 					type: "success",
-					content: `Donation has been successfully claimed: ${amountClaimed.toString()}`,
+					content: `Donation has been successfully claimed`,
 					duration: 5,
 				});
 				setShowModal(false);
 				setSelectedCampaign(null);
+                refetch()
 			}
 		} catch (error) {
 			let errorMessage = error.data
@@ -126,6 +129,17 @@ const ClaimModal = ({
 			});
 		}
 	};
+
+    let targetEuro = null;
+	let valueOfToken = null;
+    let codesNotRedeemed = null
+	if (ethPrice) {
+		targetEuro = (campaign.target * ethPrice).toFixed(2);
+        valueOfToken = ((campaign.target / campaign.tokensCount)* ethPrice).toFixed(2);
+	}
+    if (campaign.blockchain_data) {
+        codesNotRedeemed = campaign.blockchain_data.tokensCount - campaign.blockchain_data.redeemedTokensCount
+    }
 
 	return (
 		<Modal
@@ -162,7 +176,7 @@ const ClaimModal = ({
 					<Text strong>Donor:</Text>
 				</Col>
 				<Col span={12}>
-					<Text strong={role === "Donor"}>{campaign.donor}</Text>
+					<Text strong={role === "Donor"}>{campaign.donorPublicName ? campaign.donorPublicName : campaign.donor}</Text>
 				</Col>
 			</Row>
 			<Row>
@@ -171,7 +185,7 @@ const ClaimModal = ({
 				</Col>
 				<Col span={12}>
 					<Text strong={role === "Beneficiary"}>
-						{campaign.receiver}
+						{campaign.receiverPublicName ? campaign.receiverPublicName : campaign.receiver}
 					</Text>
 				</Col>
 			</Row>
@@ -209,13 +223,25 @@ const ClaimModal = ({
 							<Text>{campaign.blockchain_data.tokensCount.toString()}</Text>
 						</Col>
 					</Row>
-					{/* <br />
+					<br />
 					<Row>
 						<Col span={12}>
 							<Text strong>Number of Donations:</Text>
 						</Col>
 						<Col span={12}>
-							<Text>{campaignBlock.donations.toString()}</Text>
+							<Text>{campaign.blockchain_data.redeemedTokensCount.toString()}</Text>
+						</Col>
+					</Row>
+                    <Row>
+						<Col span={12}>
+							<Text strong>Amount of Donations (ETH):</Text>
+						</Col>
+						<Col span={12}>
+							<Text>
+								{ethPrice
+									? ((campaign.blockchain_data.redeemedTokensCount * valueOfToken) / ethPrice).toFixed(2)
+									: "Calculating Exchange Rate"}
+							</Text>
 						</Col>
 					</Row>
 					<Row>
@@ -225,28 +251,33 @@ const ClaimModal = ({
 						<Col span={12}>
 							<Text>
 								{ethPrice
-									? (
-											((campaign.target * ethPrice) /
-												Number(
-													campaignBlock.tokensCount
-												)) *
-											Number(campaignBlock.donations)
-									  ).toFixed(2)
+									? (campaign.blockchain_data.redeemedTokensCount * valueOfToken).toFixed(2)
 									: "Calculating Exchange Rate"}
 							</Text>
 						</Col>
-					</Row> */}
+					</Row>
 					{role === "Donor" && (
 						<>
 							<br />
-							{/* <Row>
+							<Row>
 								<Col span={12}>
 									<Text strong>Codes Not Redeemd:</Text>
 								</Col>
 								<Col span={12}>
 									<Text>
-										{Number(campaignBlock.tokensCount) -
-											Number(campaignBlock.donations)}
+										{codesNotRedeemed}
+									</Text>
+								</Col>
+							</Row>
+							<Row>
+								<Col span={12}>
+									<Text strong>Refund available (ETH):</Text>
+								</Col>
+								<Col span={12}>
+									<Text>
+										{ethPrice
+											? (valueOfToken * codesNotRedeemed) / ethPrice
+											: "Calculating Exchange Rate"}
 									</Text>
 								</Col>
 							</Row>
@@ -257,19 +288,11 @@ const ClaimModal = ({
 								<Col span={12}>
 									<Text>
 										{ethPrice
-											? (
-													((campaign.target *
-														ethPrice) /
-														Number(
-															campaignBlock.tokensCount
-														)) *
-                                                        Number(campaignBlock.tokensCount) -
-                                                        Number(campaignBlock.donations)
-											  ).toFixed(2)
+											? (valueOfToken * codesNotRedeemed).toFixed(2)
 											: "Calculating Exchange Rate"}
 									</Text>
 								</Col>
-							</Row> */}
+							</Row>
 						</>
 					)}
 					<div
@@ -285,46 +308,34 @@ const ClaimModal = ({
 								<Button
 									type="primary"
 									size="large"
-									// disabled={
-									// 	campaignBlock.refundClaimed ||
-									// 	campaignBlock.donations === campaignBlock.tokensCount
-									// }
+									disabled={campaign.blockchain_data.redeemedTokensCount === campaign.blockchain_data.tokensCount}
 									onClick={() => onClickClaimRefund()}
 								>
 									Claim Refund
 								</Button>
-								{/* {campaignBlock.refundClaimed && (
-									<Text type="danger">Already claimed</Text>
-								)}
-								{campaignBlock.donations === campaignBlock.tokensCount && (
+								{campaign.blockchain_data.redeemedTokensCount === campaign.blockchain_data.tokensCount && (
 									<Text type="danger">
-										Unfortunately there is no refund
-										available
+										Unfortunately there is no refund available
 									</Text>
-								)} */}
+								)} 
 							</Space>
 						) : (
 							<Space direction="vertical">
 								<Button
 									type="primary"
 									size="large"
-									// disabled={
-									// 	campaignBlock.donationClaimed ||
-									// 	campaignBlock.donations.toString() ===
-									// 		"0"
-									// }
+									disabled={
+										campaign.blockchain_data.redeemedTokensCount === 0
+									}
 									onClick={() => onClickClaimDonation()}
 								>
 									Claim Dontations
 								</Button>
-								{/* {campaignBlock.donationClaimed && (
-									<Text type="danger">Already claimed</Text>
-								)}
-								{campaignBlock.donations.toString() === "0" && (
+								{campaign.blockchain_data.redeemedTokensCount === 0 && (
 									<Text type="danger">
 										Unfortunately no donations has been made
 									</Text>
-								)} */}
+								)}
 							</Space>
 						)}
 					</div>

@@ -118,11 +118,11 @@ const adminMenu = [
 		key: "/home",
 		icon: <HomeOutlined />,
 	},
-    {
-		label: (<Link to='/admin/dashboard'>Dashboard</Link>),
-		key: "/admin/dashboard",
-		icon: <BarChartOutlined />,
-	},
+    // {
+	// 	label: (<Link to='/admin/dashboard'>Dashboard</Link>),
+	// 	key: "/admin/dashboard",
+	// 	icon: <BarChartOutlined />,
+	// },
     {
 		label: (<Link to='/admin/campaigns'>Campaigns</Link>),
 		key: "/admin/campaigns",
