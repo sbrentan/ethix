@@ -157,7 +157,6 @@ const redeemToken = asyncHandler(async (req, res) => {
     try{
         [tokenSalt, t15_token] = await recoverT15Token(campaignId, token);
     } catch (error) {
-        console.log('salt not present on db');
         console.log('Error redeeming token:', error);
         return res.status(400).json({ message: "Error redeeming token: " + error.message });
     }
@@ -167,7 +166,9 @@ const redeemToken = asyncHandler(async (req, res) => {
     const { v, r, s } = ethUtil.fromRpcSig(signature);
 
     try {
-        // TODO: batch these calls
+        if(tokenSalt && tokenSalt.redeemed){
+            return res.status(400).json({ message: "Token already redeemed" });
+        }
         // Check if the token is valid on blockchain
         const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).call({ from: WEB3_MANAGER_ACCOUNT.address });
         console.log("isTokenValid", isTokenValid);
@@ -175,18 +176,23 @@ const redeemToken = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "Token not valid" });
         }
 
-        if (tokenSalt)
+        if (tokenSalt){
             tokenSalt.redeemed = true;
-        
+            await tokenSalt.save();
+        }
+
         // Check if the batch of tokens is complete
         campaign.redeemableTokens += 1;
         newtoken = new RedeemableToken({
             campaignId: campaignId,
-            token: token,
+            token: t15_token,
             signature: signature
         });
+
         await newtoken.save();
-        if (campaign.redeemableTokens === campaign.batchRedeem) {
+        await campaign.save();
+        console.log(campaign.redeemableTokens, campaign.batchRedeem);
+        if (campaign.redeemableTokens >= campaign.batchRedeem) {
             // redeem the batch of tokens
             const redeemableTokens = await RedeemableToken.find({ campaignId: campaignId }).limit(campaign.batchRedeem).exec();
             console.log('Redeeming batch of tokens: ', redeemableTokens);
@@ -203,7 +209,7 @@ const redeemToken = asyncHandler(async (req, res) => {
             
             for (const token of redeemableTokens) {
                 // delete token
-                await token.delete();
+                await token.deleteOne();
             }
 
             // reset redeemable tokens
@@ -212,6 +218,10 @@ const redeemToken = asyncHandler(async (req, res) => {
             // update campaign
             await campaign.save();
             console.log('Campaign updated:', campaign);
+        } else {
+            // save token and signature
+            console.log('Added redeemable token:', newtoken);
+            console.log('Skipping single token redeem, batch count = ', campaign.batchRedeem, ', redeemable tokens = ', campaign.redeemableTokens);
         }
 
         res.json({ message: "Token redeemed" });

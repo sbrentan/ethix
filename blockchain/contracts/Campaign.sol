@@ -255,6 +255,7 @@ contract Campaign {
             // redeem the token
             tokens[t2_token] = true;
         }
+        
         campaignDetails.redeemedTokensCount += _tokens.length;
     }
 

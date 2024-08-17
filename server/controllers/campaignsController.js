@@ -97,7 +97,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	}
 
 	if(!batchRedeem) {
-		batchRedeem = 1;
+		batchRedeem = process.env.DEFAULT_BATCH_REDEEM || 1;
 	}
 
 	// Get current blockchain block number (used for to wait for CRR reveal method)
