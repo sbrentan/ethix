@@ -71,6 +71,17 @@ const CampaignSchema = new mongoose.Schema(
             required: true,
             ref: "Beneficiary",
         },
+        // batchRedeem is the number of tokens that will be redeemed at once
+        batchRedeem: {
+            type: Number,
+            required: true
+        },
+        // total redeemable tokens count saved on db
+        redeemableTokens: {
+            type: Number,
+            required: false,
+            default: 0
+        },
         seed: {
             type: String,
             required: true

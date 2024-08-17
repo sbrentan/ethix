@@ -57,6 +57,8 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	}
 
 	// Check if the campaign is a draft and skip campaign creation if it is
+	// Saving the seed in the session to be used later
+	// Also return the seed hash and the signature to be passed to the blockchain method
 	if (draft) {
 		// Generate a seed for the campaign
 		const seed = web3.utils.randomHex(32);
@@ -81,8 +83,8 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	}
 
 	const seed = req.session.seed;
-	const seedHash = req.body.seedHash;
-	const campaignAddress = req.body.campaignAddress;
+	const { seedHash, campaignAddress } = req.body;
+	let { batchRedeem } = req.body;
 	
 	// Confirm seed and seedHash are valid
 	if (!seed || !seedHash || seedHash !== web3.utils.keccak256(seed)) {
@@ -94,6 +96,10 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 		return res.status(400).json({ message: "Campaign address is required" });
 	}
 
+	if(!batchRedeem) {
+		batchRedeem = 1;
+	}
+
 	// Get current blockchain block number (used for to wait for CRR reveal method)
 	const blockNumber = Number(await web3.eth.getBlockNumber());
 
@@ -102,7 +108,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	// Create and store new campaign
 	const campaign = await Campaign.create({ 
 		target, title, image, description, startingDate, deadline, donor, receiver, tokensCount,
-		seed, blockNumber, campaignId: campaignAddress, createdBy: donor
+		seed, blockNumber, campaignId: campaignAddress, createdBy: donor, batchRedeem: batchRedeem
 	});
 
 	if (campaign) {
@@ -137,7 +143,7 @@ const generateRandomWallet = asyncHandler(async (req, res) => {
 	if(!seed) {
 		return res.status(400).json({ message: "Seed not found" });
 	}
-	
+
 	// Generate a random wallet
 	const wallet = web3.eth.accounts.create();
 
@@ -232,7 +238,6 @@ async function _injectBlockchainCampaign(campaigns) {
 		}
 
 		new_campaigns.push(campaign);
-		console.log(new_campaigns);
 	}
 	return new_campaigns;
 }

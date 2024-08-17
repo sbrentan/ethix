@@ -4,7 +4,8 @@ const TokenSalt = require("../models/TokenSalt");
 const Campaign = require("../models/Campaign");
 const crypto = require('crypto');
 const ethUtil = require('ethereumjs-util');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const RedeemableToken = require("../models/RedeemableToken");
 
 const retrieveBlockchainError = (error) => {
     try{
@@ -173,15 +174,46 @@ const redeemToken = asyncHandler(async (req, res) => {
         if (!isTokenValid) {
             return res.status(400).json({ message: "Token not valid" });
         }
-        
-        // Redeem the token
-        const receipt = await WEB3_CONTRACT.methods.redeemToken(campaignAddress, t15_token, {r: r, s: s, v: v}).send({ from: WEB3_MANAGER_ACCOUNT.address });
-        if (tokenSalt) {
+
+        if (tokenSalt)
             tokenSalt.redeemed = true;
-            await tokenSalt.save();
+        
+        // Check if the batch of tokens is complete
+        campaign.redeemableTokens += 1;
+        newtoken = new RedeemableToken({
+            campaignId: campaignId,
+            token: token,
+            signature: signature
+        });
+        await newtoken.save();
+        if (campaign.redeemableTokens === campaign.batchRedeem) {
+            // redeem the batch of tokens
+            const redeemableTokens = await RedeemableToken.find({ campaignId: campaignId }).limit(campaign.batchRedeem).exec();
+            console.log('Redeeming batch of tokens: ', redeemableTokens);
+            const tokens = redeemableTokens.map(token => token.token);
+            const RSVSignatures = redeemableTokens.map(token => {
+                const { v, r, s } = ethUtil.fromRpcSig(token.signature);
+                return {r: r, s: s, v: v}
+            });
+            const receipt = await WEB3_CONTRACT.methods.redeemTokensBatch(campaignAddress, tokens, RSVSignatures).send({
+                gasPrice: web3.utils.toWei('2', 'gwei'),
+                from: WEB3_MANAGER_ACCOUNT.address
+            });
+            console.log('Transaction receipt:', receipt);
+            
+            for (const token of redeemableTokens) {
+                // delete token
+                await token.delete();
+            }
+
+            // reset redeemable tokens
+            campaign.redeemableTokens = await RedeemableToken.countDocuments({ campaignId: campaignId }).exec();
+
+            // update campaign
+            await campaign.save();
+            console.log('Campaign updated:', campaign);
         }
 
-        console.log('Transaction receipt:', receipt);
         res.json({ message: "Token redeemed" });
     } catch (error) {
         console.log('Error redeeming token:', error);
@@ -205,22 +237,6 @@ const recoverT15Token = async (campaignId, t1_token) => {
     console.log('t15_token', t15_token);
 
     return [tokenSalt, t15_token];
-}
-
-const checkTokenHash = async (campaignId, tokenId, campaignAddress) => {
-    campaign = await Campaign.findOne({ _id: campaignId, campaignId: campaignAddress }).exec();
-    if (!campaign)
-        throw new Error("Campaign not found");
-
-    token_hash = crypto.createHash('sha256').update(campaignId + tokenId + campaignAddress).digest('hex')
-    const token = await Token.findOne({ campaignId: campaign._id, hash: token_hash }).exec();
-
-    if (!token)
-        throw new Error("Token not valid");
-    else if (token.redeemed)
-        throw new Error("Token already redeemed");
-
-    return token;
 }
 
 
