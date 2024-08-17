@@ -28,7 +28,7 @@ const HomePage = () => {
 			>
 				<Space direction="vertical" style={{ margin: "20px 20px" }}>
 					<Title level={1}>Make a Change</Title>
-					<Link to={"/newcampaign"}>
+					<Link to={"/donor/donorCampaigns"}>
 						<Button type="primary" shape="round" size="large">
 							Start your Charity Campaign Now
 						</Button>

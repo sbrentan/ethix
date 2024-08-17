@@ -43,16 +43,11 @@ const RedeemPage = () => {
 				if (!decoded) {	// || !decoded.exp || Date.now() > (decoded.exp * 1000)) {
 					setInvalidToken(true);
 				} else {
-					const { campaignId, campaignAddress, tokenId } = decoded;
-                    console.log({
-                    	campaignId,
-                    	campaignAddress,
-                    	tokenId,
-                    })
+					const { campaignId, tokenId, signature } = decoded;
                     redeemToken({
                     	campaignId,
-                    	campaignAddress,
-                    	tokenId,
+                    	token: tokenId,
+                    	signature: signature
                     });
 					setCampaignId(campaignId);
 				}
@@ -82,7 +77,7 @@ const RedeemPage = () => {
 			status="error"
 			title="Code not redeemed."
 			subTitle={`There was an error redeeming the code${
-				error ? `: ${error.data.message}.` : `.`
+				error ? `: ${error?.data?.message}.` : `.`
 			}`}
 			extra={[
 				<Link to="/home">

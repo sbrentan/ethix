@@ -88,7 +88,8 @@ const registerDonorBeneficiary = asyncHandler(async (req, res) => {
         const request = await ProfileRequest.create({ user: user._id.toString(), username, address, role, donorData, beneficiaryData})
 
         // to create the public data
-        const publicProfile = await PublicProfile.create({ user: user._id.toString()})
+        const publicName = role === ROLES_LIST.donor ? values?.companyName : values?.beneficiaryName
+        const publicProfile = await PublicProfile.create({ user: user._id.toString(), publicName})
     }
 
     res.status(200).json({ message: `Account created!` });

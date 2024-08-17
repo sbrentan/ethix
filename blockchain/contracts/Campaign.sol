@@ -28,6 +28,11 @@ contract Campaign {
         uint256 initialDeposit; // initial deposit for the campaign
         uint256 refunds;
         uint256 donations;
+
+        bool refundClaimed;
+        bool donationClaimed;
+        bool funded;
+        uint256 redeemedTokensCount;
     }
 
     // ====================================== VARIABLES ======================================
@@ -36,11 +41,6 @@ contract Campaign {
 
     // is the public wallet address used to verify the authenticity of the tokens generated
     address private walletAddress;
-
-    bool private refundClaimed;
-    bool private donationClaimed;
-    bool private funded;
-    bool private suspended; // TODO: add a flag to suspend the campaign
 
     // seed used to generate the tokens
     bytes32 private seed;
@@ -52,7 +52,6 @@ contract Campaign {
     TokenBlock private tokenBlock;
 
     // keep track of all tokens redeeming status (redeemed or not)
-    uint256 public redeemedTokensCount;
     mapping(bytes32 => bool) private tokens;
 
     // keep track of the gas fees
@@ -84,7 +83,7 @@ contract Campaign {
     }
 
     modifier onlyFundedCampaign() {
-        require(funded, "Campaign has not been funded yet");
+        require(campaignDetails.funded, "Campaign has not been funded yet");
         _;
     }
 
@@ -109,12 +108,12 @@ contract Campaign {
     }
 
     modifier onlyNotRefunded() {
-        require(!refundClaimed, "Refunds already claimed");
+        require(!campaignDetails.refundClaimed, "Refunds already claimed");
         _;
     }
 
     modifier onlyNotDonated() {
-        require(!donationClaimed, "Donations already claimed");
+        require(!campaignDetails.donationClaimed, "Donations already claimed");
         _;
     }
 
@@ -148,7 +147,7 @@ contract Campaign {
         address _from
     ) external payable onlyOwner onlyDonor(_from) {
         // require the campaign is not already funded
-        require(!funded, "Campaign has already been funded");
+        require(!campaignDetails.funded, "Campaign has already been funded");
 
         /*uint256 redeemTransactionCost = REDEEM_TOKEN_GAS_COST * REDEEM_TOKEN_COST_MULTIPLIER * tx.gasprice;
         gasFeesStorage = redeemTransactionCost * campaignDetails.tokensCount;
@@ -171,7 +170,7 @@ contract Campaign {
         tokenBlock.blockTimestamp = block.timestamp;
 
         // set the campaign as funded
-        funded = true;
+        campaignDetails.funded = true;
     }
 
     function setWalletAddress(address _walletAddress) external onlyOwner {
@@ -201,16 +200,16 @@ contract Campaign {
             campaignDetails.tokensCount) + _tokenValue;
 
         uint256 _refunds = 0;
-        if (redeemedTokensCount < campaignDetails.tokensCount)
+        if (campaignDetails.redeemedTokensCount < campaignDetails.tokensCount)
             _refunds =
                 _lastTokenValue +
                 (_tokenValue *
-                    ((campaignDetails.tokensCount - 1) - redeemedTokensCount));
+                    ((campaignDetails.tokensCount - 1) - campaignDetails.redeemedTokensCount));
 
         // transfer the refunds to the donor
         campaignDetails.refunds = _refunds;
         campaignDetails.donor.transfer(_refunds);
-        refundClaimed = true;
+        campaignDetails.refundClaimed = true;
     }
 
 
@@ -229,13 +228,13 @@ contract Campaign {
             campaignDetails.tokensCount;
 
         uint256 _donations = campaignDetails.initialDeposit;
-        if (redeemedTokensCount < campaignDetails.tokensCount)
-            _donations = _tokenValue * redeemedTokensCount;
+        if (campaignDetails.redeemedTokensCount < campaignDetails.tokensCount)
+            _donations = _tokenValue * campaignDetails.redeemedTokensCount;
 
         // transfer the balance to the beneficiary
         campaignDetails.donations = _donations;
         campaignDetails.beneficiary.transfer(_donations);
-        donationClaimed = true;
+        campaignDetails.donationClaimed = true;
     }
 
     // allow users to reedem the tokens they bought
@@ -247,7 +246,7 @@ contract Campaign {
 
         // redeem the token
         tokens[t2_token] = true;
-        redeemedTokensCount += 1;
+        campaignDetails.redeemedTokensCount += 1;
     }
 
     // check if a token is valid
@@ -269,7 +268,7 @@ contract Campaign {
         }
 
         // check if the campaign is funded
-        if (!funded) {
+        if (!campaignDetails.funded) {
             return false;
         }
 

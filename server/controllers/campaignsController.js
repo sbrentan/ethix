@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
-const { web3, WEB3_MANAGER_PRIVATE_KEY, encodePacked } = require("../config/web3");
+const { web3, WEB3_MANAGER_PRIVATE_KEY, WEB3_CONTRACT, encodePacked } = require("../config/web3");
 const User = require("../models/User");
 const { beneficiary } = require("../config/roles_list");
 
@@ -8,36 +8,25 @@ const { beneficiary } = require("../config/roles_list");
 // @route GET /campaigns
 // @access Public - each user can see all campaigns
 const getAllCampaigns = asyncHandler(async (req, res) => {
-	const campaigns = await Campaign.find().lean();
+	var campaigns = await Campaign.find().exec();
 	if (!campaigns?.length) {
 		return res.status(400).json({ message: "No campaigns found" });
 	}
-	res.json(campaigns);
+	const new_campaigns = await _injectBlockchainCampaign(campaigns);
+
+	res.json(new_campaigns);
 });
 
 // @desc Get a campaign
 // @route GET /campaigns/:id
 // @access Public - each user can see a campaign
 const getCampaign = asyncHandler(async (req, res) => {
-	const campaign = await Campaign.findById(req.params.id).lean();
+	let campaign = await Campaign.findById(req.params.id).lean();
 	if (!campaign) {
 		return res.status(400).json({ message: "Campaign not found" });
 	}
-	inject_from_blockchain = req.query.from_blockchain
-	if (inject_from_blockchain) {
-		// inject data from blockchain
-		// TODO: implement
-		// campaign.blockchain_data = ...
-	}
-
-	// Get current blockchain block number (used for to wait for CRR reveal method)
-	const blockNumber = Number(await web3.eth.getBlockNumber());
-
-	// Tell the frontend when the reveal method is callable because the block number has changed
-	campaign.is_fundable = campaign.blockNumber < blockNumber;
-
-	// Remove `seed` from the response
-	delete campaign.seed;
+	
+	[campaign] = await _injectBlockchainCampaign([campaign]);
 
 	res.json(campaign);
 });
@@ -48,10 +37,12 @@ const getCampaign = asyncHandler(async (req, res) => {
 const getUserCampaigns = asyncHandler(async (req, res) => {
 	let userId = req.userId;
 	console.log("userid:"+userId)
-	const campaigns = await Campaign.find({$or:[{donor: userId},{receiver: userId}]}).exec();
+	let campaigns = await Campaign.find({$or:[{donor: userId},{receiver: userId}]}).exec();
 	if (!campaigns?.length) {
 		return res.status(400).json({ message: "No campaigns found" });
 	}
+	
+	campaigns = await _injectBlockchainCampaign(campaigns);
 	res.json(campaigns);
 });
 
@@ -209,6 +200,43 @@ const deleteCampaign = asyncHandler(async (req, res) => {
 
 	res.json({ message: "Campaign removed" });
 });
+
+async function _injectBlockchainCampaign(campaigns) {
+	// Get current blockchain block number (used for to wait for CRR reveal method)
+	const blockNumber = Number(await web3.eth.getBlockNumber());
+	new_campaigns = [];
+	for (let i = 0; i < campaigns.length; i++) {
+		campaign = campaigns[i].toObject();
+
+		// inject data from blockchain
+		delete campaign.seed;
+
+		// Tell the frontend when the reveal method is callable because the block number has changed
+		campaign.is_fundable = campaign.blockNumber < blockNumber;
+
+		if (!campaign.campaignId) {
+			continue;
+		}
+		try{
+			campaign.blockchain_data = await WEB3_CONTRACT.methods.getCampaign(campaign.campaignId).call();
+			for (let key in campaign.blockchain_data) {
+				// if is big int
+				if(typeof(campaign.blockchain_data[key]) === 'bigint')
+					campaign.blockchain_data[key] = Number(campaign.blockchain_data[key]);
+			}
+			// console.log("Retrieved campaign data from blockchain for campaign:", campaign._id);
+		} catch (error) {
+			campaign.blockchain_data = {};
+			// console.log('Error getting campaign data from blockchain for campaign:', campaign._id);
+			continue;
+		}
+
+		new_campaigns.push(campaign);
+		console.log(new_campaigns);
+	}
+	return new_campaigns;
+}
+
 
 module.exports = {
 	getAllCampaigns,

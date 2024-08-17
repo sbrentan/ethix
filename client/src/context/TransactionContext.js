@@ -246,11 +246,11 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const startCampaign = async () => {
+    const startCampaign = async ({campaignId, campaignAddress}) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
-            const wallet_response = await generateRandomWallet({ campaignId: campaign.id });
+            const wallet_response = await generateRandomWallet({ campaignId });
 
             if (wallet_response?.error?.data?.message) throw new Error(wallet_response?.error?.data?.message);
 
@@ -265,7 +265,7 @@ export const TransactionsProvider = ({ children }) => {
             if (!target) throw new Error("No target found");
 
             await charityContract.methods.startCampaign(
-                campaign.address, 
+                campaignAddress, 
                 seed,
                 walletAddress, // public key
                 {
@@ -278,7 +278,7 @@ export const TransactionsProvider = ({ children }) => {
                 value: web3.utils.toWei(String(target), 'ether')
             });
             
-            const token_response = await generateCampaignTokens({ campaignId: campaign.id });
+            const token_response = await generateCampaignTokens({ campaignId });
 
             if (token_response?.error?.data?.message) throw new Error(token_response?.error?.data?.message);
 
@@ -286,7 +286,7 @@ export const TransactionsProvider = ({ children }) => {
 
             console.log(signed_tokens);
 
-            // TODO: create qr codes in some way
+            return signed_tokens
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -357,6 +357,7 @@ export const TransactionsProvider = ({ children }) => {
 
             const result = await charityContract.methods.claimRefund(campaignId).send({ from: wallet.address });
             refund = result.events.RefundClaimed.returnValues.amount;
+            console.log(refund)
             setCampaign((prevState) => ({ ...prevState, is_refunded: true }));
 
         } catch (error) {
@@ -376,6 +377,7 @@ export const TransactionsProvider = ({ children }) => {
 
             const result = await charityContract.methods.claimDonation(campaignId).send({ from: wallet.address });
             donation = result.events.DonationClaimed.returnValues.amount;
+            console.log(donation)
             setCampaign((prevState) => ({ ...prevState, is_donated: true }));
 
         } catch (error) {
@@ -412,31 +414,6 @@ export const TransactionsProvider = ({ children }) => {
     }, [wallet]);
 
     useEffect(() => {
-        const checkMinedBlock = async () => {
-            const response = await getCampaignDetails({ campaignId: campaign.id });
-            const is_fundable = response?.data?.is_fundable;
-            setCampaign((prevState) => ({ ...prevState, is_fundable: is_fundable }));
-        }
-        if (campaign.id && !campaign.is_fundable) checkMinedBlock();
-    }, [block]);
-
-    useEffect(() => {
-
-        // Subscription to new blocks mined event
-
-        const checkMinedBlock = async () => {
-            const minedBlockSubscription = await web3.eth.subscribe('newBlockHeaders');
-
-            minedBlockSubscription.on('data', async (blockHeader) => {
-                setBlock(Number(blockHeader.number));
-            });
-
-            return () => minedBlockSubscription.unsubscribe();
-        };
-
-        // Call async functions
-
-        checkMinedBlock();
 
         // Subscriptions to contract events
         

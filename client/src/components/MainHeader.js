@@ -118,11 +118,11 @@ const adminMenu = [
 		key: "/home",
 		icon: <HomeOutlined />,
 	},
-    {
-		label: (<Link to='/admin/dashboard'>Dashboard</Link>),
-		key: "/admin/dashboard",
-		icon: <BarChartOutlined />,
-	},
+    // {
+	// 	label: (<Link to='/admin/dashboard'>Dashboard</Link>),
+	// 	key: "/admin/dashboard",
+	// 	icon: <BarChartOutlined />,
+	// },
     {
 		label: (<Link to='/admin/campaigns'>Campaigns</Link>),
 		key: "/admin/campaigns",
@@ -216,7 +216,7 @@ const MainHeader = () => {
 			style={{
                 position: 'sticky',
                 top: 0,
-                // zIndex: 1,
+                zIndex: 1,
                 width: '100%',
 				// display: "flex",
 				// justifyContent: "space-between",

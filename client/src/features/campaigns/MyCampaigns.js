@@ -61,7 +61,9 @@ const CampaignsGrid = () => {
 		isSuccess,
 		isError,
 		error,
-	} = useGetDonorCampaignsQuery("campaignsList", {});
+	} = useGetDonorCampaignsQuery("campaignsList", {
+        refetchOnFocus: true, // fetch on focus
+    });
 
 	// When campaigns or the filter change it perform a filters evaluation
 	// Filtered result is the ID lists of the filtered campaigns

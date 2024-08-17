@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import React from "react";
 import { useGetCampaignsQuery } from "./campaignsApiSlice";
 import { useNavigate } from "react-router-dom";
+import { useEthPrice } from "use-eth-price";
 
 const { Text } = Typography;
 
@@ -24,10 +25,24 @@ const CampaignCard = ({ campaignId }) => {
 		}),
 	});
 
+    const { ethPrice, loading, errorEth } = useEthPrice("eur");
     const navigate = useNavigate()
 
 	if (campaign) {
-		const percent = Math.floor(Math.random() * 11) * 10;
+        let targetEuro = null;
+        if (ethPrice) {
+            targetEuro = (campaign.target * ethPrice).toFixed(2);
+        }
+    
+		let percent = Math.floor(Math.random() * 11) * 10;
+        if (campaign && campaign.blockchain_data) {
+            try { 
+                percent = Math.floor(campaign.blockchain_data.redeemedTokensCount / campaign.blockchain_data.tokensCount * 100)
+                console.log(percent)
+                if (percent < 1 && campaign.blockchain_data.redeemedTokensCount > 0) percent = 1
+            } catch (error) {console.log(error)}
+        }
+
 		let status = "active";
 		if (percent === 100) {
 			status = "";
@@ -58,7 +73,13 @@ const CampaignCard = ({ campaignId }) => {
 						/>
 					</Col>
 					<Col span={10}>
-						<Progress percent={percent} status={status} />
+                        <Space direction="vertical" style={{ width: '100%'}}>
+						    <Progress percent={percent} status={status} />
+                            <Text>
+                                Goal of{" "}
+                                {targetEuro ? <Text strong>{targetEuro}</Text> : "Calculating Exchange Rate"} €
+                            </Text>
+                        </Space>
 					</Col>
 					<Col span={1}>
 						<Divider

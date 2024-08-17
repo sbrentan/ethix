@@ -19,15 +19,15 @@ const Register = () => {
 	const [successRegistration, setSuccessRegistration] = useState(false);
 	// For the tabs
 	const tabItems = [
+		// {
+		// 	key: "0",
+		// 	label: "User",
+		// 	children: (
+		// 		<RegisterUser setSuccessRegistration={setSuccessRegistration} />
+		// 	),
+		// },
 		{
 			key: "0",
-			label: "User",
-			children: (
-				<RegisterUser setSuccessRegistration={setSuccessRegistration} />
-			),
-		},
-		{
-			key: "1",
 			label: "Donor",
 			children: (
 				<RegisterDonor
@@ -36,7 +36,7 @@ const Register = () => {
 			),
 		},
 		{
-			key: "2",
+			key: "1",
 			label: "Beneficiary",
 			children: (
 				<RegisterBeneficiary
