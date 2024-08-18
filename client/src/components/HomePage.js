@@ -144,7 +144,7 @@ const HomePage = () => {
 								Discover More
 							</Button>
 						</Space>
-						<Image src="error" width={350} preview={false} />
+						<Image src="https://www.wordstormpr.com.au/wp-content/uploads/2014/07/charity.png" width={350} preview={false} />
 					</Space>
 				</Space>
 			</Flex>
