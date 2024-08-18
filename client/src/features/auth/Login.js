@@ -17,6 +17,8 @@ import { setCredentials } from "./authSlice";
 import { useLoginMutation } from "./authApiSlice";
 import usePersist from "../../hooks/usePersist";
 import useTitle from "../../hooks/useTitle";
+import Cookies from 'universal-cookie';
+const cookies = new Cookies();
 
 const { Text, Title } = Typography;
 
@@ -46,6 +48,7 @@ const Login = () => {
 				password,
 			}).unwrap();
 			dispatch(setCredentials({ accessToken }));
+			cookies.set('jwt_cookie', accessToken);
 			navigate("/home");
 		} catch (err) {
 			if (!err.status) {
