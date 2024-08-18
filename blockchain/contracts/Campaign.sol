@@ -18,6 +18,8 @@ contract Campaign {
     }
 
     struct CampaignDetails {
+
+        // campaign initial details
         bytes32 campaignId;
         string title;
         uint256 startingDate; //timestamp format
@@ -25,10 +27,11 @@ contract Campaign {
         address payable donor;
         address payable beneficiary;
         uint256 tokensCount;
-        uint256 initialDeposit; // initial deposit for the campaign
+        
+        // campaign status information
+        uint256 initialDeposit;
         uint256 refunds;
         uint256 donations;
-
         bool refundClaimed;
         bool donationClaimed;
         bool funded;
@@ -53,11 +56,6 @@ contract Campaign {
 
     // keep track of all tokens redeeming status (redeemed or not)
     mapping(bytes32 => bool) private tokens;
-
-    // keep track of the gas fees
-    uint256 public gasFeesStorage;
-    uint256 public constant REDEEM_TOKEN_GAS_COST = 65000; // approximated gas cost to redeem a token
-    uint24 public constant REDEEM_TOKEN_COST_MULTIPLIER = 2; // gas cost multiplier to be sure to have enough gas to redeem a token
 
     // ====================================== MODIFIERS ======================================
 
@@ -149,21 +147,10 @@ contract Campaign {
         // require the campaign is not already funded
         require(!campaignDetails.funded, "Campaign has already been funded");
 
-        /*uint256 redeemTransactionCost = REDEEM_TOKEN_GAS_COST * REDEEM_TOKEN_COST_MULTIPLIER * tx.gasprice;
-        gasFeesStorage = redeemTransactionCost * campaignDetails.tokensCount;
-
-        require(
-            msg.value > gasFeesStorage,
-            "Insufficient funds to start the campaign"
-        );*/
-
-        // compute the initial deposit after subtracting the gas fees for the tokens redeem
-        uint _initialDeposit = msg.value; // - gasFeesStorage;
-
         seed = _seed;
         walletAddress = _walletAddress;
-        campaignDetails.initialDeposit = _initialDeposit;
-        campaignDetails.refunds = _initialDeposit;
+        campaignDetails.initialDeposit = msg.value;
+        campaignDetails.refunds = msg.value;
 
         // saves information for future token generation
         tokenBlock.blockNumber = block.number - 1;
@@ -247,8 +234,7 @@ contract Campaign {
         );
 
         for (uint256 i = 0; i < _tokens.length; i++) {
-            // redeem single token
-            // not calling redeemToken to avoid changing the state multiple times for redeemedTokensCount
+
             bytes32 t2_token = generateTokenHash(_tokens[i]);
             require(isTokenValid(_tokens[i], _signatures[i]), "Token is not valid");
 
@@ -257,19 +243,6 @@ contract Campaign {
         }
         
         campaignDetails.redeemedTokensCount += _tokens.length;
-    }
-
-    // allow users to reedem the tokens they bought
-    function redeemToken(
-        bytes32 t15_token,
-        Signature calldata _signature
-    ) external {
-        bytes32 t2_token = generateTokenHash(t15_token);
-        require(isTokenValid(t2_token, _signature), "Token is not valid");
-
-        // redeem the token
-        tokens[t2_token] = true;
-        campaignDetails.redeemedTokensCount += 1;
     }
 
     // check if a token is valid
