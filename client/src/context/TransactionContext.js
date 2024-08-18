@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 
 import {
-    useGetCampaignMutation,
     useCreateCampaignMutation,
     useGenerateRandomWalletMutation,
     useGenerateCampaignTokensMutation,
@@ -24,8 +23,6 @@ export const TransactionsProvider = ({ children }) => {
 
     /* ------------------------ STATES ------------------------ */
 
-    const [block, setBlock] = useState(0);
-
     const [wallet, setWallet] = useState({
         address: '', // walletAddress of MetaMask
         is_logged: false,
@@ -37,14 +34,14 @@ export const TransactionsProvider = ({ children }) => {
     });
 
     const [formData, setformData] = useState({
-        title: '1',
+        title: '',
         description: '',
         image: '',
         startdate: '',
         deadline: '',
-        target: "0.001",
-        tokens: "5",
-        beneficiary: '0x665d33620B72b917932Ae8bdE0382494C25b45e1'
+        target: '',
+        tokens: '',
+        beneficiary: ''
     });
 
     const [campaign, setCampaign] = useState({
@@ -52,8 +49,6 @@ export const TransactionsProvider = ({ children }) => {
         address: '', // campaignAddress on the blockchain
         is_created: false,
         is_started: false,
-        is_association_failed: false,
-        is_fundable: false,
         is_refunded: false,
         is_donated: false
     });
@@ -61,7 +56,6 @@ export const TransactionsProvider = ({ children }) => {
     /* ------------------------ MUTATIONS ------------------------ */
 
     // Move to specific components
-    const [getCampaignDetails] = useGetCampaignMutation();
     const [initCampaign] = useCreateCampaignMutation();
     const [generateRandomWallet] = useGenerateRandomWalletMutation();
     const [generateCampaignTokens] = useGenerateCampaignTokensMutation();
@@ -282,6 +276,8 @@ export const TransactionsProvider = ({ children }) => {
 
             if (token_response?.error?.data?.message) throw new Error(token_response?.error?.data?.message);
 
+            setCampaign((prevState) => ({ ...prevState, is_started: true }));
+
             const signed_tokens = token_response?.data?.signedTokens;
 
             console.log(signed_tokens);
@@ -409,8 +405,10 @@ export const TransactionsProvider = ({ children }) => {
 
     useEffect(() => {
         if (!wallet.address) checkIfWalletIsConnect();
-        ethereum.on('accountsChanged', checkIfWalletIsConnect);
-        return () => ethereum.removeListener('accountsChanged', checkIfWalletIsConnect);
+        if (ethereum) {
+            ethereum.on('accountsChanged', checkIfWalletIsConnect);
+            return () => ethereum.removeListener('accountsChanged', checkIfWalletIsConnect);
+        }
     }, [wallet]);
 
     useEffect(() => {

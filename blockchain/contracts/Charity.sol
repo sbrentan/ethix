@@ -237,21 +237,13 @@ contract Charity {
         emit DonationClaimed(campaigns[_campaignId].getDetails().donations);
     }
 
+    // redeem a batch of tokens
     function redeemTokensBatch(
         bytes32 _campaignId,
         bytes32[] calldata _tokens,
         Campaign.Signature[] calldata _signatures
     ) external onlyExistingCampaign(_campaignId) onlyOwner {
         campaigns[_campaignId].redeemTokensBatch(_tokens, _signatures);
-    }
-
-    // redeem a token for an active campaign
-    function redeemToken(
-        bytes32 _campaignId,
-        bytes32 _tokenId,
-        Campaign.Signature calldata _signature
-    ) external onlyExistingCampaign(_campaignId) onlyOwner {
-        campaigns[_campaignId].redeemToken(_tokenId, _signature);
     }
 
     // function to check if a token is valid
