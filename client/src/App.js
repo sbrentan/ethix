@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import MainLayout from "./components/MainLayout";
 import logo from "./logo.svg";
@@ -33,11 +33,8 @@ function App() {
             <Routes>
                 <Route path="/" element={<MainLayout />}>
                     {/* public routes */}
-                    <Route index element={
-                        <div className="App" style={{ margin: 30}}>
-                            This element needs to be replaced by the Homepage
-                        </div>
-                    } />
+
+                    <Route index element={<Navigate to="/home" replace />} />
                     <Route path="login" element={<Login />} />
                     <Route path="logout" element={<Logout />} />
                     <Route path="register" element={<Register />} />

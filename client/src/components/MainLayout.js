@@ -12,7 +12,6 @@ const MainLayout = () => {
             <MainHeader />
 			<Content>
 				<Outlet />
-				<Test />
 			</Content>
 			<MainFooter />
 		</Layout>
