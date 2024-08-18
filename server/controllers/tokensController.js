@@ -81,9 +81,17 @@ const generateTokens = asyncHandler(async (req, res) => {
         console.log('t15_tokens', t15_tokens);
 
         // Generate the tokens T2
-        // TODO: batch this call
-        const t2_tokens = await WEB3_CONTRACT.methods.generateTokenHashes(campaignAddress, t15_tokens).call({ from: WEB3_MANAGER_ACCOUNT.address });
-        console.log('t2_tokens', t2_tokens);
+        // batch this call by dividing the tokens into chunks of 100
+        divided_tokens = Array.from({ length: Math.ceil(t15_tokens.length / 100) }, (_, i) => {
+            return t15_tokens.slice(i * 100, (i + 1) * 100);
+        });
+        console.log('divided_tokens', divided_tokens);
+        const t2_tokens = [];
+        for (const chunk of divided_tokens){
+            const chunk_t2_tokens = await WEB3_CONTRACT.methods.generateTokenHashes(campaignAddress, chunk).call({ from: WEB3_MANAGER_ACCOUNT.address });
+            console.log('chunk ', chunk, ': t2_tokens', chunk_t2_tokens);
+            t2_tokens.push(...chunk_t2_tokens);
+        }
 
         // Create the signature for the tokens
         const tokenSignatures = t2_tokens.map(token => {
