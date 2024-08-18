@@ -144,22 +144,33 @@ const GenerateTokensModal = ({
 			});
 		}
 
-		const doc = new jsPDF();
-		const qrCodeData = [];
-
 		try {
+
+			const pdf = new jsPDF();
+			const qrCodeData = [];
+
+			const pageWidth = pdf.internal.pageSize.getWidth();
+			const pageHeight = pdf.internal.pageSize.getHeight();
+
+			const qrSize = 100; // Size of each QR code
+			const x = (pageWidth - qrSize) / 2;
+			const y = (pageHeight - qrSize) / 2;
+			
 			for (const token of tokensList) {
 				// Generate QR code as data URL using the qrcode library
 				const url = process.env.REACT_APP_BASE_URL + "/redeem/" + token.token;
 				const imageData = await QRCode.toDataURL(url);
 				qrCodeData.push(imageData);
 			}
-	
+
 			qrCodeData.forEach((image, index) => {
-				doc.addImage(image, 'JPEG', 10, 10 + (index * 60), 50, 50);
+				pdf.addImage(image, "JPEG", x, y, qrSize, qrSize);
+
+				if (index != qrCodeData.length - 1)
+					pdf.addPage();
 			});
 	
-			doc.save('qr_codes.pdf');
+			pdf.save('qr_codes.pdf');
             setCanClose(true)
 		} catch (error) {
 			console.error("Error generating QR codes or PDF:", error);
@@ -328,7 +339,7 @@ const GenerateTokensModal = ({
 					</Text>
 				</Col>
 			</Row>
-
+			
 			<Divider />
 			<Title level={4}>Generating Codes Details</Title>
 			<Text style={{ fontSize: 16 }}>
@@ -398,7 +409,7 @@ const GenerateTokensModal = ({
 								exportToExcel();
 							}}
 						>
-							DOWNLOAD TOKENS (Excel format)
+							Download Tokens (.xlsx)
 						</Button>
 						<br></br>
 						<Button
@@ -409,7 +420,7 @@ const GenerateTokensModal = ({
 								exportToPdf();
 							}}
 						>
-							DOWNLOAD TOKENS (Pdf format)
+							Download QR Codes (.pdf)
 						</Button>
 					</Flex>
 				</Space>
