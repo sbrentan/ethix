@@ -65,6 +65,11 @@ WEB3_MANAGER_PRIVATE_KEY = '<private key of the server relayer account>'
 WEB3_MANAGER_ADDRESS = '<public key of the server relayer account>'
 WEB3_CONTRACT_ADDRESS = '<the Charity contract address, obtainable after the deploy>'
 WEB3_NETWORK_ADDRESS = 'http://127.0.0.1:7545'
+
+# Settings
+DEFAULT_BATCH_REDEEM = 3
+DEFAULT_BATCH_HASH_GENERATION = 100
+DEBUG = true
 ```
 
 ## Application running
