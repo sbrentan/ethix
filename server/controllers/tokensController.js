@@ -125,15 +125,17 @@ const generateTokens = asyncHandler(async (req, res) => {
         })
         if(process.env.DEBUG) console.log(jwt_tokens)
 
-        if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
-        // Generate QR codes in a worker thread
-        generateQRCodes(campaignId, jwt_tokens).then(async (fileName) => {
-            campaign.qrCodes = fileName;
-            await campaign.save();
-            console.log("QR codes generated in worker thread:", fileName);
-        }).catch((error) => {
-            console.log("Error generating QR codes in worker thread:", error);
-        });
+        if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
+            if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
+            // Generate QR codes in a worker thread
+            generateQRCodes(campaignId, jwt_tokens).then(async (fileName) => {
+                campaign.qrCodes = fileName;
+                await campaign.save();
+                console.log("QR codes generated in worker thread:", fileName);
+            }).catch((error) => {
+                console.log("Error generating QR codes in worker thread:", error);
+            });
+        }
 
         res.json({ signedTokens: jwt_tokens });
         
