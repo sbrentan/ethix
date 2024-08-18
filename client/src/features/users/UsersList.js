@@ -15,6 +15,8 @@ import { ROLES } from "../../config/roles";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { useGetUsersQuery, useUpdateUserMutation } from "./usersApiSlice";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
+import { useDispatch } from "react-redux";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
@@ -41,6 +43,7 @@ const UsersList = () => {
 
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch()
 
 	const {
 		data: normalizedUsers,
@@ -88,6 +91,12 @@ const UsersList = () => {
 
 	// Gestione Azioni su utenti
 	const navigate = useNavigate();
+
+    // Loading Overlay
+	useEffect(() => {
+		if (isLoading || updateIsLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading, updateIsLoading]);
 
 	// Error Overlay
 	useEffect(() => {

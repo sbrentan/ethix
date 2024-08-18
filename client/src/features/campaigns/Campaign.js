@@ -2,7 +2,7 @@ import NotFoundResult from "../../components/NotFoundResult";
 import { Link, useParams } from "react-router-dom";
 import { useGetCampaignsQuery } from "./campaignsApiSlice";
 import { TransactionContext } from "./../../context/TransactionContext";
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import {
 	Avatar,
 	Card,
@@ -26,6 +26,8 @@ import {
 import { format } from "date-fns";
 import { useGetPublicProfileByUserQuery } from "../requests/requestsApiSlice";
 import { useEthPrice } from "use-eth-price";
+import { useDispatch } from "react-redux";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
 
 const { Text, Title } = Typography;
 const { Meta } = Card;
@@ -44,8 +46,9 @@ const isExpired = (deadline) => {
 const Campaign = () => {
 	// id campaign
 	const { id } = useParams();
+    const dispatch = useDispatch()
 
-	const { campaign, isCampaignLoading } = useGetCampaignsQuery(
+	const { campaign, isLoading } = useGetCampaignsQuery(
 		"campaignsList",
 		{
 			selectFromResult: ({ data }) => ({
@@ -61,6 +64,11 @@ const Campaign = () => {
 	const { ethPrice, loading, errorEth } = useEthPrice("eur");
 
 	const { setCampaign } = useContext(TransactionContext);
+    // Loading Overlay
+	useEffect(() => {
+		if (isLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading]);
 	console.log(campaign);
 	if (!campaign)
 		return (

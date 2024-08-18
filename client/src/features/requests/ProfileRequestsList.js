@@ -26,6 +26,8 @@ import DonorProfile from "../../components/DonorProfile";
 import Web3 from 'web3';
 import { CHARITY_CONTRACT_ABI, CHARITY_CONTRACT_ADDRESS } from './../../utils/constants';
 import { TransactionContext } from ".//../../context/TransactionContext.js";
+import { hideLoading, showLoading } from "../../app/loadingSlice.js";
+import { useDispatch } from "react-redux";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
@@ -57,6 +59,8 @@ const ProfileRequestsList = () => {
 	// To see the selected profile request
 	const [selectedProfileRequest, setSelectedProfileRequest] = useState(null);
 	const [showViewModal, setShowViewModal] = useState(false);
+
+    const dispatch = useDispatch()
 
 	const {
 		data: normalizedProfilerequests,
@@ -92,6 +96,12 @@ const ProfileRequestsList = () => {
 		}
 		setFilteredProfileRequests(filteredResult);
 	}, [normalizedProfilerequests, isSuccess, isFetching, selectedOption]);
+
+    // Loading Overlay
+	useEffect(() => {
+		if (isLoading || updateIsLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading]);
 
 	// Error Overlay
 	useEffect(() => {

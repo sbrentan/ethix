@@ -15,6 +15,8 @@ import {
 } from "antd";
 import { format } from "date-fns";
 import CampaignCard from "./CampaignCard";
+import { useDispatch } from "react-redux";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
@@ -46,6 +48,7 @@ const CampaignsGrid = () => {
 
     // for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch()
 
 	const {
 		data: normalizedCampaigns,
@@ -92,6 +95,12 @@ const CampaignsGrid = () => {
 		donorFilter,
 		receiverFilter,
 	]);
+
+    // Loading Overlay
+	useEffect(() => {
+		if (isLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading]);
 
 	// Error Overlay
 	useEffect(() => {

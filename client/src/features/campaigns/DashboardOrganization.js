@@ -19,6 +19,8 @@ import ClaimModal from "./ClaimModal";
 import GenerateTokensModal from "./GenerateTokensModal";
 import { useGetPublicProfilesQuery } from "../requests/requestsApiSlice";
 import { useEthPrice } from "use-eth-price";
+import { useDispatch } from "react-redux";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
@@ -56,6 +58,7 @@ const DashboardOrganization = ({ role }) => {
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
 	const { ethPrice, loading, errorEth } = useEthPrice("eur");
+    const dispatch = useDispatch()
 
 	const {
 		data: normalizedCampaigns,
@@ -106,6 +109,12 @@ const DashboardOrganization = ({ role }) => {
 		}
 		setFilteredCampaigns(filteredResult);
 	}, [normalizedCampaigns, isSuccess, isFetching, titleFilter]);
+
+        // Loading Overlay
+	useEffect(() => {
+		if (isLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading]);
 
 	// Error Overlay
 	useEffect(() => {

@@ -13,6 +13,8 @@ import {
 	Typography,
 } from "antd";
 import { format } from "date-fns";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
+import { useDispatch } from "react-redux";
 
 const { Option } = Select;
 const { Text, Title } = Typography;
@@ -48,6 +50,7 @@ const CampaignsList = () => {
 
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch()
 
 	const {
 		data: normalizedCampaigns,
@@ -94,6 +97,12 @@ const CampaignsList = () => {
 		donorFilter,
 		receiverFilter,
 	]);
+
+    // Loading Overlay
+	useEffect(() => {
+		if (isLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading]);
 
 	// Error Overlay
 	useEffect(() => {

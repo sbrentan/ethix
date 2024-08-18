@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useGetPublicProfilesQuery } from "../requests/requestsApiSlice";
 import { Col, Empty, message, Row, Typography } from "antd";
 import OrganizationCard from "./OrganizationCard";
+import { useDispatch } from "react-redux";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
 
 const { Text, Title } = Typography;
 
@@ -10,6 +12,7 @@ const OrganizationsGrid = () => {
 
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch()
 
 	const {
 		data: normalizedPublicProfiles,
@@ -37,6 +40,12 @@ const OrganizationsGrid = () => {
 		}
 		setFilteredPublicProfiles(filteredResult);
 	}, [normalizedPublicProfiles, isSuccess, isFetching]);
+
+    // Loading Overlay
+	useEffect(() => {
+		if (isLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading]);
 
 	// Error Overlay
 	useEffect(() => {
