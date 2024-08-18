@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const ethUtil = require('ethereumjs-util');
 const jwt = require('jsonwebtoken');
 const RedeemableToken = require("../models/RedeemableToken");
+const generateQRCodes = require("./utils/qrcode_generator");
 
 const retrieveBlockchainError = (error) => {
     try{
@@ -52,16 +53,16 @@ const generateTokens = asyncHandler(async (req, res) => {
         // Generate the seed(St) that is used to generate the tokens T1
         const tokenSeed = crypto.createHash('sha256').update(campaign.seed + new Date().getTime()).digest('hex');
 
-        console.log(campaign);
+        if(process.env.DEBUG) console.log(campaign);
         // Generate the tokens T1
         const t1_tokens = Array.from({ length: campaign.tokensCount }, (_, i) => {
             return web3.utils.toHex(crypto.createHash('sha256').update(tokenSeed + i).digest('hex'));
         });
-        console.log('t1_tokens', t1_tokens);
+        if(process.env.DEBUG) console.log('t1_tokens', t1_tokens);
         
         // generate randomlyh token indexes
         const salts = Array.from({ length: campaign.tokensCount }, (_, i) => crypto.createHash('sha256').update(String(i + new Date().getTime())).digest('hex'));
-        console.log('salts', salts);
+        if(process.env.DEBUG) console.log('salts', salts);
 
         // Create the TokenSalt objects to save on db
         const tokenSalts = t1_tokens.map((token, i) => {
@@ -72,24 +73,24 @@ const generateTokens = asyncHandler(async (req, res) => {
             };
         });
         await TokenSalt.insertMany(tokenSalts);
-        console.log('tokenSalts', tokenSalts);
+        if(process.env.DEBUG) console.log('tokenSalts', tokenSalts);
         
         // Generate the tokens T1.5
         const t15_tokens = t1_tokens.map((token, i) => {
             return web3.utils.toHex(crypto.createHash('sha256').update(token + salts[i]).digest('hex'));
         });
-        console.log('t15_tokens', t15_tokens);
+        if(process.env.DEBUG) console.log('t15_tokens', t15_tokens);
 
         // Generate the tokens T2
         // batch this call by dividing the tokens into chunks of 100
         divided_tokens = Array.from({ length: Math.ceil(t15_tokens.length / 100) }, (_, i) => {
             return t15_tokens.slice(i * 100, (i + 1) * 100);
         });
-        console.log('divided_tokens', divided_tokens);
+        if(process.env.DEBUG) console.log('divided_tokens', divided_tokens);
         const t2_tokens = [];
         for (const chunk of divided_tokens){
             const chunk_t2_tokens = await WEB3_CONTRACT.methods.generateTokenHashes(campaignAddress, chunk).call({ from: WEB3_MANAGER_ACCOUNT.address });
-            console.log('chunk ', chunk, ': t2_tokens', chunk_t2_tokens);
+            if(process.env.DEBUG) console.log('chunk ', chunk, ': t2_tokens', chunk_t2_tokens);
             t2_tokens.push(...chunk_t2_tokens);
         }
 
@@ -97,7 +98,7 @@ const generateTokens = asyncHandler(async (req, res) => {
         const tokenSignatures = t2_tokens.map(token => {
             return web3.eth.accounts.sign(encodePacked(web3.utils.toHex(token), campaignAddress), wallet.privateKey);
         });
-        console.log('tokenSignatures', tokenSignatures);
+        if(process.env.DEBUG) console.log('tokenSignatures', tokenSignatures);
 
         signed_tokens = t1_tokens.map((token, i) => {
             return {
@@ -105,7 +106,7 @@ const generateTokens = asyncHandler(async (req, res) => {
                 signature: tokenSignatures[i].signature,
             };
         });
-        console.log('signed_tokens', signed_tokens);
+        if(process.env.DEBUG) console.log('signed_tokens', signed_tokens);
 
         const expirationTime = Math.floor(campaign.deadline.getTime() / 1000);
         const secretKey = process.env.REFRESH_TOKEN_SECRET + "";
@@ -122,12 +123,22 @@ const generateTokens = asyncHandler(async (req, res) => {
                 })
             }
         })
-        console.log(jwt_tokens)
+        if(process.env.DEBUG) console.log(jwt_tokens)
+
+        if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
+        // Generate QR codes in a worker thread
+        generateQRCodes(campaignId, jwt_tokens).then(async (fileName) => {
+            campaign.qrCodes = fileName;
+            await campaign.save();
+            console.log("QR codes generated in worker thread:", fileName);
+        }).catch((error) => {
+            console.log("Error generating QR codes in worker thread:", error);
+        });
 
         res.json({ signedTokens: jwt_tokens });
         
     } catch (error) {
-        console.log('Error generating tokens:', error);
+        if(process.env.DEBUG) console.log('Error generating tokens:', error);
         res.status(400).json({ message: "Error generating tokens: " + error.message });
     }
 });
@@ -160,15 +171,15 @@ const redeemToken = asyncHandler(async (req, res) => {
     const campaignAddress = campaign.campaignId;
 
     // check if the token salt is present in db
-    console.log('campaignId', campaignId);
-    console.log('token', token);
+    if(process.env.DEBUG) console.log('campaignId', campaignId);
+    if(process.env.DEBUG) console.log('token', token);
     try{
         [tokenSalt, t15_token] = await recoverT15Token(campaignId, token);
     } catch (error) {
-        console.log('Error redeeming token:', error);
+        if(process.env.DEBUG) console.log('Error redeeming token:', error);
         return res.status(400).json({ message: "Error redeeming token: " + error.message });
     }
-    console.log("tokenSalt", tokenSalt);
+    if(process.env.DEBUG) console.log("tokenSalt", tokenSalt);
 
     // signature is 65 bytes long, convert it to r, s, v
     const { v, r, s } = ethUtil.fromRpcSig(signature);
@@ -179,7 +190,7 @@ const redeemToken = asyncHandler(async (req, res) => {
         }
         // Check if the token is valid on blockchain
         const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).call({ from: WEB3_MANAGER_ACCOUNT.address });
-        console.log("isTokenValid", isTokenValid);
+        if(process.env.DEBUG) console.log("isTokenValid", isTokenValid);
         if (!isTokenValid) {
             return res.status(400).json({ message: "Token not valid" });
         }
@@ -199,11 +210,11 @@ const redeemToken = asyncHandler(async (req, res) => {
 
         await newtoken.save();
         await campaign.save();
-        console.log(campaign.redeemableTokens, campaign.batchRedeem);
+        if(process.env.DEBUG) console.log(campaign.redeemableTokens, campaign.batchRedeem);
         if (campaign.redeemableTokens >= campaign.batchRedeem) {
             // redeem the batch of tokens
             const redeemableTokens = await RedeemableToken.find({ campaignId: campaignId }).limit(campaign.batchRedeem).exec();
-            console.log('Redeeming batch of tokens: ', redeemableTokens);
+            if(process.env.DEBUG) console.log('Redeeming batch of tokens: ', redeemableTokens);
             const tokens = redeemableTokens.map(token => token.token);
             const RSVSignatures = redeemableTokens.map(token => {
                 const { v, r, s } = ethUtil.fromRpcSig(token.signature);
@@ -213,7 +224,7 @@ const redeemToken = asyncHandler(async (req, res) => {
                 gasPrice: web3.utils.toWei('2', 'gwei'),
                 from: WEB3_MANAGER_ACCOUNT.address
             });
-            console.log('Transaction receipt:', receipt);
+            if(process.env.DEBUG) console.log('Transaction receipt:', receipt);
             
             for (const token of redeemableTokens) {
                 // delete token
@@ -225,16 +236,16 @@ const redeemToken = asyncHandler(async (req, res) => {
 
             // update campaign
             await campaign.save();
-            console.log('Campaign updated:', campaign);
+            if(process.env.DEBUG) console.log('Campaign updated:', campaign);
         } else {
             // save token and signature
-            console.log('Added redeemable token:', newtoken);
-            console.log('Skipping single token redeem, batch count = ', campaign.batchRedeem, ', redeemable tokens = ', campaign.redeemableTokens);
+            if(process.env.DEBUG) console.log('Added redeemable token:', newtoken);
+            if(process.env.DEBUG) console.log('Skipping single token redeem, batch count = ', campaign.batchRedeem, ', redeemable tokens = ', campaign.redeemableTokens);
         }
 
         res.json({ message: "Token redeemed" });
     } catch (error) {
-        console.log('Error redeeming token:', error);
+        if(process.env.DEBUG) console.log('Error redeeming token:', error);
         errorMessage = retrieveBlockchainError(error);
         return res.status(400).json({ message: "Error redeeming token: " + errorMessage });
     }
@@ -244,15 +255,15 @@ const recoverT15Token = async (campaignId, t1_token) => {
     hashed_token = crypto.createHash('sha256').update(t1_token).digest('hex');
     tokenSalt = await TokenSalt.findOne({ campaignId: campaignId, hash: hashed_token }).exec();
     
-    console.log("t1_token", t1_token);
-    console.log("tokenSalt", tokenSalt);
+    if(process.env.DEBUG) console.log("t1_token", t1_token);
+    if(process.env.DEBUG) console.log("tokenSalt", tokenSalt);
     if(!tokenSalt)
         throw new Error("Token not valid");
     if(tokenSalt.redeemed)
         throw new Error("Token already redeemed");
 
     t15_token = web3.utils.toHex(crypto.createHash('sha256').update(t1_token + tokenSalt.salt).digest('hex'));
-    console.log('t15_token', t15_token);
+    if(process.env.DEBUG) console.log('t15_token', t15_token);
 
     return [tokenSalt, t15_token];
 }

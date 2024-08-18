@@ -2,7 +2,6 @@ const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
 const { web3, WEB3_MANAGER_PRIVATE_KEY, WEB3_CONTRACT, encodePacked } = require("../config/web3");
 const User = require("../models/User");
-const { beneficiary } = require("../config/roles_list");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -36,7 +35,7 @@ const getCampaign = asyncHandler(async (req, res) => {
 // @access Donor
 const getUserCampaigns = asyncHandler(async (req, res) => {
 	let userId = req.userId;
-	console.log("userid:"+userId)
+	if(process.env.DEBUG) console.log("userid:"+userId)
 	let campaigns = await Campaign.find({$or:[{donor: userId},{receiver: userId}]}).exec();
 	if (!campaigns?.length) {
 		return res.status(400).json({ message: "No campaigns found" });
@@ -230,10 +229,10 @@ async function _injectBlockchainCampaign(campaigns) {
 				if(typeof(campaign.blockchain_data[key]) === 'bigint')
 					campaign.blockchain_data[key] = Number(campaign.blockchain_data[key]);
 			}
-			// console.log("Retrieved campaign data from blockchain for campaign:", campaign._id);
+			// if(process.env.DEBUG) "Retrieved campaign data from blockchain for campaign:", campaign._id);
 		} catch (error) {
 			campaign.blockchain_data = {};
-			// console.log('Error getting campaign data from blockchain for campaign:', campaign._id);
+			// if(process.env.DEBUG) 'Error getting campaign data from blockchain for campaign:', campaign._id);
 			continue;
 		}
 
