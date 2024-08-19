@@ -44,7 +44,7 @@ const NewUserForm = () => {
     // Successo creazione nuovo account
     useEffect(() => {
         if (isSuccess) {
-            message.success("Account creato correttamente", 5)
+            message.success("Account created", 5)
             navigate(`/admin/users`)
         }
     }, [isSuccess, navigate])
@@ -77,7 +77,7 @@ const NewUserForm = () => {
     return (
         <>
             {contextHolder}
-            <Title>Crea un nuovo Account</Title>
+            <Title>Create new account</Title>
             <Form
                 form={form}
                 layout="vertical"
@@ -90,8 +90,8 @@ const NewUserForm = () => {
                             label="Username:"
                             name="username"
                             rules={[
-                                { required: true, message: 'Inserire la Email' },
-                                { type: 'email', message: 'Prego inserisci un indirizzo mail valido!', },
+                                { required: true, message: 'Insert Email' },
+                                { type: 'email', message: 'please insert valid email', },
                             ]}
                         >
                             <Input
@@ -103,20 +103,19 @@ const NewUserForm = () => {
                         <Form.Item
                             label="Password"
                             name="password"
-                            rules={[
-                                { required: true, message: 'Inserisci una password' },
-                                {
-                                    pattern: new RegExp(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,30}$/),
-                                    message: "La password deve essere lunga tra 8 e 30 caratteri, contenere combinazione di lettere maiuscole, minuscole e un numero"
-                                },
-                            ]}
+                                rules={[
+                                    {
+                                        pattern: new RegExp(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,30}$/),
+                                        message: "the password must be between 8 and 30 characters long, contain a combination of uppercase and lowercase letters and a number"
+                                    },
+                                ]}
                         >
                             <Input.Password />
                         </Form.Item>
                     </Col>
                     <hr />
                     <Col lg={24} xs={24}>
-                        <Form.Item label="Ruolo:" name="role" rules={[{ required: true, message: 'Inserisci un ruolo' }]}>
+                        <Form.Item label="Role:" name="role" rules={[{ required: true, message: 'Insert new role' }]}>
                             <Select
                                 mode="single"
                                 size="large"

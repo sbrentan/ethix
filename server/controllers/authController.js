@@ -5,6 +5,7 @@ const asyncHandler = require('express-async-handler')
 const ROLES_LIST = require('../config/roles_list')
 const ProfileRequest = require('../models/ProfileRequest')
 const PublicProfile = require('../models/PublicProfile')
+require('dotenv').config();
 
 // @desc Register the unauthenticated user as new "User"
 // @route POST /auth/register
@@ -100,11 +101,12 @@ const registerDonorBeneficiary = asyncHandler(async (req, res) => {
 // @route POST /auth
 // @access Public
 const login = asyncHandler(async (req, res) => {
-    const { username, password } = req.body
+    const { username, password, address } = req.body
 
     if (!username || !password) {
         return res.status(400).json({ message: 'All fields are required' })
     }
+    
 
     const foundUser = await User.findOne({ username }).collation({ locale: 'en', strength: 2 }).exec()
 
@@ -113,9 +115,16 @@ const login = asyncHandler(async (req, res) => {
         return res.status(401).json({ message: 'Unauthorized' })
     }
 
+
     const match = await bcrypt.compare(password, foundUser.password)
 
     if (!match) return res.status(401).json({ message: 'Unauthorized' })
+
+    const userrequest = await ProfileRequest.findOne({ username: username })
+    let matchaddress = false;
+    matchaddress = foundUser.role === ROLES_LIST.admin ? matchaddress = process.env.WEB3_MANAGER_ADDRESS.toLowerCase() === address.toLowerCase() : matchaddress = userrequest?.address.toLowerCase() === address.toLowerCase() 
+    
+        if (!matchaddress) return res.status(401).json({ message: 'Metamask address not matching' })
     
     // Here we can block the not verified account to login - in our case we can still allow them to enter the 
     // private area of the website and instead block the request for creating campaings etc..

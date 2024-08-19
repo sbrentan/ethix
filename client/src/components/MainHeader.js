@@ -129,12 +129,12 @@ const adminMenu = [
 		icon: <EuroOutlined />,
 	},
     {
-		label: (<Link to='/admin/requests'>Richieste</Link>),
+		label: (<Link to='/admin/requests'>Requests</Link>),
 		key: "/admin/requests",
 		icon: <AuditOutlined />,
 	},
     {
-		label: (<Link to='/admin/users'>Utenti</Link>),
+		label: (<Link to='/admin/users'>Users</Link>),
 		key: "/admin/users",
 		icon: <UserOutlined />,
 	},

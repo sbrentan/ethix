@@ -117,7 +117,7 @@ const EditUserForm = ({ user }) => {
         <>
             {contextHolder}
             <div>
-                <Title>Modifica l'utente: {user.username}</Title>
+                <Title>Edit user: {user.username}</Title>
                 {user ? (
                 <Form
                     form={form}
@@ -131,8 +131,8 @@ const EditUserForm = ({ user }) => {
                                 label="Username:"
                                 name="username"
                                 rules={[
-                                    { required: true, message: 'Inserire la Email' },
-                                    { type: 'email', message: 'Prego inserisci un indirizzo mail valido', },
+                                    { required: true, message: 'Insert Email' },
+                                    { type: 'email', message: 'please insert valid email', },
                                 ]}
                             >
                                 <Input
@@ -147,7 +147,7 @@ const EditUserForm = ({ user }) => {
                                 rules={[
                                     {
                                         pattern: new RegExp(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,30}$/),
-                                        message: "La password deve essere lunga tra 8 e 30 caratteri, contenere combinazione di lettere maiuscole, minuscole e un numero"
+                                        message: "the password must be between 8 and 30 characters long, contain a combination of uppercase and lowercase letters and a number"
                                     },
                                 ]}
                             >
@@ -155,7 +155,7 @@ const EditUserForm = ({ user }) => {
                             </Form.Item>
                         </Col>
                         <Col lg={24} xs={24}>
-                            <Form.Item label="Ruolo:" name="role">
+                            <Form.Item label="Role:" name="role">
                                 <Select
                                     mode="single"
                                     size="large"
@@ -166,7 +166,7 @@ const EditUserForm = ({ user }) => {
                             <p>Verificato:</p>
                             <div style={{ margin: 10, textAlign: "center" }}>
                                 <Space direction="horizontal" align="center" size={30}>
-                                    <Tooltip title="Utilizza questa funzione solo se necessario. Il bottone diventa rosso se modifichi il valore, successivamente premi conferma!">
+                                    <Tooltip title= "Use this function only if necessary. The button turns red if you change the value, then press confirm!" >
                                         <Switch checked={switchValue} onChange={handleSwitchChange} style={switchValue !== user.verified ? { backgroundColor: 'red' } : {}}/>
                                     </Tooltip>
                                 </Space>
@@ -175,27 +175,27 @@ const EditUserForm = ({ user }) => {
                         
                         <Col>
                             <Button htmlType="button" onClick={handleCancel}>
-                                Cancella
+                                Cancel
                             </Button>
                         </Col>
                         <Col>
                             <Button type="primary" htmlType="submit">
-                                Conferma
+                                Confirm
                             </Button>
                         </Col>
                     </Row>
                 </Form>
                 ) : (
-                    <p>Nessun dato disponibile!</p>
+                    <p>No data avairable!</p>
                 )}
                 <hr />
-                <Title>Cancella l'utente: {user.username}</Title>
+                <Title>Delete user: {user.username}</Title>
                 <br />
-                <Text type='danger'>Attenzione, questa operazione non puo' essere annullata</Text>
+                <Text type='danger'>Beware, this action cannot be undone</Text>
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Popconfirm
-                        title="Cancella l'utente"
-                        description="Sei sicuro di voler cancellare l'utente?"
+                        title="Delete user"
+                        description="Are you sure you want to delete the user?"
                         onConfirm={onDeleteUserClicked}
                         okText="Yes"
                         cancelText="No"

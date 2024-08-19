@@ -126,7 +126,7 @@ const UsersList = () => {
 			key: "username",
 		},
 		{
-			title: "Ruolo",
+			title: "Role",
 			dataIndex: "role",
 			key: "role",
 			render: (action, record) => {
@@ -146,10 +146,10 @@ const UsersList = () => {
             },
 		},
         {
-            title: "Verificato",
+            title: "Verified",
             dataIndex: "verified",
             key: "verified",
-            render: (verified) => (verified ? "Verificato" : "Non Verificato")
+            render: (verified) => (verified ? "Verified" : "Not Verified"),
         },
 		{
 			title: "Action",
@@ -168,7 +168,7 @@ const UsersList = () => {
 	if (isError) {
 		errContent = (
 			<Text type="danger" strong>
-				Errore nella ricezione dei dati: {error?.data?.message}
+				Error while receiving data: {error?.data?.message}
 			</Text>
 		);
 		//if (!preventPolling) setPreventPolling(true)
@@ -195,13 +195,13 @@ const UsersList = () => {
 		<div>
 			{contextHolder}
 			<Space direction="horizontal">
-				<Title>Utenti</Title>
+				<Title>Users</Title>
 				<Button
 					size="large"
 					type="primary"
 					onClick={() => navigate(`/admin/users/new`)}
 				>
-					Aggiungi Utente
+					Create User
 				</Button>
 			</Space>
 			<div>
@@ -225,7 +225,7 @@ const UsersList = () => {
 							onChange={(option) => setRoleFilter(option)}
 						>
 							<Option value="" key="disabled" disabled>
-								Seleziona un ruolo
+								Select role
 							</Option>
 							{options}
 						</Select>
@@ -237,7 +237,7 @@ const UsersList = () => {
 								setRoleFilter("");
 							}}
 						>
-							Rimuovi Filtri
+							Remove filters
 						</Button>
 					</Col>
 				</Row>

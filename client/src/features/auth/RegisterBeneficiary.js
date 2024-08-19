@@ -58,6 +58,7 @@ const RegisterBeneficiary = ({ setSuccessRegistration }) => {
           {wallet.is_logged && (
             <p>Connected wallet: {wallet.address}</p>
             ) && (formDisabled = false)}
+            
 			<br style={{height:"120px"}}></br><Text>Register your non-profit organization by using this form. Required fields are marked with an asterisk (*).</Text>
 			<Form form={form} layout="vertical" onFinish={handleSubmit} disabled={formDisabled}>
                 <Title level={5}>Beneficiary general information</Title>

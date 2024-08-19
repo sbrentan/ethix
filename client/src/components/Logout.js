@@ -15,7 +15,7 @@ const Logout = () => {
     useEffect(() => {
 		if (isSuccess) navigate("/");
 	}, [isSuccess, navigate]);
-	return <div>Caricamento...</div>;
+	return <div>Loading...</div>;
 };
 
 export default Logout;

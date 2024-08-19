@@ -131,7 +131,7 @@ export const TransactionsProvider = ({ children }) => {
 
             await charityContract.methods.isOrganizationVerified(organizationAddress).call({ from: wallet.address })
                 .then((response) => {
-                    response ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
+                    console.log(response);
                     status = response;
                 });
             return status;
