@@ -10,7 +10,7 @@ const MainFooter = () => {
 				textAlign: "center",
 			}}
 		>
-			CharityChain © {new Date().getFullYear()}. All Rights Reserved.
+			Ethix © {new Date().getFullYear()}. All Rights Reserved.
 		</Footer>
 	);
 };

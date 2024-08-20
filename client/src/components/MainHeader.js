@@ -230,7 +230,7 @@ const MainHeader = () => {
                     <Space direction="horizontal">
                         {/* <DontaionIcon style={{fontSize: 40, marginRight: 10}} /> */}
                         <Link to="/">
-                            <h1 style={{ margin: 0 }}>CharityChain</h1>
+                            <h1 style={{ margin: 0 }}>Ethix</h1>
                         </Link>
                     </Space>
                 </Col>
