@@ -102,6 +102,7 @@ contract Charity {
         uint256 _startingDate,
         uint256 _deadline,
         uint256 _tokensCount,
+        uint256 _maxTokensCount,
         address _beneficiary,
         bytes32 _commitHash, // is the hash of the seed
         Campaign.Signature calldata _signature
@@ -125,6 +126,10 @@ contract Charity {
             _startingDate >= block.timestamp,
             "Starting date must be in the future"
         );
+        require(
+            _maxTokensCount >= _tokensCount,
+            "Max tokens count must be greater than or equal to tokens count"
+        );
 
         // verify the signature, checking if the owner generated the seed
         require(
@@ -143,7 +148,8 @@ contract Charity {
             _deadline,
             msg.sender,
             _beneficiary,
-            _tokensCount
+            _tokensCount,
+            _maxTokensCount
         );
         campaignsIds.push(campaignId);
 

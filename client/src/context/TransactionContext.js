@@ -157,7 +157,7 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const createCampaign = async (title, description, image, startingDate, deadline, targetEth, tokenAmount, donor, receiverId, receiver) => {
+    const createCampaign = async (title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
@@ -165,6 +165,7 @@ export const TransactionsProvider = ({ children }) => {
             if (!startingDate) throw new Error("Start date is required");
             if (!deadline) throw new Error("Deadline is required");
             if (!tokenAmount) throw new Error("Tokens count is required");
+            if (!totalTokens) throw new Error("Total tokens is required");
             if (!targetEth) throw new Error("Target is required");
             if (!receiver) throw new Error("Beneficiary is required");
             if (!(await isOrganizationVerified(receiver))) throw new Error("Beneficiary is not validated");
@@ -177,6 +178,7 @@ export const TransactionsProvider = ({ children }) => {
                 startingDate: startingDate,
                 deadline: deadline,
                 tokensCount: tokenAmount,
+                maxTokensCount: totalTokens,
                 donor: donor,
                 receiver: receiverId,
                 draft: true
@@ -198,6 +200,7 @@ export const TransactionsProvider = ({ children }) => {
                 Math.floor(startingDate / 1000),
                 Math.floor(deadline / 1000),
                 tokenAmount,
+                totalTokens,
                 receiver,
                 _seedHash,
                 {
@@ -214,6 +217,7 @@ export const TransactionsProvider = ({ children }) => {
             const response = await initCampaign({
                 target: targetEth,
                 tokensCount: tokenAmount,
+                maxTokensCount: totalTokens,
                 title: title,
                 description: description,
                 image: image,

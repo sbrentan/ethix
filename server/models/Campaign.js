@@ -29,6 +29,10 @@ const CampaignSchema = new mongoose.Schema(
             type: Number,
             required: true
         },
+        maxTokensCount: {   // The maximum number of tokens that can be generated
+            type: Number,
+            required: true
+        },
         // The image url of the campaign
         image: {
             type: String,

@@ -27,6 +27,7 @@ contract Campaign {
         address payable donor;
         address payable beneficiary;
         uint256 tokensCount;
+        uint256 maxTokensCount;
         
         // campaign status information
         uint256 initialDeposit;
@@ -124,7 +125,8 @@ contract Campaign {
         uint256 _deadline,
         address _donor,
         address _beneficiary,
-        uint256 _tokensCount
+        uint256 _tokensCount,
+        uint256 _maxTokensCount
     ) {
         // saving charity contract address
         owner = msg.sender;
@@ -136,6 +138,7 @@ contract Campaign {
         campaignDetails.donor = payable(_donor);
         campaignDetails.beneficiary = payable(_beneficiary);
         campaignDetails.tokensCount = _tokensCount;
+        campaignDetails.maxTokensCount = _maxTokensCount;
     }
 
 
