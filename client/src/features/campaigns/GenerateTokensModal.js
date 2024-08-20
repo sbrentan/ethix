@@ -210,7 +210,7 @@ const GenerateTokensModal = ({
     let targetEuro = null;
 	let valueOfToken = null;
 	if (ethPrice) {
-		targetEuro = (campaign.target * ethPrice).toFixed(2);
+		targetEuro = (campaign.targetEur);
         valueOfToken = ((campaign.target / campaign.tokensCount)* ethPrice).toFixed(2);
 	}
 

@@ -31,7 +31,7 @@ const CampaignCard = ({ campaignId }) => {
 	if (campaign) {
         let targetEuro = null;
         if (ethPrice) {
-            targetEuro = (campaign.target * ethPrice).toFixed(2);
+            targetEuro = (campaign.targetEur);
         }
     
 		let percent = Math.floor(Math.random() * 11) * 10;
