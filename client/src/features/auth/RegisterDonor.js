@@ -60,7 +60,7 @@ const RegisterDonor = ({ setSuccessRegistration }) => {
           {wallet.is_logged && (
             <p>Connected wallet: {wallet.address}</p>
             ) && (formDisabled = false)}
-			<Text>
+			<br></br><Text>
 				Register your business by using this form. Required fields are
 				marked with an asterisk (*).
 			</Text>

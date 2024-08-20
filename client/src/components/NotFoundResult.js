@@ -8,7 +8,7 @@ const NotFoundResult = ({ subTitle = "The page you are looking for cannot be fou
             status="404"
             title="Page not found"
             subTitle={subTitle}
-            extra={<Button type="primary" onClick={() => {navigate("/")}}>Ritorna alla Home</Button>}
+            extra={<Button type="primary" onClick={() => {navigate("/")}}>Return to Home</Button>}
         />
     )
 }

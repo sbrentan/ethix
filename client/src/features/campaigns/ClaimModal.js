@@ -134,7 +134,7 @@ const ClaimModal = ({
 	let valueOfToken = null;
     let codesNotRedeemed = null
 	if (ethPrice) {
-		targetEuro = (campaign.target * ethPrice).toFixed(2);
+		targetEuro = (campaign.targetEur);
         valueOfToken = ((campaign.target / campaign.tokensCount)* ethPrice).toFixed(2);
 	}
     if (campaign.blockchain_data) {
@@ -208,7 +208,7 @@ const ClaimModal = ({
 				<Col span={12}>
 					<Text>
 						{ethPrice
-							? (campaign.target * ethPrice).toFixed(2)
+							? (campaign.targetEur)
 							: "Calculating Exchange Rate"}
 					</Text>
 				</Col>

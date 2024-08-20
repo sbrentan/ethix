@@ -62,7 +62,7 @@ function range(start, end) {
   const { username } = useAuth()
 
     const handleSubmit = async (values) => {
-		  const { title, image, dates, description, receiverId, tokenAmount }  = values;
+		  const { targetEur, title, image, dates, description, receiverId, tokenAmount, totalTokens }  = values;
       const startDate = dates[0];
       const deadline = dates[1];
       const seed = web3.utils.randomHex(32);
@@ -73,7 +73,7 @@ function range(start, end) {
         user._id === receiverId
       );   
       const receiver = benef[0].address;
-      const response = await createCampaign(title, description, image, startDate, deadline, targetEth, tokenAmount, donor, receiverId, receiver)
+      const response = await createCampaign(targetEur, title, description, image, startDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver)
       setSuccessCreation(response === true)
 	};
 
@@ -92,7 +92,7 @@ function range(start, end) {
       <Title level={5}>New Campaign data</Title>
       
 				<Row gutter={16}>
-          <Col span={12}>
+          <Col span={7}>
             <Form.Item
               label="Amount"
               name="targetEur"
@@ -115,10 +115,13 @@ function range(start, end) {
               />
             </Form.Item>
           </Col>
-          <Col span={4}>
+          <Col span={5}>
           <Form.Item 
               label="ETH Amount"
               name="targetEth"
+              style={{
+                  width: '100%',
+                }}
               rules={[
                 {
                   required: false,
@@ -133,14 +136,32 @@ function range(start, end) {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={6}>
           <Form.Item 
               label="Token Amount"
               name="tokenAmount"
               rules={[
                 {
                   required: true,
-                  message: "Insert money amount",
+                  message: "Insert token amount",
+                },
+              ]}
+            >
+              <InputNumber  
+                style={{
+                  width: '100%',
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+          <Form.Item 
+              label="Total Tokens"
+              name="totalTokens"
+              rules={[
+                {
+                  required: true,
+                  message: "Insert total tokens to be generated",
                 },
               ]}
             >

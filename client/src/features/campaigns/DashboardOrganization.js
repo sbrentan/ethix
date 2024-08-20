@@ -333,7 +333,7 @@ const DashboardOrganization = ({ role }) => {
     let codesNotRedeemed = null
     if (selectedCampaign){
 	if (ethPrice) {
-		targetEuro = (selectedCampaign.target * ethPrice).toFixed(2);
+		targetEuro = (selectedCampaign.targetEur);
         valueOfToken = ((selectedCampaign.target / selectedCampaign.tokensCount)* ethPrice).toFixed(2);
 	}
     if (selectedCampaign.blockchain_data) {

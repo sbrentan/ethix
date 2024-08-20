@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
 import {
 	Form,
 	Input,
@@ -17,6 +17,10 @@ import { setCredentials } from "./authSlice";
 import { useLoginMutation } from "./authApiSlice";
 import usePersist from "../../hooks/usePersist";
 import useTitle from "../../hooks/useTitle";
+import Cookies from 'universal-cookie';
+import { TransactionContext } from ".//../../context/TransactionContext.js";
+import MetamaskButton from ".//../../components/MetamaskButton.js";
+const cookies = new Cookies();
 
 const { Text, Title } = Typography;
 
@@ -25,6 +29,10 @@ const Login = () => {
 	const [persist, setPersist] = usePersist();
 	const [login, { isLoading }] = useLoginMutation();
 	const [needVerify, setNeedVerify] = useState(false);
+	let formDisabled = true;
+	const {
+			wallet,
+		} = useContext(TransactionContext);
 
 	const userRef = useRef();
 
@@ -41,11 +49,15 @@ const Login = () => {
 	const handleSubmit = async (values) => {
 		try {
 			const { username, password } = values;
+			const address = wallet.address;
 			const { accessToken } = await login({
 				username,
 				password,
+				address,
+				
 			}).unwrap();
 			dispatch(setCredentials({ accessToken }));
+			cookies.set('jwt_cookie', accessToken);
 			navigate("/home");
 		} catch (err) {
 			if (!err.status) {
@@ -71,12 +83,13 @@ const Login = () => {
 	return (
 		<div>
 			{contextHolder}
+            
 			{needVerify ? (
 				<>
 					<Result
 						status="warning"
-						title="Account non verificato"
-						subTitle="Per accedere ai tuoi contenuti e' necessario verificare l'account."
+						title="account not verified"
+						subTitle="to access the application you need to verify your account"
 						extra={
 							<Button
 								type="primary"
@@ -85,7 +98,7 @@ const Login = () => {
 									navigate("/verify");
 								}}
 							>
-								Verifica l'account
+								Verify account
 							</Button>
 						}
 					/>
@@ -102,10 +115,17 @@ const Login = () => {
 								size={"large"}
 							>
 								<Title>Login</Title>
+								{!wallet.is_logged && (
+									<MetamaskButton></MetamaskButton>
+								)}
+								{wallet.is_logged && (
+									<p>Connected wallet: {wallet.address}</p>
+									) && (formDisabled = false)}
 								<Form
 									form={form}
 									layout="vertical"
 									onFinish={handleSubmit}
+									disabled={formDisabled}
 									initialValues={{ persist }}
 								>
 									<div
@@ -121,18 +141,18 @@ const Login = () => {
 												{
 													required: true,
 													message:
-														"Inserire la Email",
+														"insert your email",
 												},
 												{
 													type: "email",
 													message:
-														"Prego inserisci un indirizzo mail valido",
+														"please enter a valid email",
 												},
 											]}
 										>
 											<Input
 												ref={userRef}
-												placeholder="Inserisci il tuo indirizzo email"
+												placeholder="insert your email"
 												autoComplete="off"
 											/>
 										</Form.Item>
@@ -143,11 +163,11 @@ const Login = () => {
 												{
 													required: true,
 													message:
-														"Inserisci la tua password",
+														"insert your password",
 												},
 											]}
 										>
-											<Input.Password placeholder="Inserisci la tua password" />
+											<Input.Password placeholder="insert your password" />
 										</Form.Item>
 									</div>
 									<div style={{ width: "300px", margin: "0 auto" }}>
@@ -156,7 +176,7 @@ const Login = () => {
 											htmlType="submit"
 											block
 										>
-											Accedi
+											Login
 										</Button>
 									</div>
 									<div>
@@ -164,7 +184,7 @@ const Login = () => {
 											to="/forgot-password"
 											style={{ float: "right" }}
 										>
-											Password dimenticata?
+											Forgot your password?
 										</Link>
 										<div></div>
 										<Form.Item
@@ -174,16 +194,16 @@ const Login = () => {
 										>
 											<Checkbox onChange={handleToggle}>
 												{" "}
-												Salva questo dispositivo{" "}
+												Remember this device{" "}
 											</Checkbox>
 										</Form.Item>
 									</div>
 									<hr />
 									<div>
-										Non sei registrato?
+										Not Registered?
 										<Link to="/register">
 											{" "}
-											Registrati ora
+											Register Now
 										</Link>
 									</div>
 								</Form>

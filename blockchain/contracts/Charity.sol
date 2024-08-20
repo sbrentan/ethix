@@ -102,6 +102,7 @@ contract Charity {
         uint256 _startingDate,
         uint256 _deadline,
         uint256 _tokensCount,
+        uint256 _maxTokensCount,
         address _beneficiary,
         bytes32 _commitHash, // is the hash of the seed
         Campaign.Signature calldata _signature
@@ -125,6 +126,10 @@ contract Charity {
             _startingDate >= block.timestamp,
             "Starting date must be in the future"
         );
+        require(
+            _maxTokensCount >= _tokensCount,
+            "Max tokens count must be greater than or equal to tokens count"
+        );
 
         // verify the signature, checking if the owner generated the seed
         require(
@@ -143,7 +148,8 @@ contract Charity {
             _deadline,
             msg.sender,
             _beneficiary,
-            _tokensCount
+            _tokensCount,
+            _maxTokensCount
         );
         campaignsIds.push(campaignId);
 
@@ -237,14 +243,13 @@ contract Charity {
         emit DonationClaimed(campaigns[_campaignId].getDetails().donations);
     }
 
-    // redeem a token for an active campaign
-    function redeemToken(
+    // redeem a batch of tokens
+    function redeemTokensBatch(
         bytes32 _campaignId,
-        bytes32 _tokenId,
-        Campaign.Signature calldata _signature
+        bytes32[] calldata _tokens,
+        Campaign.Signature[] calldata _signatures
     ) external onlyExistingCampaign(_campaignId) onlyOwner {
-        bytes32 t2_token = _generateTokenHash(_campaignId, _tokenId);
-        campaigns[_campaignId].redeemToken(t2_token, _signature);
+        campaigns[_campaignId].redeemTokensBatch(_tokens, _signatures);
     }
 
     // function to check if a token is valid
@@ -257,9 +262,7 @@ contract Charity {
             return false;
         }
 
-        bytes32 t2_token = _generateTokenHash(_campaignId, _tokenId);
-
-        return campaigns[_campaignId].isTokenValid(t2_token, _signature);
+        return campaigns[_campaignId].isTokenValid(_tokenId, _signature);
     }
 
     function generateTokenHashes(
@@ -275,7 +278,7 @@ contract Charity {
         bytes32[] memory t2_tokens = new bytes32[](_tokensT1.length);
 
         for (uint i = 0; i < _tokensT1.length; i++) {
-            t2_tokens[i] = _generateTokenHash(_campaignId, _tokensT1[i]);
+            t2_tokens[i] = campaigns[_campaignId].generateTokenHash(_tokensT1[i]);
         }
 
         return t2_tokens;
@@ -299,14 +302,6 @@ contract Charity {
                     campaignsIds.length
                 )
             );
-    }
-
-    // generate token hash for a single token
-    function _generateTokenHash(
-        bytes32 _campaignId,
-        bytes32 _tokenId
-    ) private view returns (bytes32) {
-        return campaigns[_campaignId].generateTokenHash(_tokenId);
     }
 
     function _signatureVerified(

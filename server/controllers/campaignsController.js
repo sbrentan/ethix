@@ -2,7 +2,6 @@ const asyncHandler = require("express-async-handler");
 const Campaign = require("../models/Campaign");
 const { web3, WEB3_MANAGER_PRIVATE_KEY, WEB3_CONTRACT, encodePacked } = require("../config/web3");
 const User = require("../models/User");
-const { beneficiary } = require("../config/roles_list");
 
 // @desc Get all campaigns
 // @route GET /campaigns
@@ -36,7 +35,7 @@ const getCampaign = asyncHandler(async (req, res) => {
 // @access Donor
 const getUserCampaigns = asyncHandler(async (req, res) => {
 	let userId = req.userId;
-	console.log("userid:"+userId)
+	if(process.env.DEBUG) console.log("userid:"+userId)
 	let campaigns = await Campaign.find({$or:[{donor: userId},{receiver: userId}]}).exec();
 	if (!campaigns?.length) {
 		return res.status(400).json({ message: "No campaigns found" });
@@ -49,14 +48,16 @@ const getUserCampaigns = asyncHandler(async (req, res) => {
 // @route POST /campaigns
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
-	const { target, tokensCount, title, image, description, startingDate, deadline, receiver, draft } = req.body;
+	const { targetEur, target, tokensCount, maxTokensCount, title, image, description, startingDate, deadline, receiver, draft } = req.body;
 
 	// Confirm data
-	if (!target || !title || !deadline || !receiver || !tokensCount) {
+	if (!target || !title || !deadline || !receiver || !tokensCount || !maxTokensCount || !startingDate || !targetEur) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
 	// Check if the campaign is a draft and skip campaign creation if it is
+	// Saving the seed in the session to be used later
+	// Also return the seed hash and the signature to be passed to the blockchain method
 	if (draft) {
 		// Generate a seed for the campaign
 		const seed = web3.utils.randomHex(32);
@@ -81,8 +82,8 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	}
 
 	const seed = req.session.seed;
-	const seedHash = req.body.seedHash;
-	const campaignAddress = req.body.campaignAddress;
+	const { seedHash, campaignAddress } = req.body;
+	let { batchRedeem } = req.body;
 	
 	// Confirm seed and seedHash are valid
 	if (!seed || !seedHash || seedHash !== web3.utils.keccak256(seed)) {
@@ -94,6 +95,13 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 		return res.status(400).json({ message: "Campaign address is required" });
 	}
 
+	if(!batchRedeem) {
+		batchRedeem = process.env.DEFAULT_BATCH_REDEEM || 1;
+	}
+	if(batchRedeem < tokensCount) {
+		batchRedeem = tokensCount;
+	}
+
 	// Get current blockchain block number (used for to wait for CRR reveal method)
 	const blockNumber = Number(await web3.eth.getBlockNumber());
 
@@ -101,8 +109,8 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 
 	// Create and store new campaign
 	const campaign = await Campaign.create({ 
-		target, title, image, description, startingDate, deadline, donor, receiver, tokensCount,
-		seed, blockNumber, campaignId: campaignAddress, createdBy: donor
+		target, targetEur, title, image, description, startingDate, deadline, donor, receiver, tokensCount, maxTokensCount,
+		seed, blockNumber, campaignId: campaignAddress, createdBy: donor, batchRedeem: batchRedeem
 	});
 
 	if (campaign) {
@@ -137,7 +145,7 @@ const generateRandomWallet = asyncHandler(async (req, res) => {
 	if(!seed) {
 		return res.status(400).json({ message: "Seed not found" });
 	}
-	
+
 	// Generate a random wallet
 	const wallet = web3.eth.accounts.create();
 
@@ -224,15 +232,14 @@ async function _injectBlockchainCampaign(campaigns) {
 				if(typeof(campaign.blockchain_data[key]) === 'bigint')
 					campaign.blockchain_data[key] = Number(campaign.blockchain_data[key]);
 			}
-			// console.log("Retrieved campaign data from blockchain for campaign:", campaign._id);
+			// if(process.env.DEBUG) "Retrieved campaign data from blockchain for campaign:", campaign._id);
 		} catch (error) {
 			campaign.blockchain_data = {};
-			// console.log('Error getting campaign data from blockchain for campaign:', campaign._id);
+			// if(process.env.DEBUG) 'Error getting campaign data from blockchain for campaign:', campaign._id);
 			continue;
 		}
 
 		new_campaigns.push(campaign);
-		console.log(new_campaigns);
 	}
 	return new_campaigns;
 }

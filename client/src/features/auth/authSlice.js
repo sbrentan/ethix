@@ -1,8 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit'
+import Cookies from 'universal-cookie';
+const cookies = new Cookies();
 
 const authSlice = createSlice({
     name: 'auth',
-    initialState: { token: null },
+    initialState: { token: null || cookies.get('jwt_cookie') },
     reducers: {
         setCredentials: (state, action) => {
             const { accessToken } = action.payload

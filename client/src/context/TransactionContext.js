@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 
 import {
-    useGetCampaignMutation,
     useCreateCampaignMutation,
     useGenerateRandomWalletMutation,
     useGenerateCampaignTokensMutation,
@@ -24,8 +23,6 @@ export const TransactionsProvider = ({ children }) => {
 
     /* ------------------------ STATES ------------------------ */
 
-    const [block, setBlock] = useState(0);
-
     const [wallet, setWallet] = useState({
         address: '', // walletAddress of MetaMask
         is_logged: false,
@@ -37,14 +34,14 @@ export const TransactionsProvider = ({ children }) => {
     });
 
     const [formData, setformData] = useState({
-        title: '1',
+        title: '',
         description: '',
         image: '',
         startdate: '',
         deadline: '',
-        target: "0.001",
-        tokens: "5",
-        beneficiary: '0x665d33620B72b917932Ae8bdE0382494C25b45e1'
+        target: '',
+        tokens: '',
+        beneficiary: ''
     });
 
     const [campaign, setCampaign] = useState({
@@ -52,8 +49,6 @@ export const TransactionsProvider = ({ children }) => {
         address: '', // campaignAddress on the blockchain
         is_created: false,
         is_started: false,
-        is_association_failed: false,
-        is_fundable: false,
         is_refunded: false,
         is_donated: false
     });
@@ -61,7 +56,6 @@ export const TransactionsProvider = ({ children }) => {
     /* ------------------------ MUTATIONS ------------------------ */
 
     // Move to specific components
-    const [getCampaignDetails] = useGetCampaignMutation();
     const [initCampaign] = useCreateCampaignMutation();
     const [generateRandomWallet] = useGenerateRandomWalletMutation();
     const [generateCampaignTokens] = useGenerateCampaignTokensMutation();
@@ -137,7 +131,7 @@ export const TransactionsProvider = ({ children }) => {
 
             await charityContract.methods.isOrganizationVerified(organizationAddress).call({ from: wallet.address })
                 .then((response) => {
-                    response ? console.log(`Organization is verified`) : console.log(`Organization is not verified`);
+                    console.log(response);
                     status = response;
                 });
             return status;
@@ -163,7 +157,7 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const createCampaign = async (title, description, image, startingDate, deadline, targetEth, tokenAmount, donor, receiverId, receiver) => {
+    const createCampaign = async (targetEur, title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
@@ -171,11 +165,16 @@ export const TransactionsProvider = ({ children }) => {
             if (!startingDate) throw new Error("Start date is required");
             if (!deadline) throw new Error("Deadline is required");
             if (!tokenAmount) throw new Error("Tokens count is required");
+            if (!totalTokens) throw new Error("Total tokens is required");
             if (!targetEth) throw new Error("Target is required");
             if (!receiver) throw new Error("Beneficiary is required");
+            if(!targetEur) throw new Error("Target in EUR is required");
             if (!(await isOrganizationVerified(receiver))) throw new Error("Beneficiary is not validated");
 
+            console.log(targetEur, title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver)
+
             const draft_response = await initCampaign({
+                targetEur: targetEur,
                 target: targetEth,
                 title: title,
                 description: description, // optional
@@ -183,6 +182,7 @@ export const TransactionsProvider = ({ children }) => {
                 startingDate: startingDate,
                 deadline: deadline,
                 tokensCount: tokenAmount,
+                maxTokensCount: totalTokens,
                 donor: donor,
                 receiver: receiverId,
                 draft: true
@@ -199,11 +199,13 @@ export const TransactionsProvider = ({ children }) => {
             if (!_seedHash) throw new Error("No seed hash found");
             if (!_signature) throw new Error("No signature found");
 
+
             const campaign = await charityContract.methods.createCampaign(
                 title,
                 Math.floor(startingDate / 1000),
                 Math.floor(deadline / 1000),
                 tokenAmount,
+                totalTokens,
                 receiver,
                 _seedHash,
                 {
@@ -213,13 +215,17 @@ export const TransactionsProvider = ({ children }) => {
                 }
             ).send({ from: wallet.address });
 
+            console.log("Campaign created");
+
             const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
             setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
             console.log(campaignAddress);
 
             const response = await initCampaign({
+                targetEur: targetEur,
                 target: targetEth,
                 tokensCount: tokenAmount,
+                maxTokensCount: totalTokens,
                 title: title,
                 description: description,
                 image: image,
@@ -281,6 +287,8 @@ export const TransactionsProvider = ({ children }) => {
             const token_response = await generateCampaignTokens({ campaignId });
 
             if (token_response?.error?.data?.message) throw new Error(token_response?.error?.data?.message);
+
+            setCampaign((prevState) => ({ ...prevState, is_started: true }));
 
             const signed_tokens = token_response?.data?.signedTokens;
 
@@ -409,8 +417,10 @@ export const TransactionsProvider = ({ children }) => {
 
     useEffect(() => {
         if (!wallet.address) checkIfWalletIsConnect();
-        ethereum.on('accountsChanged', checkIfWalletIsConnect);
-        return () => ethereum.removeListener('accountsChanged', checkIfWalletIsConnect);
+        if (ethereum) {
+            ethereum.on('accountsChanged', checkIfWalletIsConnect);
+            return () => ethereum.removeListener('accountsChanged', checkIfWalletIsConnect);
+        }
     }, [wallet]);
 
     useEffect(() => {

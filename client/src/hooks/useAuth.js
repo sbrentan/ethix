@@ -31,10 +31,8 @@ const useAuth = () => {
             return { username: '', role: null,status:null, isUser, isDonor, isBeneficiary, isAdmin, verified: null }
         }
         const decoded = jwtDecode(token)
-        console.log(decoded.UserInfo);
         const { userId,username, role, verified } = decoded.UserInfo
-
-        console.log("role:"+role)
+        
         isUser = (role === ROLES.User)
         isDonor = (role === ROLES.Donor)
         isBeneficiary = (role === ROLES.Beneficiary)

@@ -100,9 +100,12 @@ const Campaign = () => {
 	let targetEuro = null;
 	let currentAmountEuro = null;
 	if (ethPrice) {
-		targetEuro = (campaign.target * ethPrice).toFixed(2);
+		targetEuro = (campaign.targetEur);
 		if (campaign.blockchain_data) {
 			const valueOfToken = campaign.target / campaign.tokensCount;
+			if(campaign.tokensCount <= campaign.blockchain_data.redeemedTokensCount)
+				currentAmountEuro = (campaign.targetEur).toFixed(2);
+			else
 			currentAmountEuro = (
 				campaign.blockchain_data.redeemedTokensCount *
 				valueOfToken *
