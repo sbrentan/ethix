@@ -157,7 +157,7 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const createCampaign = async (title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver) => {
+    const createCampaign = async (targetEur, title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
@@ -168,9 +168,13 @@ export const TransactionsProvider = ({ children }) => {
             if (!totalTokens) throw new Error("Total tokens is required");
             if (!targetEth) throw new Error("Target is required");
             if (!receiver) throw new Error("Beneficiary is required");
+            if(!targetEur) throw new Error("Target in EUR is required");
             if (!(await isOrganizationVerified(receiver))) throw new Error("Beneficiary is not validated");
 
+            console.log(targetEur, title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver)
+
             const draft_response = await initCampaign({
+                targetEur: targetEur,
                 target: targetEth,
                 title: title,
                 description: description, // optional
@@ -195,6 +199,7 @@ export const TransactionsProvider = ({ children }) => {
             if (!_seedHash) throw new Error("No seed hash found");
             if (!_signature) throw new Error("No signature found");
 
+
             const campaign = await charityContract.methods.createCampaign(
                 title,
                 Math.floor(startingDate / 1000),
@@ -210,11 +215,14 @@ export const TransactionsProvider = ({ children }) => {
                 }
             ).send({ from: wallet.address });
 
+            console.log("Campaign created");
+
             const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
             setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
             console.log(campaignAddress);
 
             const response = await initCampaign({
+                targetEur: targetEur,
                 target: targetEth,
                 tokensCount: tokenAmount,
                 maxTokensCount: totalTokens,

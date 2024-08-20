@@ -48,10 +48,10 @@ const getUserCampaigns = asyncHandler(async (req, res) => {
 // @route POST /campaigns
 // @access Private: donor
 const createNewCampaign = asyncHandler(async (req, res) => {
-	const { target, tokensCount, maxTokensCount, title, image, description, startingDate, deadline, receiver, draft } = req.body;
+	const { targetEur, target, tokensCount, maxTokensCount, title, image, description, startingDate, deadline, receiver, draft } = req.body;
 
 	// Confirm data
-	if (!target || !title || !deadline || !receiver || !tokensCount || !maxTokensCount || !startingDate) {
+	if (!target || !title || !deadline || !receiver || !tokensCount || !maxTokensCount || !startingDate || !targetEur) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
@@ -106,7 +106,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 
 	// Create and store new campaign
 	const campaign = await Campaign.create({ 
-		target, title, image, description, startingDate, deadline, donor, receiver, tokensCount, maxTokensCount,
+		target, targetEur, title, image, description, startingDate, deadline, donor, receiver, tokensCount, maxTokensCount,
 		seed, blockNumber, campaignId: campaignAddress, createdBy: donor, batchRedeem: batchRedeem
 	});
 

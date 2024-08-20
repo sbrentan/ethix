@@ -62,7 +62,7 @@ function range(start, end) {
   const { username } = useAuth()
 
     const handleSubmit = async (values) => {
-		  const { title, image, dates, description, receiverId, tokenAmount, totalTokens }  = values;
+		  const { targetEur, title, image, dates, description, receiverId, tokenAmount, totalTokens }  = values;
       const startDate = dates[0];
       const deadline = dates[1];
       const seed = web3.utils.randomHex(32);
@@ -73,7 +73,7 @@ function range(start, end) {
         user._id === receiverId
       );   
       const receiver = benef[0].address;
-      const response = await createCampaign(title, description, image, startDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver)
+      const response = await createCampaign(targetEur, title, description, image, startDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver)
       setSuccessCreation(response === true)
 	};
 

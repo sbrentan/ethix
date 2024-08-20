@@ -18,6 +18,11 @@ const CampaignSchema = new mongoose.Schema(
             type: Number,
             required: true
         },
+        // The target amount of the campaign donation
+        targetEur: {
+            type: Number,
+            required: true
+        },
         // TODO: still needed?
         // The amount of money each redeemable token donates. Initially empty, will be filled when the campaign is created on the blockchain.
         tokenDonation: {
