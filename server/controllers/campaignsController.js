@@ -98,6 +98,9 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	if(!batchRedeem) {
 		batchRedeem = process.env.DEFAULT_BATCH_REDEEM || 1;
 	}
+	if(batchRedeem < tokensCount) {
+		batchRedeem = tokensCount;
+	}
 
 	// Get current blockchain block number (used for to wait for CRR reveal method)
 	const blockNumber = Number(await web3.eth.getBlockNumber());
