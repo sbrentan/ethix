@@ -6,7 +6,7 @@ To get started with the project, please follow the steps below:
 
 Clone the repository to your local machine using the following command:
 ```sh
-git clone https://github.com/sbrentan/charitychain.git
+git clone https://github.com/sbrentan/ethix.git
 ```
 
 ## Prerequisites
