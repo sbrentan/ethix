@@ -236,6 +236,11 @@ contract Campaign {
             "Tokens and signatures length mismatch"
         );
 
+        require (
+            campaignDetails.redeemedTokensCount + _tokens.length <= campaignDetails.tokensCount,
+            "Redeemed tokens count exceeds the total tokens count"
+        );
+
         for (uint256 i = 0; i < _tokens.length; i++) {
 
             bytes32 t2_token = generateTokenHash(_tokens[i]);
