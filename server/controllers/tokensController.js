@@ -55,13 +55,13 @@ const generateTokens = asyncHandler(async (req, res) => {
 
         if(process.env.DEBUG) console.log(campaign);
         // Generate the tokens T1
-        const t1_tokens = Array.from({ length: campaign.tokensCount }, (_, i) => {
+        const t1_tokens = Array.from({ length: campaign.maxTokensCount }, (_, i) => {
             return web3.utils.toHex(crypto.createHash('sha256').update(tokenSeed + i).digest('hex'));
         });
         if(process.env.DEBUG) console.log('t1_tokens', t1_tokens);
         
         // generate randomlyh token indexes
-        const salts = Array.from({ length: campaign.tokensCount }, (_, i) => crypto.createHash('sha256').update(String(i + new Date().getTime())).digest('hex'));
+        const salts = Array.from({ length: campaign.maxTokensCount }, (_, i) => crypto.createHash('sha256').update(String(i + new Date().getTime())).digest('hex'));
         if(process.env.DEBUG) console.log('salts', salts);
 
         // Create the TokenSalt objects to save on db
@@ -197,55 +197,64 @@ const redeemToken = asyncHandler(async (req, res) => {
             return res.status(400).json({ message: "Token not valid" });
         }
 
+        // get total redeemed token salt for the campaign
+        const totalRedeemedTokenSalt = await TokenSalt.countDocuments({ campaignId: campaignId, redeemed: true }).exec();
+        
         if (tokenSalt){
             tokenSalt.redeemed = true;
             await tokenSalt.save();
         }
 
-        // Check if the batch of tokens is complete
-        campaign.redeemableTokens += 1;
-        newtoken = new RedeemableToken({
-            campaignId: campaignId,
-            token: t15_token,
-            signature: signature
-        });
+        if (totalRedeemedTokenSalt < campaign.tokensCount) {
 
-        await newtoken.save();
-        await campaign.save();
-        if(process.env.DEBUG) console.log(campaign.redeemableTokens, campaign.batchRedeem);
-        if (campaign.redeemableTokens >= campaign.batchRedeem) {
-            // redeem the batch of tokens
-            const redeemableTokens = await RedeemableToken.find({ campaignId: campaignId }).limit(campaign.batchRedeem).exec();
-            if(process.env.DEBUG) console.log('Redeeming batch of tokens: ', redeemableTokens);
-            const tokens = redeemableTokens.map(token => token.token);
-            const RSVSignatures = redeemableTokens.map(token => {
-                const { v, r, s } = ethUtil.fromRpcSig(token.signature);
-                return {r: r, s: s, v: v}
+            // Check if the batch of tokens is complete
+            campaign.redeemableTokens += 1;
+            newtoken = new RedeemableToken({
+                campaignId: campaignId,
+                token: t15_token,
+                signature: signature
             });
-            const receipt = await WEB3_CONTRACT.methods.redeemTokensBatch(campaignAddress, tokens, RSVSignatures).send({
-                gasPrice: web3.utils.toWei('2', 'gwei'),
-                from: WEB3_MANAGER_ACCOUNT.address
-            });
-            if(process.env.DEBUG) console.log('Transaction receipt:', receipt);
-            
-            for (const token of redeemableTokens) {
-                // delete token
-                await token.deleteOne();
+
+            await newtoken.save();
+            await campaign.save();
+            if(process.env.DEBUG) console.log(campaign.redeemableTokens, campaign.batchRedeem);
+            if (campaign.redeemableTokens >= campaign.batchRedeem || totalRedeemedTokenSalt + 1 == campaign.tokensCount) {
+                // redeem the batch of tokens
+                const redeemableTokens = await RedeemableToken.find({ campaignId: campaignId }).limit(campaign.batchRedeem).exec();
+                if(process.env.DEBUG) console.log('Redeeming batch of tokens: ', redeemableTokens);
+                const tokens = redeemableTokens.map(token => token.token);
+                const RSVSignatures = redeemableTokens.map(token => {
+                    const { v, r, s } = ethUtil.fromRpcSig(token.signature);
+                    return {r: r, s: s, v: v}
+                });
+                const receipt = await WEB3_CONTRACT.methods.redeemTokensBatch(campaignAddress, tokens, RSVSignatures).send({
+                    gasPrice: web3.utils.toWei('2', 'gwei'),
+                    from: WEB3_MANAGER_ACCOUNT.address
+                });
+                if(process.env.DEBUG) console.log('Transaction receipt:', receipt);
+                
+                for (const token of redeemableTokens) {
+                    // delete token
+                    await token.deleteOne();
+                }
+
+                // reset redeemable tokens
+                campaign.redeemableTokens = await RedeemableToken.countDocuments({ campaignId: campaignId }).exec();
+
+                // update campaign
+                await campaign.save();
+                if(process.env.DEBUG) console.log('Campaign updated:', campaign);
+            } else {
+                // save token and signature
+                if(process.env.DEBUG) console.log('Added redeemable token:', newtoken);
+                if(process.env.DEBUG) console.log('Skipping single token redeem, batch count = ', campaign.batchRedeem, ', redeemable tokens = ', campaign.redeemableTokens);
             }
 
-            // reset redeemable tokens
-            campaign.redeemableTokens = await RedeemableToken.countDocuments({ campaignId: campaignId }).exec();
-
-            // update campaign
-            await campaign.save();
-            if(process.env.DEBUG) console.log('Campaign updated:', campaign);
+            res.json({ message: "Token redeemed" });
         } else {
-            // save token and signature
-            if(process.env.DEBUG) console.log('Added redeemable token:', newtoken);
-            if(process.env.DEBUG) console.log('Skipping single token redeem, batch count = ', campaign.batchRedeem, ', redeemable tokens = ', campaign.redeemableTokens);
+            console.log("Target has been reached, no more tokens can be redeemed");
+            res.json("Token redeemed, but target has already been reached");
         }
-
-        res.json({ message: "Token redeemed" });
     } catch (error) {
         if(process.env.DEBUG) console.log('Error redeeming token:', error);
         errorMessage = retrieveBlockchainError(error);
