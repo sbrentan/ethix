@@ -15,6 +15,8 @@ import {
 	useGetMyPublicProfileQuery,
 	useUpdateMyPublicProfileMutation,
 } from "../requests/requestsApiSlice";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
+import { useDispatch } from "react-redux";
 
 const { Text, Title } = Typography;
 
@@ -23,6 +25,8 @@ const MyPublicProfile = () => {
 
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch()
+
 
 	// GET MY PROFILE
 	const {
@@ -36,6 +40,12 @@ const MyPublicProfile = () => {
 
 	const [update, { isLoading, isSuccess, isError, error }] =
 		useUpdateMyPublicProfileMutation();
+
+    // Loading Overlay
+	useEffect(() => {
+		if (isLoading) dispatch(showLoading());
+		else dispatch(hideLoading()); // eslint-disable-next-line
+	}, [isLoading]);
 
 	// Errore
 	useEffect(() => {

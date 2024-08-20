@@ -26,8 +26,13 @@ import MyProfile from "./features/users/MyProfile.js";
 import PublicProfile from "./features/organizations/PublicProfile.js";
 import OrganizationsGrid from "./features/organizations/OrganizationsGrid.js";
 import DashboardOrganization from "./features/campaigns/DashboardOrganization.js";
+import { useSelector } from "react-redux";
+import { selectLoadingState } from "./app/loadingSlice.js";
+import Loader from "./components/Loader.js";
 
 function App() {
+    const loading = useSelector(selectLoadingState);
+
     return (
         <>
             <Routes>
@@ -164,6 +169,7 @@ function App() {
 
                     </Route>
             </Routes>
+            {loading && <Loader />}
         </>
     );
 }
