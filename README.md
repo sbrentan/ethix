@@ -1,3 +1,18 @@
+# Ethix
+
+![Logo](./logo.png)
+
+This repository contains the project for the Blockchain course for the year 2023/2024 of University of Trento.
+
+The team members for the group project are:
+
+* Simone Brentan (239959)
+* Matteo Costalonga (239960)
+* Alex Reichert (239961)
+* Pietro Farina (249889)
+
+The root folder also contains the report pdf file.
+
 # Project Setup Instructions
 
 To get started with the project, please follow the steps below:
