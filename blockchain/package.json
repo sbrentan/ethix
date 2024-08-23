@@ -8,11 +8,12 @@
     "reset": "truffle migrate --reset",
     "copy": "node copy-contracts.js",
     "deploy": "npm run reset && npm run copy",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node run-tests.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "child_process": "^1.0.2",
     "dotenv": "^16.4.5",
     "hardhat": "^2.22.9",
     "truffle": "^5.11.5"
