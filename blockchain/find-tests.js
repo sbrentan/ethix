@@ -123,13 +123,47 @@ const searchPattern = process.argv.slice(2).join(' ').split(" ");
 
 const matchingTests = findTests(searchPattern);
 
+let result = "";
+let commonPart = "";
+if(matchingTests.length == 1)
+	result = matchingTests[0];
+else if(matchingTests.length > 1){
+    // find the common part between all the tests
+    for (let i = 0; i < matchingTests[0].length; i++) {
+        let char = matchingTests[0][i];
+        let common = true;
+        for (let j = 1; j < matchingTests.length; j++) {
+            if(matchingTests[j][i] != char){
+                common = false;
+                break;
+            }
+        }
+        if(common) {
+            commonPart += char;
+        } else {
+            break;
+        }
+    }
+    if (commonPart.length > 0) {
+        // commonPart = commonPart.split(" ");
+        // commonPart = commonPart.slice(0, commonPart.length - 1);
+        result = commonPart.trim();
+    } else {
+	    result = searchPattern.join(" ").trim();
+    }
+}
+console.log(result);
+
 err_msg = "";
 if(matchingTests.length == 0){
     run_msg = "!!! Stopping the command as no test has been found !!!\n";
-	  err_msg = "* No matching tests found *\n\n\n" + run_msg;
+	err_msg = "* No matching tests found *\n\n\n" + run_msg;
 }
 else if(matchingTests.length > 1){
-    run_msg = "!!! Running directly hh command: `npx hardhat test --grep \"" + searchPattern.join(" ") + "\"` !!!\n";
+    if(commonPart.length > 0)
+        run_msg = "!!! Running directly hh command with common part: `npx hardhat test --grep \"" + commonPart + "\"` !!!\n";
+    else
+        run_msg = "!!! Running directly hh command: `npx hardhat test --grep \"" + searchPattern.join(" ").trim() + "\"` !!!\n";
     err_msg = "\n* Multiple matching tests found, cannot retrieve direct test *\n\n\n" + run_msg;
 }
 
@@ -140,12 +174,4 @@ process.stderr.write(
 	err_msg + '\n' +
 	'----------------------------------------------------------------------------------\n\n'
 )
-// console.log('Matching test descriptions:');
-// matchingTests.forEach((test) => console.log("\t- " + test));
-// console.clear();
-
-if(matchingTests.length == 1)
-	console.log(matchingTests[0]);
-else if(matchingTests.length > 1)
-	console.log(searchPattern.join(" "));
 
