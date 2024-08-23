@@ -147,5 +147,5 @@ process.stderr.write(
 if(matchingTests.length == 1)
 	console.log(matchingTests[0]);
 else if(matchingTests.length > 1)
-	console.log(searchPattern);
+	console.log(searchPattern.join(" "));
 
