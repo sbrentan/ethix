@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./Campaign.sol";
+import "hardhat/console.sol";
 
 contract Charity {
     // Charity contract roles:
@@ -50,6 +51,9 @@ contract Charity {
     // ====================================== MODIFIERS ======================================
 
     modifier onlyOwner() {
+        /*console.log("msg.sender: ", msg.sender);
+        console.log("owner: ", owner);
+        console.log("msg.sender == owner: ", msg.sender == owner);*/
         require(msg.sender == owner, "Only the owner can perform this action");
         _;
     }
@@ -107,6 +111,19 @@ contract Charity {
         bytes32 _commitHash, // is the hash of the seed
         Campaign.Signature calldata _signature
     ) external onlyVerifiedBeneficiary(_beneficiary) {
+
+        /*console.log("title: ", _title);
+        console.log("startingDate: ", _startingDate);
+        console.log("deadline: ", _deadline);
+        console.log("tokensCount: ", _tokensCount);
+        console.log("maxTokensCount: ", _maxTokensCount);
+        console.logBytes(abi.encodePacked(_beneficiary));
+        console.logBytes(abi.encodePacked(_commitHash));
+        console.logBytes(abi.encodePacked(_signature.r));
+        console.logBytes(abi.encodePacked(_signature.s));
+        console.logBytes(abi.encodePacked(_signature.v));*/
+        console.log("donor : ", msg.sender);
+
         // generate a unique ID for the campaign
         bytes32 campaignId = _generateCampaignId(
             msg.sender,
