@@ -49,7 +49,6 @@ describe("Charity", function () {
 	 */
 	describe("Deployment", function () {
 		it("T001 - Should deploy the contract", async function () {
-			charity = _fixture.charity;
 
 			const contract_address = await charity.getAddress();
 			expect(contract_address).to.be.properAddress;
