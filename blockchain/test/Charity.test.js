@@ -6,11 +6,17 @@ require("@nomicfoundation/hardhat-chai-matchers");
 const { expect } = require("chai");
 const CharityModule = require("../ignition/modules/Charity");
 
-const log = (message, tabs) => { console.log(`${"\t".repeat(tabs)}${message}`); };
+const { 
+	log,
+	getPrivateKey,
+	encodePacked 
+} = require("../common/utils");
 
 describe("Charity", function () {
 	
-	let charity, owner, donor, beneficiary, other;
+	let charity; // contract instance
+
+	let owner, donor, beneficiary, other; // signers providers
 	let owner_private_key;
 
 	async function deployCharityFixture() {
@@ -20,22 +26,24 @@ describe("Charity", function () {
 
 	before(async function () {
 		
-		// Runs before all tests in this block
 		const [_owner, _donor, _beneficiary, _other] = await ethers.getSigners();
 
-		const _accounts = config.networks.hardhat.accounts;
-		const _owner_wallet = ethers.Wallet.fromPhrase(_accounts.mnemonic, _accounts.path + `/0`);
+		// if no index is specified, the owner private key is returned
+		owner_private_key = getPrivateKey();
 
-		owner = _owner.address;
-		owner_private_key = _owner_wallet.privateKey;
-		donor = _donor.address;
-		beneficiary = _beneficiary.address;
-		other = _other.address;
+		// check if the owner private key is correct
+		/* const _owner_wallet = new ethers.Wallet(owner_private_key);
+		expect(_owner.address).to.equal(_owner_wallet.address); */
+
+		owner = _owner;
+		donor = _donor;
+		beneficiary = _beneficiary;
+		other = _other;
 		
-		log(`owner: ${owner}`, 1);
-		log(`donor: ${donor}`, 1);
-		log(`beneficiary: ${beneficiary}`, 1);
-		log(`other: ${other}`, 1);
+		log(`owner: ${owner.address}`, 1);
+		log(`donor: ${donor.address}`, 1);
+		log(`beneficiary: ${beneficiary.address}`, 1);
+		log(`other: ${other.address}`, 1);
 	});
 
 	beforeEach(async function () {
@@ -44,12 +52,8 @@ describe("Charity", function () {
 		charity = _fixture.charity;
 	});
 
-	/**
-	 * Deployment test cases
-	 */
 	describe("Deployment", function () {
 		it("T001 - Should deploy the contract", async function () {
-
 			const contract_address = await charity.getAddress();
 			expect(contract_address).to.be.properAddress;
 
@@ -57,7 +61,7 @@ describe("Charity", function () {
 		});
 
 		it("T002 - Should set the right owner", async function () {
-			expect(charity.runner.address).to.equal(owner);
+			expect(charity.runner.address).to.equal(owner.address);
 		});
 
 		it("CT003 - General flow", async function () {
@@ -66,43 +70,63 @@ describe("Charity", function () {
 			expect(_is_verified).to.be.false;
 
 			// Verify the beneficiary
-			await charity.verifyOrganization(beneficiary, { from: owner });
+			await charity.connect(owner).verifyOrganization(beneficiary);
 
 			_is_verified = await charity.isOrganizationVerified(beneficiary);
 			expect(_is_verified).to.be.true;
+
+			// TODO: test also the organization revocation
 
 			const _seed = web3.utils.randomHex(32);
 			const _seedHash = web3.utils.keccak256(_seed);
 
 			// Sign the seed
-			const _signature = await web3.eth.accounts.sign(_seedHash, owner_private_key);
+			let _signature = await web3.eth.accounts.sign(_seedHash, owner_private_key);
 
 			const _startingDate = new Date().getTime();
 			const _deadline = new Date().getTime() + 60;
-			
-			log(`startingDate: ${_startingDate}`, 1);
-			log(`deadline: ${_deadline}`, 1);
-			log(`beneficiary: ${beneficiary}`, 1);
-			log(`seedHash: ${_seedHash}`, 1);
-			log(`signature: ${JSON.stringify(_signature)}`, 1);
-			log(`donor: ${donor}`, 1);
 
 			// Donor can create campaign
-			const _creation = await charity.createCampaign(
+			await charity.connect(donor).createCampaign(
 				"Test",
 				_startingDate,
 				_deadline,
 				5,
 				10,
 				beneficiary,
-				_seedHash, // is the hash of the seed
+				_seedHash,
 				{
 					r: _signature.r,
 					s: _signature.s,
 					v: _signature.v
-				}, // is the signature of the seed 
-				{ from: owner }
+				}
 			);
+
+			const _latestCampaign = (await charity.getCampaignsIds()).at(-1);
+
+			const _rwallet = web3.eth.accounts.create();
+
+			const _combinedHash = encodePacked(_rwallet.address, _latestCampaign);
+			_signature = await web3.eth.accounts.sign(_combinedHash, owner_private_key);
+
+			await charity.connect(donor).startCampaign(
+				_latestCampaign,
+				_seed,
+				_rwallet.address,
+				{
+					r: _signature.r,
+					s: _signature.s,
+					v: _signature.v
+				},
+				{
+					value: web3.utils.toWei('1', 'ether')
+				}
+			)
+
+			const _campaign = await charity.getCampaign(_latestCampaign);
+
+			console.log(_campaign);
+
 		});
 	});
 });
