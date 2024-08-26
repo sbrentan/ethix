@@ -2,6 +2,7 @@ const {
 	loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 require("@nomicfoundation/hardhat-chai-matchers");
+const helpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const { expect } = require("chai");
 const CharityModule = require("../ignition/modules/Charity");
@@ -10,7 +11,8 @@ const {
 	log,
 	getPrivateKey,
 	encodePacked,
-	generateToken
+	generateToken,
+	redeemToken
 } = require("../common/utils");
 
 describe("Charity", function () {
@@ -89,8 +91,16 @@ describe("Charity", function () {
 			// Sign the seed
 			let _signature = await web3.eth.accounts.sign(_seedHash, owner_private_key);
 
-			const _startingDate = new Date().getTime();
-			const _deadline = new Date().getTime() + 60;
+			const _startingDate = Math.floor((new Date().getTime() + 10000) / 1000);
+			const _deadline = Math.floor((new Date().getTime() + 60000) / 1000);
+
+			await helpers.time.setNextBlockTimestamp(...);
+			
+			console.log("Starting date: ", _startingDate);
+			console.log("Deadline: ", _deadline);
+
+			let block = await ethers.provider.getBlock("latest");
+			console.log("1)" + block.number, block.timestamp);
 
 			// Donor can create campaign
 			await donor_charity.createCampaign(
@@ -108,14 +118,21 @@ describe("Charity", function () {
 				}
 			);
 
+			await helpers.time.increase(3600); // 1 hour
+
+			block = await ethers.provider.getBlock("latest");
+			console.log("3)" + block.number, block.timestamp);
+
 			const _latestCampaign = (await charity.getCampaignsIds()).at(-1);
 
 			const _rwallet = web3.eth.accounts.create();
+			console.log("Rwallet address: ", _rwallet.address);
+			console.log("Rwallet private key: ", _rwallet.privateKey);
 
 			const _combinedHash = encodePacked(_rwallet.address, _latestCampaign);
 			_signature = await web3.eth.accounts.sign(_combinedHash, owner_private_key);
 
-			await donor_charity.startCampaign(
+			/*const response = await donor_charity.startCampaign(
 				_latestCampaign,
 				_seed,
 				_rwallet.address,
@@ -129,13 +146,35 @@ describe("Charity", function () {
 				}
 			)
 
+			console.log(response);*/
+
+			await expect(donor_charity.startCampaign(
+				_latestCampaign,
+				_seed,
+				_rwallet.address,
+				{
+					r: _signature.r,
+					s: _signature.s,
+					v: _signature.v
+				},
+				{
+					value: web3.utils.toWei('1', 'ether')
+				}
+			)).to.emit(donor_charity, "CampaignStarted")
+
+			await helpers.time.setNextBlockTimestamp(_startingDate + 100);
+
 			const _campaign = await charity.getCampaign(_latestCampaign);
 
 			console.log(_campaign);
 
-			const token_structure = generateToken(owner_charity, _seed, _latestCampaign);
+			const _token_structure = await generateToken(owner_charity, _seed, _latestCampaign, _rwallet);
 
-			console.log(token_structure.token, token_structure.token_seed, token_structure.token_salt);
+			console.log(_token_structure.token, _token_structure.token_seed, _token_structure.token_salt);
+
+			const is_valid = await redeemToken(owner_charity, _latestCampaign, _token_structure);
+
+			console.log(is_valid);
 
 		});
 	});
