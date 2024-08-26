@@ -9,7 +9,8 @@ const CharityModule = require("../ignition/modules/Charity");
 const { 
 	log,
 	getPrivateKey,
-	encodePacked 
+	encodePacked,
+	generateToken
 } = require("../common/utils");
 
 describe("Charity", function () {
@@ -65,15 +66,20 @@ describe("Charity", function () {
 		});
 
 		it("CT003 - General flow", async function () {
+
+			let owner_charity = charity.connect(owner);
+			let donor_charity = charity.connect(donor);
 			
 			let _is_verified = await charity.isOrganizationVerified(beneficiary);
 			expect(_is_verified).to.be.false;
 
 			// Verify the beneficiary
-			await charity.connect(owner).verifyOrganization(beneficiary);
+			await owner_charity.verifyOrganization(beneficiary);
 
 			_is_verified = await charity.isOrganizationVerified(beneficiary);
 			expect(_is_verified).to.be.true;
+
+			log("Organization verified", 1);
 
 			// TODO: test also the organization revocation
 
@@ -87,7 +93,7 @@ describe("Charity", function () {
 			const _deadline = new Date().getTime() + 60;
 
 			// Donor can create campaign
-			await charity.connect(donor).createCampaign(
+			await donor_charity.createCampaign(
 				"Test",
 				_startingDate,
 				_deadline,
@@ -109,7 +115,7 @@ describe("Charity", function () {
 			const _combinedHash = encodePacked(_rwallet.address, _latestCampaign);
 			_signature = await web3.eth.accounts.sign(_combinedHash, owner_private_key);
 
-			await charity.connect(donor).startCampaign(
+			await donor_charity.startCampaign(
 				_latestCampaign,
 				_seed,
 				_rwallet.address,
@@ -126,6 +132,10 @@ describe("Charity", function () {
 			const _campaign = await charity.getCampaign(_latestCampaign);
 
 			console.log(_campaign);
+
+			const token_structure = generateToken(owner_charity, _seed, _latestCampaign);
+
+			console.log(token_structure.token, token_structure.token_seed, token_structure.token_salt);
 
 		});
 	});
