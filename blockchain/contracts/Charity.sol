@@ -188,6 +188,9 @@ contract Charity {
         );
         Commit memory commitData = commits[_campaignId];
 
+        console.log("commit block number: ");
+        console.log(commitData.blockNumber);
+
         // require that the seed matches the commit
         require(
             commitData.commitHash == keccak256(abi.encodePacked(_seed)),

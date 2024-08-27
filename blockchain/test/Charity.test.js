@@ -2,21 +2,25 @@ const {
 	loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 require("@nomicfoundation/hardhat-chai-matchers");
+
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const { expect } = require("chai");
 const CharityModule = require("../ignition/modules/Charity");
 
-const { 
+const {
 	log,
+	formatDate,
 	getPrivateKey,
 	encodePacked,
 	generateToken,
 	redeemToken
-} = require("../common/utils");
+} = require("./common/utils.js");
+
+require("./Charity/deployment.test.js");
 
 describe("Charity", function () {
-	
+
 	let charity; // contract instance
 
 	let owner, donor, beneficiary, other; // signers providers
@@ -28,7 +32,6 @@ describe("Charity", function () {
 	}
 
 	before(async function () {
-		
 		const [_owner, _donor, _beneficiary, _other] = await ethers.getSigners();
 
 		// if no index is specified, the owner private key is returned
@@ -42,11 +45,12 @@ describe("Charity", function () {
 		donor = _donor;
 		beneficiary = _beneficiary;
 		other = _other;
-		
-		log(`owner: ${owner.address}`, 1);
-		log(`donor: ${donor.address}`, 1);
-		log(`beneficiary: ${beneficiary.address}`, 1);
-		log(`other: ${other.address}`, 1);
+
+		log(`owner: \n\t* address: ${owner.address}\n\t* private key: ${owner_private_key}`, 1);
+		log(`donor address: ${donor.address}`, 1);
+		log(`beneficiary address: ${beneficiary.address}`, 1);
+		log(`other address: ${other.address}\n`, 1);
+		log("");
 	});
 
 	beforeEach(async function () {
@@ -56,126 +60,163 @@ describe("Charity", function () {
 	});
 
 	describe("Deployment", function () {
-		it("T001 - Should deploy the contract", async function () {
-			const contract_address = await charity.getAddress();
-			expect(contract_address).to.be.properAddress;
 
-			log(`charity deployed to: ${contract_address}`, 1);
-		});
+		it("T001 - Should deploy the contract", () => test_contract_is_deployed(charity));
+		
+		it("T002 - Should set the right owner", () => test_owner_is_correct(charity, owner));
 
-		it("T002 - Should set the right owner", async function () {
-			expect(charity.runner.address).to.equal(owner.address);
-		});
+	});
 
-		it("CT003 - General flow", async function () {
+	describe("Organization verification", function () {
 
-			let owner_charity = charity.connect(owner);
-			let donor_charity = charity.connect(donor);
-			
-			let _is_verified = await charity.isOrganizationVerified(beneficiary);
-			expect(_is_verified).to.be.false;
+		// should be authorized to verify the organization
+		// should verify the organization (both proper and not proper adddress)
 
-			// Verify the beneficiary
-			await owner_charity.verifyOrganization(beneficiary);
+		// should be authorized to revoke the organization verification
+		// should revoke the organization verification
 
-			_is_verified = await charity.isOrganizationVerified(beneficiary);
-			expect(_is_verified).to.be.true;
+	});
 
-			log("Organization verified", 1);
+	it("CT003 - General flow", async function () {
 
-			// TODO: test also the organization revocation
+		let owner_charity = charity.connect(owner);
+		let donor_charity = charity.connect(donor);
+		let beneficiary_charity = charity.connect(beneficiary);
 
-			const _seed = web3.utils.randomHex(32);
-			const _seedHash = web3.utils.keccak256(_seed);
+		let _is_verified = await charity.isOrganizationVerified(beneficiary);
+		expect(_is_verified).to.be.false;
 
-			// Sign the seed
-			let _signature = await web3.eth.accounts.sign(_seedHash, owner_private_key);
+		// Verify the beneficiary
+		await expect(owner_charity.verifyOrganization(beneficiary)).to.emit(owner_charity, "OrganizationVerified");
 
-			const _startingDate = Math.floor((new Date().getTime() + 10000) / 1000);
-			const _deadline = Math.floor((new Date().getTime() + 60000) / 1000);
+		_is_verified = await charity.isOrganizationVerified(beneficiary);
+		expect(_is_verified).to.be.true;
 
-			await helpers.time.setNextBlockTimestamp(...);
-			
-			console.log("Starting date: ", _startingDate);
-			console.log("Deadline: ", _deadline);
+		log("Organization verified", 1);
 
-			let block = await ethers.provider.getBlock("latest");
-			console.log("1)" + block.number, block.timestamp);
+		// TODO: test also the organization revocation
 
-			// Donor can create campaign
-			await donor_charity.createCampaign(
-				"Test",
-				_startingDate,
-				_deadline,
-				5,
-				10,
-				beneficiary,
-				_seedHash,
-				{
-					r: _signature.r,
-					s: _signature.s,
-					v: _signature.v
-				}
-			);
+		const _seed = web3.utils.randomHex(32);
+		const _seedHash = web3.utils.keccak256(_seed);
 
-			await helpers.time.increase(3600); // 1 hour
+		// Sign the seed
+		let _signature = await web3.eth.accounts.sign(_seedHash, owner_private_key);
 
-			block = await ethers.provider.getBlock("latest");
-			console.log("3)" + block.number, block.timestamp);
+		let block = await ethers.provider.getBlock("latest");
+		log("After verification: ", formatDate(block.timestamp));
 
-			const _latestCampaign = (await charity.getCampaignsIds()).at(-1);
+		const HOUR = 3600;
+		const _startingDate = Math.floor(block.timestamp + (2 * HOUR));
+		const _deadline = Math.floor(_startingDate + (6 * HOUR));
 
-			const _rwallet = web3.eth.accounts.create();
-			console.log("Rwallet address: ", _rwallet.address);
-			console.log("Rwallet private key: ", _rwallet.privateKey);
+		log("Starting date: ", formatDate(_startingDate));
+		log("Deadline: ", formatDate(_deadline));
 
-			const _combinedHash = encodePacked(_rwallet.address, _latestCampaign);
-			_signature = await web3.eth.accounts.sign(_combinedHash, owner_private_key);
+		block = await ethers.provider.getBlock("latest");
+		log("Pre creation: ", formatDate(block.timestamp));
 
-			/*const response = await donor_charity.startCampaign(
-				_latestCampaign,
-				_seed,
-				_rwallet.address,
-				{
-					r: _signature.r,
-					s: _signature.s,
-					v: _signature.v
-				},
-				{
-					value: web3.utils.toWei('1', 'ether')
-				}
-			)
+		const create_tx = await donor_charity.createCampaign(
+			"Test",
+			_startingDate,
+			_deadline,
+			5,
+			10,
+			beneficiary,
+			_seedHash,
+			{
+				r: _signature.r,
+				s: _signature.s,
+				v: _signature.v
+			}
+		);
 
-			console.log(response);*/
+		log("create_tx", create_tx);
 
-			await expect(donor_charity.startCampaign(
-				_latestCampaign,
-				_seed,
-				_rwallet.address,
-				{
-					r: _signature.r,
-					s: _signature.s,
-					v: _signature.v
-				},
-				{
-					value: web3.utils.toWei('1', 'ether')
-				}
-			)).to.emit(donor_charity, "CampaignStarted")
+		const create_receipt = await create_tx.wait();
 
-			await helpers.time.setNextBlockTimestamp(_startingDate + 100);
+		log(create_receipt.logs);
+		const create_event = create_receipt?.logs[0]?.fragment?.name;
+		const _campaignId = create_receipt?.logs[0]?.data; // campaign id
 
-			const _campaign = await charity.getCampaign(_latestCampaign);
+		expect(create_event).to.equal("CampaignCreated");
 
-			console.log(_campaign);
+		block = await ethers.provider.getBlock("latest");
+		log("After creation: ", formatDate(block.timestamp));
 
-			const _token_structure = await generateToken(owner_charity, _seed, _latestCampaign, _rwallet);
+		// TODO: add block mining and test startCampaign does not work before
 
-			console.log(_token_structure.token, _token_structure.token_seed, _token_structure.token_salt);
+		// TODO: test if the campaign id has been added to the list of campaigns
+		//const _campaignId = (await charity.getCampaignsIds()).at(-1);
 
-			const is_valid = await redeemToken(owner_charity, _latestCampaign, _token_structure);
+		const _rwallet = web3.eth.accounts.create();
+		log("Rwallet address: ", _rwallet.address);
+		log("Rwallet private key: ", _rwallet.privateKey);
 
-			console.log(is_valid);
+		const _combinedHash = encodePacked(_rwallet.address, _campaignId);
+		_signature = await web3.eth.accounts.sign(_combinedHash, owner_private_key);
 
-		});
+		block = await ethers.provider.getBlock("latest");
+		log("Pre start: ", formatDate(block.timestamp));
+
+		await expect(donor_charity.startCampaign(
+			_campaignId,
+			_seed,
+			_rwallet.address,
+			{
+				r: _signature.r,
+				s: _signature.s,
+				v: _signature.v
+			},
+			{
+				value: web3.utils.toWei('1', 'ether')
+			}
+		)).to.emit(donor_charity, "CampaignStarted")
+
+		block = await ethers.provider.getBlock("latest");
+		log("After start: ", formatDate(block.timestamp));
+
+		await helpers.time.increase((4 * HOUR));
+
+		block = await ethers.provider.getBlock("latest");
+		log("Entering the campaign period: ", formatDate(block.timestamp));
+
+		const _campaign = await charity.getCampaign(_campaignId);
+
+		log(_campaign);
+
+		const _token_structure = await generateToken(owner_charity, _seed, _campaignId, _rwallet);
+
+		log(_token_structure.token, _token_structure.token_seed, _token_structure.token_salt);
+
+		const is_valid = await redeemToken(owner_charity, _campaignId, _token_structure);
+
+		log(is_valid);
+
+		await helpers.time.increase((10 * HOUR));
+
+		block = await ethers.provider.getBlock("latest");
+		log("Campaign finished! ", formatDate(block.timestamp));
+
+		const refund_tx = await donor_charity.claimRefund(_campaignId);
+		const refund_receipt = await refund_tx.wait();
+		const refund_event = refund_receipt?.logs[0]?.fragment?.name;
+		const refund_amount = refund_receipt?.logs[0]?.data;
+
+		expect(refund_event).to.equal("RefundClaimed");
+
+		// convert the amount from hex wei to ether
+		const _refund_amount = web3.utils.fromWei(refund_amount, 'ether');
+		log("Refund amount: ", _refund_amount);
+
+		const donation_tx = await beneficiary_charity.claimDonation(_campaignId);
+		const donation_receipt = await donation_tx.wait();
+		const donation_event = donation_receipt?.logs[0]?.fragment?.name;
+		const donation_amount = donation_receipt?.logs[0]?.data;
+
+		expect(donation_event).to.equal("DonationClaimed");
+
+		// convert the amount from hex wei to ether
+		const _donation_amount = web3.utils.fromWei(donation_amount, 'ether');
+		log("Donation amount: ", _donation_amount);
 	});
 });
