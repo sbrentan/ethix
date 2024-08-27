@@ -11,7 +11,10 @@ function findTests(searchPattern) {
 
     // Use regular expressions to find `describe` and `it` blocks
     const describeRegex = /describe\s*\(\s*['"`](.+?)['"`]\s*,\s*function\s*\(\s*\)\s*\{/g;
-    const itRegex = /it\s*\(\s*['"`](.+?)['"`]\s*,\s*\(\)\s*\=\>\s([\w\(\)\s\,\.]+?)\s*\)/g;
+    const itRegexes = [
+        /it\s*\(\s*['"`](.+?)['"`]\s*,\s*\(\)\s*\=\>\s*([\w\(\)\s\,\.]+?)\s*\)/g,
+        /it\s*\(\s*['"`](.+?)['"`]\s*,\s*async\s*function\s*\(\)\s*\{/g,
+    ];
 
     const describeStack = [];
     let descriptions = {};
@@ -31,18 +34,20 @@ function findTests(searchPattern) {
     }
 
     initialIndex = 0;
-    while ((match = itRegex.exec(fileContent))) {
-      const itIndex = match.index;
-      const lastNewLineIndex = fileContent.slice(initialIndex, itIndex).lastIndexOf("\n");
-      const level = itIndex - (lastNewLineIndex + initialIndex);
+    for (let itRegex of itRegexes) {
+        while ((match = itRegex.exec(fileContent))) {
+        const itIndex = match.index;
+        const lastNewLineIndex = fileContent.slice(initialIndex, itIndex).lastIndexOf("\n");
+        const level = itIndex - (lastNewLineIndex + initialIndex);
 
-      descriptions[itIndex] = {"type": "it", "value": match[1], 'level': level - 1};
+        descriptions[itIndex] = {"type": "it", "value": match[1], 'level': level - 1};
 
-      initialIndex = itIndex;
+        initialIndex = itIndex;
 
-      //break; // Remove this line to search for all tests
+        //break; // Remove this line to search for all tests
+        }
     }
-    console.log("descriptions: ", descriptions);
+    // console.log("descriptions: ", descriptions);
 
 
     let previousValues = {};
@@ -64,10 +69,10 @@ function findTests(searchPattern) {
         }
 
     }
-    console.log("newTexts: ", newTexts);
+    // console.log("newTexts: ", newTexts);
 
 
-    console.log("------------")
+    // console.log("------------")
 
     // perform regex search on newTexts
     for (let i = 0; i < newTexts.length; i++) {

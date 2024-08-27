@@ -102,6 +102,8 @@ describe("Charity", function () {
 		// Sign the seed
 		let _signature = await web3.eth.accounts.sign(_seedHash, owner_private_key);
 
+		// TODO: change log with formatted strings
+
 		let block = await ethers.provider.getBlock("latest");
 		log("After verification: ", formatDate(block.timestamp));
 
@@ -149,8 +151,8 @@ describe("Charity", function () {
 		//const _campaignId = (await charity.getCampaignsIds()).at(-1);
 
 		const _rwallet = web3.eth.accounts.create();
-		log("Rwallet address: ", _rwallet.address);
-		log("Rwallet private key: ", _rwallet.privateKey);
+		log(`Rwallet address: ${_rwallet.address}`);
+		log(`Rwallet private key: ${_rwallet.privateKey}`);
 
 		const _combinedHash = encodePacked(_rwallet.address, _campaignId);
 		_signature = await web3.eth.accounts.sign(_combinedHash, owner_private_key);
