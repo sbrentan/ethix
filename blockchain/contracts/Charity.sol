@@ -122,10 +122,10 @@ contract Charity {
         // require that the campaignId doesn't already exist in the mapping
         require(!campaignExists(campaignId), "Campaign already exists");
 
-        console.log("creation starting date: ");
+        /*console.log("creation starting date: ");
         console.log(_startingDate);
         console.log("creation block.timestamp: ");
-        console.log(block.timestamp);
+        console.log(block.timestamp);*/
         require(
             _startingDate < _deadline,
             "Starting date must be before the deadline"
@@ -148,8 +148,8 @@ contract Charity {
 
         // save the commit hash and the block number for future CRR `reveal` verification
         commits[campaignId] = Commit(_commitHash, block.number);
-        console.log("block number on creation: ");
-        console.log(block.number);
+        /*console.log("block number on creation: ");
+        console.log(block.number);*/
 
         // create the campaign, add it to the mapping and the list of campaigns IDs
         campaigns[campaignId] = new Campaign(
@@ -177,8 +177,8 @@ contract Charity {
     ) external payable onlyExistingCampaign(_campaignId) {
         Campaign campaign = campaigns[_campaignId];
 
-        console.log("block number on funding: ");
-        console.log(block.number);
+        /*console.log("block number on funding: ");
+        console.log(block.number);*/
 
 
         // require that a commit exists for the campaign
@@ -188,8 +188,8 @@ contract Charity {
         );
         Commit memory commitData = commits[_campaignId];
 
-        console.log("commit block number: ");
-        console.log(commitData.blockNumber);
+        /*console.log("commit block number: ");
+        console.log(commitData.blockNumber);*/
 
         // require that the seed matches the commit
         require(

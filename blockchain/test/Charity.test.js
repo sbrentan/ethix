@@ -13,18 +13,20 @@ const {
 	formatDate,
 	getPrivateKey,
 	encodePacked,
+	getCampaign,
 	generateToken,
 	redeemToken
 } = require("./common/utils.js");
 
 require("./Charity/deployment.test.js");
+require("./Charity/organization-verification.test.js");
+require("./Charity/campaign-creation.test.js");
 
 describe("Charity", function () {
 
-	let charity; // contract instance
-
+	let charity; // contract instance of owner
 	let owner, donor, beneficiary, other; // signers providers
-	let owner_private_key;
+	let owner_private_key; // owner private key
 
 	async function deployCharityFixture() {
 		const { charity } = await ignition.deploy(CharityModule);
@@ -49,8 +51,7 @@ describe("Charity", function () {
 		log(`owner: \n\t* address: ${owner.address}\n\t* private key: ${owner_private_key}`, 1);
 		log(`donor address: ${donor.address}`, 1);
 		log(`beneficiary address: ${beneficiary.address}`, 1);
-		log(`other address: ${other.address}\n`, 1);
-		log("");
+		log(`other address: ${other.address}\n\n`, 1);
 	});
 
 	beforeEach(async function () {
@@ -67,17 +68,45 @@ describe("Charity", function () {
 
 	});
 
-	describe("Organization verification", function () {
+	describe("Organization/Beneficiary verification", function () {
 
 		// should be authorized to verify the organization
-		// should verify the organization (both proper and not proper adddress)
+		it("T003 - Should revert the verification", () => test_verification_is_authorized(charity, other, beneficiary));
+
+		// if authorized, should verify the organization
+		it("T004 - Should verify the organization", () => test_verification_is_performed(charity, beneficiary));
 
 		// should be authorized to revoke the organization verification
+		it("T005 - Should revert the revocation", () => test_revocation_is_authorized(charity, other, beneficiary));
+
 		// should revoke the organization verification
+		it("T006 - Should revoke the verification", () => test_revocation_is_performed(charity, beneficiary));
 
 	});
 
-	it("CT003 - General flow", async function () {
+	describe("Campaign creation", function () {
+
+		// should revert if beneficiary is unverified
+		it("T007 - Should revert if beneficiary is unverified", () => test_beneficiary_is_verified(charity, donor, beneficiary));
+
+		// should verify if the campaign doesn't already exist
+		//it("T008 - Should revert the creation of an existing campaign", () => test_campaign_does_not_exist(charity, donor, beneficiary));
+
+        // should verify the date is proper defined:
+		/*
+			- startingDate < deadline
+			- startingDate >= block.timestamp
+		*/
+		it("T008 - Should revert if improper dates are given", () => test_date_is_properly_defined(charity, donor, beneficiary));
+
+        // should verify the tokenGoal is less than maxTokens
+
+        // should verify the signature is correct
+
+		// should create the campaign
+	});
+
+	/*it("CT003 - General flow", async function () {
 
 		let owner_charity = charity.connect(owner);
 		let donor_charity = charity.connect(donor);
@@ -94,28 +123,24 @@ describe("Charity", function () {
 
 		log("Organization verified", 1);
 
-		// TODO: test also the organization revocation
-
 		const _seed = web3.utils.randomHex(32);
 		const _seedHash = web3.utils.keccak256(_seed);
 
 		// Sign the seed
 		let _signature = await web3.eth.accounts.sign(_seedHash, owner_private_key);
 
-		// TODO: change log with formatted strings
-
 		let block = await ethers.provider.getBlock("latest");
-		log("After verification: ", formatDate(block.timestamp));
+		log(`After verification: ${formatDate(block.timestamp)}`);
 
 		const HOUR = 3600;
 		const _startingDate = Math.floor(block.timestamp + (2 * HOUR));
 		const _deadline = Math.floor(_startingDate + (6 * HOUR));
 
-		log("Starting date: ", formatDate(_startingDate));
-		log("Deadline: ", formatDate(_deadline));
+		log(`Starting date: ${formatDate(_startingDate)}`);
+		log(`Deadline: ${formatDate(_deadline)}`);
 
 		block = await ethers.provider.getBlock("latest");
-		log("Pre creation: ", formatDate(block.timestamp));
+		log(`Pre creation: ${formatDate(block.timestamp)}`);
 
 		const create_tx = await donor_charity.createCampaign(
 			"Test",
@@ -132,18 +157,14 @@ describe("Charity", function () {
 			}
 		);
 
-		log("create_tx", create_tx);
-
 		const create_receipt = await create_tx.wait();
-
-		log(create_receipt.logs);
 		const create_event = create_receipt?.logs[0]?.fragment?.name;
 		const _campaignId = create_receipt?.logs[0]?.data; // campaign id
 
 		expect(create_event).to.equal("CampaignCreated");
 
 		block = await ethers.provider.getBlock("latest");
-		log("After creation: ", formatDate(block.timestamp));
+		log(`After creation: ${formatDate(block.timestamp)}`);
 
 		// TODO: add block mining and test startCampaign does not work before
 
@@ -158,7 +179,7 @@ describe("Charity", function () {
 		_signature = await web3.eth.accounts.sign(_combinedHash, owner_private_key);
 
 		block = await ethers.provider.getBlock("latest");
-		log("Pre start: ", formatDate(block.timestamp));
+		log(`Pre start: ${formatDate(block.timestamp)}`);
 
 		await expect(donor_charity.startCampaign(
 			_campaignId,
@@ -175,29 +196,29 @@ describe("Charity", function () {
 		)).to.emit(donor_charity, "CampaignStarted")
 
 		block = await ethers.provider.getBlock("latest");
-		log("After start: ", formatDate(block.timestamp));
+		log(`After start: ${formatDate(block.timestamp)}`);
 
 		await helpers.time.increase((4 * HOUR));
 
 		block = await ethers.provider.getBlock("latest");
-		log("Entering the campaign period: ", formatDate(block.timestamp));
+		log(`Entering the campaign period: ${formatDate(block.timestamp)}`);
 
-		const _campaign = await charity.getCampaign(_campaignId);
+		const _campaign = await getCampaign(charity, _campaignId);
 
-		log(_campaign);
+		expect(_campaign).to.not.be.null;
 
 		const _token_structure = await generateToken(owner_charity, _seed, _campaignId, _rwallet);
 
-		log(_token_structure.token, _token_structure.token_seed, _token_structure.token_salt);
+		expect(_token_structure).to.not.be.null;
 
 		const is_valid = await redeemToken(owner_charity, _campaignId, _token_structure);
 
-		log(is_valid);
+		expect(is_valid).to.be.true;
 
 		await helpers.time.increase((10 * HOUR));
 
 		block = await ethers.provider.getBlock("latest");
-		log("Campaign finished! ", formatDate(block.timestamp));
+		log(`Campaign finished! ${formatDate(block.timestamp)}`);
 
 		const refund_tx = await donor_charity.claimRefund(_campaignId);
 		const refund_receipt = await refund_tx.wait();
@@ -208,7 +229,7 @@ describe("Charity", function () {
 
 		// convert the amount from hex wei to ether
 		const _refund_amount = web3.utils.fromWei(refund_amount, 'ether');
-		log("Refund amount: ", _refund_amount);
+		log(`Refund amount: ${_refund_amount} ETH`);
 
 		const donation_tx = await beneficiary_charity.claimDonation(_campaignId);
 		const donation_receipt = await donation_tx.wait();
@@ -219,6 +240,6 @@ describe("Charity", function () {
 
 		// convert the amount from hex wei to ether
 		const _donation_amount = web3.utils.fromWei(donation_amount, 'ether');
-		log("Donation amount: ", _donation_amount);
-	});
+		log(`Donation amount: ${_donation_amount} ETH`);
+	});*/
 });
