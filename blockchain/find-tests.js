@@ -11,7 +11,10 @@ function findTests(searchPattern) {
 
     // Use regular expressions to find `describe` and `it` blocks
     const describeRegex = /describe\s*\(\s*['"`](.+?)['"`]\s*,\s*function\s*\(\s*\)\s*\{/g;
-    const itRegex = /it\s*\(\s*['"`](.+?)['"`]\s*,\s*async?\s*function\s*\(\s*\)\s*\{/g;
+    const itRegexes = [
+        /it\s*\(\s*['"`](.+?)['"`]\s*,\s*\(\)\s*\=\>\s*([\w\(\)\s\,\.]+?)\s*\)/g,
+        /it\s*\(\s*['"`](.+?)['"`]\s*,\s*async\s*function\s*\(\)\s*\{/g,
+    ];
 
     const describeStack = [];
     let descriptions = {};
@@ -31,16 +34,18 @@ function findTests(searchPattern) {
     }
 
     initialIndex = 0;
-    while ((match = itRegex.exec(fileContent))) {
-      const itIndex = match.index;
-      const lastNewLineIndex = fileContent.slice(initialIndex, itIndex).lastIndexOf("\n");
-      const level = itIndex - (lastNewLineIndex + initialIndex);
+    for (let itRegex of itRegexes) {
+        while ((match = itRegex.exec(fileContent))) {
+        const itIndex = match.index;
+        const lastNewLineIndex = fileContent.slice(initialIndex, itIndex).lastIndexOf("\n");
+        const level = itIndex - (lastNewLineIndex + initialIndex);
 
-      descriptions[itIndex] = {"type": "it", "value": match[1], 'level': level - 1};
+        descriptions[itIndex] = {"type": "it", "value": match[1], 'level': level - 1};
 
-      initialIndex = itIndex;
+        initialIndex = itIndex;
 
-      //break; // Remove this line to search for all tests
+        //break; // Remove this line to search for all tests
+        }
     }
     // console.log("descriptions: ", descriptions);
 
@@ -115,63 +120,65 @@ function findTests(searchPattern) {
 }
 
 if (process.argv.length < 3) {
-  console.log('Please provide a search pattern as an argument.');
-  process.exit(1);
-}
-// get all following arguments
-const searchPattern = process.argv.slice(2).join(' ').split(" ");
+  process.stderr.write('!!! Please provide a search pattern as an argument !!!');
+} else {
 
-const matchingTests = findTests(searchPattern);
+    let real_params = process.argv.slice(2);
+        
+    // get all following arguments
+    const searchPattern = real_params.join(' ').split(" ");
 
-let result = "";
-let commonPart = "";
-if(matchingTests.length == 1)
-	result = matchingTests[0];
-else if(matchingTests.length > 1){
-    // find the common part between all the tests
-    for (let i = 0; i < matchingTests[0].length; i++) {
-        let char = matchingTests[0][i];
-        let common = true;
-        for (let j = 1; j < matchingTests.length; j++) {
-            if(matchingTests[j][i] != char){
-                common = false;
+    const matchingTests = findTests(searchPattern);
+
+    let result = "";
+    let commonPart = "";
+    if(matchingTests.length == 1)
+        result = matchingTests[0];
+    else if(matchingTests.length > 1){
+        // find the common part between all the tests
+        for (let i = 0; i < matchingTests[0].length; i++) {
+            let char = matchingTests[0][i];
+            let common = true;
+            for (let j = 1; j < matchingTests.length; j++) {
+                if(matchingTests[j][i] != char){
+                    common = false;
+                    break;
+                }
+            }
+            if(common) {
+                commonPart += char;
+            } else {
                 break;
             }
         }
-        if(common) {
-            commonPart += char;
+        if (commonPart.length > 0) {
+            // commonPart = commonPart.split(" ");
+            // commonPart = commonPart.slice(0, commonPart.length - 1);
+            result = commonPart.trim();
         } else {
-            break;
+            result = searchPattern.join(" ").trim();
         }
     }
-    if (commonPart.length > 0) {
-        // commonPart = commonPart.split(" ");
-        // commonPart = commonPart.slice(0, commonPart.length - 1);
-        result = commonPart.trim();
-    } else {
-	    result = searchPattern.join(" ").trim();
+    console.log(result);
+
+    err_msg = "";
+    if(matchingTests.length == 0){
+        run_msg = "!!! Stopping the command as no test has been found !!!\n";
+        err_msg = "* No matching tests found *\n\n\n" + run_msg;
     }
-}
-console.log(result);
+    else if(matchingTests.length > 1){
+        if(commonPart.length > 0)
+            run_msg = "!!! Running directly hh command with common part: `npx hardhat test --grep \"" + commonPart + "\"` !!!\n";
+        else
+            run_msg = "!!! Running directly hh command: `npx hardhat test --grep \"" + searchPattern.join(" ").trim() + "\"` !!!\n";
+        err_msg = "\n* Multiple matching tests found, cannot retrieve direct test *\n\n\n" + run_msg;
+    }
 
-err_msg = "";
-if(matchingTests.length == 0){
-    run_msg = "!!! Stopping the command as no test has been found !!!\n";
-	err_msg = "* No matching tests found *\n\n\n" + run_msg;
+    process.stderr.write(
+        '----------------------------------------------------------------------------------\n\n'+
+        'Matching test descriptions:\n'+
+        matchingTests.map((test) => `- ${test}`).join('\n') + '\n' +
+        err_msg + '\n' +
+        '----------------------------------------------------------------------------------\n\n'
+    )
 }
-else if(matchingTests.length > 1){
-    if(commonPart.length > 0)
-        run_msg = "!!! Running directly hh command with common part: `npx hardhat test --grep \"" + commonPart + "\"` !!!\n";
-    else
-        run_msg = "!!! Running directly hh command: `npx hardhat test --grep \"" + searchPattern.join(" ").trim() + "\"` !!!\n";
-    err_msg = "\n* Multiple matching tests found, cannot retrieve direct test *\n\n\n" + run_msg;
-}
-
-process.stderr.write(
-	'----------------------------------------------------------------------------------\n\n'+
-	'Matching test descriptions:\n'+
-	matchingTests.map((test) => `- ${test}`).join('\n') + '\n' +
-	err_msg + '\n' +
-	'----------------------------------------------------------------------------------\n\n'
-)
-
