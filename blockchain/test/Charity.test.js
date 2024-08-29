@@ -52,6 +52,8 @@ describe("Charity", function () {
 
 	describe("Deployment", function () {
 
+		after(() => log());
+
 		it("T001 - Should deploy the contract", () => test_contract_is_deployed(charity));
 
 		it("T002 - Should set the right owner", () => test_owner_is_correct(charity, owner));
@@ -59,6 +61,8 @@ describe("Charity", function () {
 	});
 
 	describe("Organization/Beneficiary verification", function () {
+
+		after(() => log());
 
 		// should be authorized to verify the organization
 		it("T003 - Should revert the verification", () => test_verification_is_not_authorized(charity, other, beneficiary));
@@ -75,6 +79,8 @@ describe("Charity", function () {
 	});
 
 	describe("Campaign creation", function () {
+
+		after(() => log());
 
 		// should revert if parameters are not properly defined ???
 		// eg. expect(title).to.be.a('string'); expect(startingDate).to.be.a('number'); etc.
