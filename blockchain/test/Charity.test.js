@@ -91,7 +91,7 @@ describe("Charity", function () {
 
 		// should verify if the campaign doesn't already exist
 		// ISSUE: impossible to verify since the campaign id is always unique due to block.timestamp and increasing size of array
-		//it("T008 - Should revert the creation of an existing campaign", () => test_campaign_does_not_exist(charity, donor, beneficiary));
+		//test("T008 - Should revert the creation of an existing campaign", () => test_campaign_does_not_exist(charity, donor, beneficiary));
 
         // should verify the date is proper defined:
 		/*
@@ -110,7 +110,7 @@ describe("Charity", function () {
 		it("T011 - Should create the campaign", () => test_campaign_creation(charity, donor, beneficiary));
 	});
 
-	/*it("flow", async function () {
+	/*test("flow", async function () {
 
 		let owner_charity = charity.connect(owner);
 		let donor_charity = charity.connect(donor);

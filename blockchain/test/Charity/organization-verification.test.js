@@ -50,7 +50,8 @@ module.exports.test_revocation_is_authorized = async (charity, other, beneficiar
     expect(beneficiary.address).to.be.properAddress;
 
     await charity.verifyOrganization(beneficiary.address);
-    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
+    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
+    expect(is_beneficiary_verified).to.be.true;
 
     let other_charity = charity.connect(other);
 
@@ -72,7 +73,8 @@ module.exports.test_revocation_is_performed = async (charity, beneficiary) => {
     expect(beneficiary.address).to.be.properAddress;
 
     await charity.verifyOrganization(beneficiary.address);
-    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
+    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
+    expect(is_beneficiary_verified).to.be.true;
 
     let _is_verified = await charity.isOrganizationVerified(beneficiary.address);
     log(`Organization ${beneficiary.address} => current status: [${_is_verified}]`);

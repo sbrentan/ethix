@@ -34,9 +34,9 @@ module.exports.test_dates_are_properly_defined = async (charity, donor, benefici
     let _deadline = Math.floor(_block.timestamp - (24 * HOUR));
 
     await charity.verifyOrganization(beneficiary.address);
-    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
+    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
+    expect(is_beneficiary_verified).to.be.true;
 
-    log();
     log(`[Test T008]`, tabs = 2, sep = '');
 
     log();
@@ -88,9 +88,9 @@ module.exports.test_token_goal_is_less_than_max_tokens = async (charity, donor, 
     let donor_charity = charity.connect(donor);
 
     await charity.verifyOrganization(beneficiary.address);
-    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
-    
-    log();
+    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
+    expect(is_beneficiary_verified).to.be.true;
+
     log(`[Test T009]: tokenGoal > maxTokens => revert`, tabs = 2, sep = '');
     
     const _params = await prepareCreationParams({ 
@@ -118,8 +118,9 @@ module.exports.test_signature_is_correct =  async (charity, donor, beneficiary) 
     let donor_charity = charity.connect(donor);
 
     await charity.verifyOrganization(beneficiary.address);
-    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
-    
+    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
+    expect(is_beneficiary_verified).to.be.true;
+
     log();
     log(`[Test T010]: Signature is incorrect => revert`, tabs = 2, sep = '');
     
@@ -148,9 +149,9 @@ module.exports.test_campaign_creation = async (charity, donor, beneficiary) => {
     let donor_charity = charity.connect(donor);
 
     await charity.verifyOrganization(beneficiary.address);
-    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
+    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
+    expect(is_beneficiary_verified).to.be.true;
 
-    log();
     log(`[Test T011]: Campaign creation`, tabs = 2, sep = '');
 
     const _params = await prepareCreationParams({ beneficiary: beneficiary.address });
