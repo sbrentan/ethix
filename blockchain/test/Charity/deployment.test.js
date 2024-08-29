@@ -3,7 +3,7 @@ const { expect } = require("chai");
 
 module.exports.test_contract_is_deployed = async (charity) => {
     log();
-    log(`[Test 1]: Contract deployment`, tabs = 2, sep = '');
+    log(`[Test T001]: Contract deployment`, tabs = 2, sep = '');
 
     const contract_address = await charity.getAddress();
     expect(contract_address).to.be.properAddress;
@@ -12,7 +12,7 @@ module.exports.test_contract_is_deployed = async (charity) => {
 
 module.exports.test_owner_is_correct = async (charity, owner) => {
     log();
-    log(`[Test 2]: Owner verification`, tabs = 2, sep = '');
+    log(`[Test T002]: Owner verification`, tabs = 2, sep = '');
 
     expect(charity.runner.address).to.equal(owner.address);
     log(`Owner address: ${owner.address}`);

@@ -3,7 +3,7 @@ const { expect } = require("chai");
 
 module.exports.test_verification_is_authorized = async (charity, other, beneficiary) => {
     log();
-    log(`[Test 1]: Unauthorized verification`, tabs = 2, sep = '');
+    log(`[Test T003]: Unauthorized verification`, tabs = 2, sep = '');
 
     expect(other.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
@@ -21,9 +21,9 @@ module.exports.test_verification_is_authorized = async (charity, other, benefici
     expect(_is_verified).to.be.false;
 }
 
-module.exports.test_verification_is_performed = async (charity, beneficiary, separator = '') => {
+module.exports.test_verification_is_performed = async (charity, beneficiary) => {  
     log();
-    log(`[Test 2]: Authorized verification`, tabs = (separator ? 3 : 2), sep = separator);
+    log(`[Test T004]: Authorized verification`, tabs = 2, sep = '');
 
     expect(beneficiary.address).to.be.properAddress;
 
@@ -40,18 +40,17 @@ module.exports.test_verification_is_performed = async (charity, beneficiary, sep
     _is_verified = await charity.isOrganizationVerified(beneficiary.address);
     log(`Organization ${beneficiary.address} => status after verification: [${_is_verified}]`);
     expect(_is_verified).to.be.true;
-
-    if (separator) log();
 }
 
 module.exports.test_revocation_is_authorized = async (charity, other, beneficiary) => {
     log();
-    log(`[Test 3]: Unauthorized revocation`, tabs = 2, sep = '');
+    log(`[Test T005]: Unauthorized revocation`, tabs = 2, sep = '');
 
     expect(other.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
 
-    await this.test_verification_is_performed(charity, beneficiary, separator = '-');
+    await charity.verifyOrganization(beneficiary.address);
+    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
 
     let other_charity = charity.connect(other);
 
@@ -68,11 +67,12 @@ module.exports.test_revocation_is_authorized = async (charity, other, beneficiar
 
 module.exports.test_revocation_is_performed = async (charity, beneficiary) => {
     log();
-    log(`[Test 4]: Authorized revocation`, tabs = 2, sep = '');
+    log(`[Test T006]: Authorized revocation`, tabs = 2, sep = '');
 
     expect(beneficiary.address).to.be.properAddress;
 
-    await this.test_verification_is_performed(charity, beneficiary, separator = '-');
+    await charity.verifyOrganization(beneficiary.address);
+    await expect(await charity.isOrganizationVerified(beneficiary.address)).to.be.true;
 
     let _is_verified = await charity.isOrganizationVerified(beneficiary.address);
     log(`Organization ${beneficiary.address} => current status: [${_is_verified}]`);

@@ -90,6 +90,7 @@ describe("Charity", function () {
 		it("T007 - Should revert if beneficiary is unverified", () => test_beneficiary_is_verified(charity, donor, beneficiary));
 
 		// should verify if the campaign doesn't already exist
+		// ISSUE: impossible to verify since the campaign id is always unique due to block.timestamp and increasing size of array
 		//it("T008 - Should revert the creation of an existing campaign", () => test_campaign_does_not_exist(charity, donor, beneficiary));
 
         // should verify the date is proper defined:
@@ -97,16 +98,19 @@ describe("Charity", function () {
 			- startingDate < deadline
 			- startingDate >= block.timestamp
 		*/
-		it("T008 - Should revert if improper dates are given", () => test_date_is_properly_defined(charity, donor, beneficiary));
+		it("T008 - Should revert if improper dates are given", () => test_dates_are_properly_defined(charity, donor, beneficiary));
 
         // should verify the tokenGoal is less than maxTokens
+		it("T009 - Should revert if tokenGoal is greater than maxTokens", () => test_token_goal_is_less_than_max_tokens(charity, donor, beneficiary));
 
-        // should verify the signature is correct
+        // should verify if the signature is correct
+		it("T010 - Should revert if the signature is incorrect", () => test_signature_is_correct(charity, donor, beneficiary));
 
 		// should create the campaign
+		it("T011 - Should create the campaign", () => test_campaign_creation(charity, donor, beneficiary));
 	});
 
-	/*it("CT003 - General flow", async function () {
+	/*it("flow", async function () {
 
 		let owner_charity = charity.connect(owner);
 		let donor_charity = charity.connect(donor);

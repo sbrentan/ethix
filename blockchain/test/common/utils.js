@@ -59,7 +59,8 @@ const prepareCreationParams = async (params = {}) => {
 
     const _seed = web3.utils.randomHex(32);
     const _seedHash = web3.utils.keccak256(_seed);
-    const _sigdata = await web3.eth.accounts.sign(_seedHash, getPrivateKey());
+    const private_key = params.private_key || getPrivateKey();
+    const _sigdata = await web3.eth.accounts.sign(_seedHash, private_key);
 
     expect(_title).to.be.a("string");
     expect(_startingDate).to.be.a("number");
