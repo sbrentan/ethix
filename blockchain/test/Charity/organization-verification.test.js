@@ -1,24 +1,21 @@
+const { 
+    verifyOrganization,
+    revokeOrganization 
+} = require("../helpers/verification-helper.js");
 const { log } = require("../common/utils.js");
 const { expect } = require("chai");
 
-module.exports.test_verification_is_authorized = async (charity, other, beneficiary) => {
+module.exports.test_verification_is_not_authorized = async (charity, other, beneficiary) => {
     log();
     log(`[Test T003]: Unauthorized verification`, tabs = 2, sep = '');
 
     expect(other.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
 
-    let other_charity = charity.connect(other);
+    const other_charity = charity.connect(other);
 
-    let _is_verified = await other_charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => current status: [${_is_verified}]`);
-    expect(_is_verified).to.be.false;
-
-    await expect(other_charity.verifyOrganization(beneficiary.address)).to.be.reverted;
-
-    _is_verified = await other_charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => status after verification: [${_is_verified}]`);
-    expect(_is_verified).to.be.false;
+    const verify_tx = await verifyOrganization(other_charity, beneficiary.address);
+    expect(verify_tx).to.be.null;
 }
 
 module.exports.test_verification_is_performed = async (charity, beneficiary) => {  
@@ -27,43 +24,21 @@ module.exports.test_verification_is_performed = async (charity, beneficiary) => 
 
     expect(beneficiary.address).to.be.properAddress;
 
-    let _is_verified = await charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => current status: [${_is_verified}]`);
-    expect(_is_verified).to.be.false;
-
-    const verify_tx = await charity.verifyOrganization(beneficiary.address);
-    const verify_receipt = await verify_tx.wait();
-    const verify_event = verify_receipt?.logs[0]?.fragment?.name;
-
-    expect(verify_event).to.equal("OrganizationVerified");
-
-    _is_verified = await charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => status after verification: [${_is_verified}]`);
-    expect(_is_verified).to.be.true;
+    const verify_tx = await verifyOrganization(charity, beneficiary.address);
+    await expect(verify_tx).to.emit(charity, "OrganizationVerified");
 }
 
-module.exports.test_revocation_is_authorized = async (charity, other, beneficiary) => {
+module.exports.test_revocation_is_not_authorized = async (charity, other, beneficiary) => {
     log();
     log(`[Test T005]: Unauthorized revocation`, tabs = 2, sep = '');
 
     expect(other.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
 
-    await charity.verifyOrganization(beneficiary.address);
-    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
-    expect(is_beneficiary_verified).to.be.true;
+    const other_charity = charity.connect(other);
 
-    let other_charity = charity.connect(other);
-
-    let _is_verified = await other_charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => current status: [${_is_verified}]`);
-    expect(_is_verified).to.be.true;
-
-    await expect(other_charity.revokeOrganization(beneficiary.address)).to.be.reverted;
-
-    _is_verified = await other_charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => status after revocation: [${_is_verified}]`);
-    expect(_is_verified).to.be.true;
+    const revoke_tx = await revokeOrganization(other_charity, beneficiary.address);
+    expect(revoke_tx).to.be.null;
 }
 
 module.exports.test_revocation_is_performed = async (charity, beneficiary) => {
@@ -71,24 +46,9 @@ module.exports.test_revocation_is_performed = async (charity, beneficiary) => {
     log(`[Test T006]: Authorized revocation`, tabs = 2, sep = '');
 
     expect(beneficiary.address).to.be.properAddress;
-
-    await charity.verifyOrganization(beneficiary.address);
-    const is_beneficiary_verified = await charity.isOrganizationVerified(beneficiary.address);
-    expect(is_beneficiary_verified).to.be.true;
-
-    let _is_verified = await charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => current status: [${_is_verified}]`);
-    expect(_is_verified).to.be.true;
-
-    const revoke_tx = await charity.revokeOrganization(beneficiary.address);
-    const revoke_receipt = await revoke_tx.wait();
-    const revoke_event = revoke_receipt?.logs[0]?.fragment?.name;
-
-    expect(revoke_event).to.equal("OrganizationRevoked");
-
-    _is_verified = await charity.isOrganizationVerified(beneficiary.address);
-    log(`Organization ${beneficiary.address} => status after revocation: [${_is_verified}]`);
-    expect(_is_verified).to.be.false;
+    
+    const revoke_tx = await revokeOrganization(charity, beneficiary.address);
+    await expect(revoke_tx).to.emit(charity, "OrganizationRevoked");
 }
 
 Object.assign(global, module.exports);

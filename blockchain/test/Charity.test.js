@@ -1,26 +1,20 @@
 const {
 	loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
-require("@nomicfoundation/hardhat-chai-matchers");
+const CharityModule = require("../ignition/modules/Charity");
 
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
 
-const { expect } = require("chai");
-const CharityModule = require("../ignition/modules/Charity");
-
 const {
 	log,
-	formatDate,
-	getPrivateKey,
-	encodePacked,
-	getCampaign,
-	generateToken,
-	redeemToken
+	getPrivateKey
 } = require("./common/utils.js");
 
+require("@nomicfoundation/hardhat-chai-matchers");
 require("./Charity/deployment.test.js");
 require("./Charity/organization-verification.test.js");
 require("./Charity/campaign-creation.test.js");
+require("./Charity/campaign-start.test.js");
 
 describe("Charity", function () {
 
@@ -38,10 +32,6 @@ describe("Charity", function () {
 
 		// if no index is specified, the owner private key is returned
 		owner_private_key = getPrivateKey();
-
-		// check if the owner private key is correct
-		/* const _owner_wallet = new ethers.Wallet(owner_private_key);
-		expect(_owner.address).to.equal(_owner_wallet.address); */
 
 		owner = _owner;
 		donor = _donor;
@@ -63,7 +53,7 @@ describe("Charity", function () {
 	describe("Deployment", function () {
 
 		it("T001 - Should deploy the contract", () => test_contract_is_deployed(charity));
-		
+
 		it("T002 - Should set the right owner", () => test_owner_is_correct(charity, owner));
 
 	});
@@ -71,13 +61,13 @@ describe("Charity", function () {
 	describe("Organization/Beneficiary verification", function () {
 
 		// should be authorized to verify the organization
-		it("T003 - Should revert the verification", () => test_verification_is_authorized(charity, other, beneficiary));
+		it("T003 - Should revert the verification", () => test_verification_is_not_authorized(charity, other, beneficiary));
 
 		// if authorized, should verify the organization
 		it("T004 - Should verify the organization", () => test_verification_is_performed(charity, beneficiary));
 
 		// should be authorized to revoke the organization verification
-		it("T005 - Should revert the revocation", () => test_revocation_is_authorized(charity, other, beneficiary));
+		it("T005 - Should revert the revocation", () => test_revocation_is_not_authorized(charity, other, beneficiary));
 
 		// should revoke the organization verification
 		it("T006 - Should revoke the verification", () => test_revocation_is_performed(charity, beneficiary));
@@ -86,28 +76,45 @@ describe("Charity", function () {
 
 	describe("Campaign creation", function () {
 
+		// should revert if parameters are not properly defined ???
+		// eg. expect(title).to.be.a('string'); expect(startingDate).to.be.a('number'); etc.
+
 		// should revert if beneficiary is unverified
 		it("T007 - Should revert if beneficiary is unverified", () => test_beneficiary_is_verified(charity, donor, beneficiary));
 
 		// should verify if the campaign doesn't already exist
-		// ISSUE: impossible to verify since the campaign id is always unique due to block.timestamp and increasing size of array
-		//test("T008 - Should revert the creation of an existing campaign", () => test_campaign_does_not_exist(charity, donor, beneficiary));
+		// ISSUE: the campaign id is always unique
 
-        // should verify the date is proper defined:
+		// should verify the date is proper defined:
 		/*
 			- startingDate < deadline
 			- startingDate >= block.timestamp
 		*/
 		it("T008 - Should revert if improper dates are given", () => test_dates_are_properly_defined(charity, donor, beneficiary));
 
-        // should verify the tokenGoal is less than maxTokens
+		// should verify the tokenGoal is less than maxTokens
 		it("T009 - Should revert if tokenGoal is greater than maxTokens", () => test_token_goal_is_less_than_max_tokens(charity, donor, beneficiary));
 
-        // should verify if the signature is correct
-		it("T010 - Should revert if the signature is incorrect", () => test_signature_is_correct(charity, donor, beneficiary));
+		// should verify if the signature is correct
+		it("T010 - Should revert if the signature is incorrect", () => test_creation_signature_is_correct(charity, donor, beneficiary));
 
 		// should create the campaign
 		it("T011 - Should create the campaign", () => test_campaign_creation(charity, donor, beneficiary));
+	});
+
+	describe("Campaign start/funding", function () {
+
+		// should revert if the campaign is not created
+		it("T012 - Should revert if the campaign is not created", () => test_campaign_is_not_created(charity, donor));
+
+		// should verify commitHash and block number
+		// ISSUE: cannot verify from here
+
+		// should revert if the signature is incorrect
+		it("T013 - Should revert if the signature is incorrect", () => test_start_signature_is_correct(charity, donor, beneficiary));
+
+		// should start the campaign
+		it("T014 - Should start the campaign", () => test_campaign_start(charity, donor, beneficiary));
 	});
 
 	/*test("flow", async function () {
