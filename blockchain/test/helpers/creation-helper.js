@@ -30,6 +30,8 @@ const prepareCreationParams = async (params = {}) => {
     const private_key = params.private_key || getPrivateKey();
     const _sigdata = await web3.eth.accounts.sign(_seedHash, private_key);
 
+    log();
+    log(`Creation params:`, tabs = 3, sep = '');
     log(`Title: ${_title}`);
     log(`Starting date: ${formatDate(_startingDate)}`);
     log(`Deadline: ${formatDate(_deadline)}`);
@@ -58,43 +60,47 @@ const prepareCreationParams = async (params = {}) => {
 }
 
 const createCampaign = async (contract, params) => {
-    try {
-        const create_tx = await contract.createCampaign(
-            params.title,
-            params.startingDate,
-            params.deadline,
-            params.tokenGoal,
-            params.maxTokens,
-            params.beneficiary,
-            params.seedHash,
-            params.signature
-        );
+    const campaignCreate = () => contract.createCampaign(
+        params.title,
+        params.startingDate,
+        params.deadline,
+        params.tokenGoal,
+        params.maxTokens,
+        params.beneficiary,
+        params.seedHash,
+        params.signature
+    );
 
+    try {
+        const create_tx = await campaignCreate();
         const create_receipt = await create_tx.wait();
         const create_data = create_receipt?.logs[0]?.data; // campaign id
 
         log(`Campaign ID: ${create_data}`);
 
-        return { 
-            create_tx: create_tx,
-            campaignId: create_data
-        }
+        return { tx: create_tx, campaignId: create_data }
 
     } catch (e) {
-        return null;
+        return { 
+            tx: null, 
+            get method() { return (campaignCreate)() }
+        }
     }
 }
 
-const getCampaign = async (charity, campaignAddress) => {
-    const _campaign = await charity.getCampaign(campaignAddress);
+const getCampaign = async (contract, campaignAddress) => {
+    const _campaign = await contract.getCampaign(campaignAddress);
 
     if (_campaign.length == 0) return null;
 
-    const data = {
+    const start_timestamp = Number(_campaign[2]);
+    const deadline_timestamp = Number(_campaign[3]);
+
+    let data = {
         campaignId: _campaign[0],
         title: _campaign[1],
-        startingDate: formatDate(Number(_campaign[2])),
-        deadline: formatDate(Number(_campaign[3])),
+        startingDate: formatDate(start_timestamp),
+        deadline: formatDate(deadline_timestamp),
         donor: _campaign[4],
         beneficiary: _campaign[5],
         tokenGoal: Number(_campaign[6]),
@@ -108,8 +114,12 @@ const getCampaign = async (charity, campaignAddress) => {
         redeemedTokenCount: Number(_campaign[14])
     }
 
-    log(`Campaign:`);
+    log();
+    log(`Campaign details:`, tabs = 3, sep = '');
     logJson(data);
+
+    data.startingDate = start_timestamp;
+    data.deadline = deadline_timestamp;
 
     return data;
 }

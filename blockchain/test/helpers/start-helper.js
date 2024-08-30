@@ -1,11 +1,17 @@
+const { generateTokens } = require("./token-helper.js");
 const { 
     log,
     getPrivateKey,
-    encodePacked 
+    encodePacked,
+    increaseTime 
 } = require("../common/utils.js");
 const { 
     DEFAULT_SLICE,
-    DEFAULT_VALUE 
+    DEFAULT_VALUE,
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_STARTDATE_SHIFT,
+    DEFAULT_DEADLINE_SHIFT,
+    DEFAULT_INVALID_TOKENS, 
 } = require('../common/constants.js');
 const crypto = require('crypto');
 
@@ -18,11 +24,19 @@ const prepareStartParams = async (params = {}) => {
     const _combinedHash = encodePacked(_rwallet.address, _campaignId);
     const private_key = params.private_key || getPrivateKey();
     const _sigdata = await web3.eth.accounts.sign(_combinedHash, private_key);
+    const _generateTokens = params.generateTokens || false;
+    const _invalidAmount = params.invalidAmount == 0 ? 0 : params.invalidAmount || DEFAULT_INVALID_TOKENS;
+    const _value = params.value || DEFAULT_VALUE;
 
+    log();
+    log(`Start params:`, tabs = 3, sep = '');
     log(`Seed: ${_seed}`);
     log(`Random wallet address: ${_rwallet.address}`);
     log(`Random wallet private key: ${_rwallet.privateKey}`);
     log(`Signature: ${_sigdata.signature.slice(0, DEFAULT_SLICE) + "........." + _sigdata.signature.slice(-DEFAULT_SLICE)}`);
+    log(`Generate tokens: ${_generateTokens}`);
+    log(`Invalid tokens: ${_invalidAmount}`);
+    log(`Value: ${_value} ETH`);
 
     return {
         campaignId: _campaignId,
@@ -32,32 +46,68 @@ const prepareStartParams = async (params = {}) => {
             r: _sigdata.r,
             s: _sigdata.s,
             v: _sigdata.v
-        }
+        },
+        generateTokens: _generateTokens,
+        tokenAmount: DEFAULT_MAX_TOKENS,
+        invalidTokenAmount: _invalidAmount,
+        contract: params.contract,
+        value: _value
     }
 }
 
-const startCampaign = async (contract, params) => {
-    try {
-        const start_tx = await contract.startCampaign(
-            params.campaignId,
-            params.seed,
-            params.wallet.address,
-            params.signature,
-            {
-				value: web3.utils.toWei(`${params.value || DEFAULT_VALUE}`, 'ether')
-			}
-        );
+const startCampaign = async (contract, params, owner_contract = null) => {
+    const campaignStart = () => contract.startCampaign(
+        params.campaignId,
+        params.seed,
+        params.wallet.address,
+        params.signature,
+        {
+            value: web3.utils.toWei(`${params.value}`, 'ether')
+        }
+    );
 
+    try {
+        const start_tx = await campaignStart();
         const start_receipt = await start_tx.wait();
         const start_data = start_receipt?.logs[0]?.data; // campaign id
 
+        let validJWTTokens, invalidJWTTokens;
+
+        if (owner_contract) {
+            validJWTTokens = params.generateTokens ? await generateTokens(owner_contract, params.seed, params.campaignId, params.wallet, params.tokenAmount) : null;
+            invalidJWTTokens = params.generateTokens ? await generateTokens(owner_contract, params.seed, params.campaignId, params.wallet, params.invalidTokenAmount, false) : null;
+        }
+
+        const validTokens = validJWTTokens ? validJWTTokens.jwt_tokens.map((jwt, _) => { return jwt.token; }) : [];
+        const invalidTokens = invalidJWTTokens ? invalidJWTTokens.jwt_tokens.map((jwt, _) => { return jwt.token; }) : [];
+
+        await increaseTime(Math.floor((DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT) / 2));
+
+        log();
+        log(`Campaign has started...`, tabs = 3, sep = '');
+
         return { 
-            start_tx: start_tx,
-            campaignId: start_data 
+            tx: start_tx,
+            campaignId: start_data,
+            jwts: {
+                valid: {
+                    tokens: validTokens,
+                    salts: validJWTTokens ? validJWTTokens.token_salts : [],
+                    seed: validJWTTokens ? validJWTTokens.token_seed : null
+                },
+                invalid: {
+                    tokens: invalidTokens,
+                    salts: invalidJWTTokens ? invalidJWTTokens.token_salts : [],
+                    seed: invalidJWTTokens ? invalidJWTTokens.token_seed : null
+                }
+            }
         };
 
     } catch (e) {
-        return null;
+        return { 
+            tx: null, 
+            get method() { return (campaignStart)() }
+        }
     }
 }
 
