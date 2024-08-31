@@ -17,7 +17,7 @@ const { log } = require("../common/utils.js");
 const { expect } = require("chai");
 
 
-module.exports.test_token_is_not_valid = async (charity, donor, beneficiary) => {
+module.exports.test_redeeming_fails_with_invalid_token = async (charity, donor, beneficiary) => {
     expect(donor.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
 
@@ -52,7 +52,7 @@ module.exports.test_token_is_not_valid = async (charity, donor, beneficiary) => 
     });
 }
 
-module.exports.test_token_is_valid = async (charity, donor, beneficiary) => {
+module.exports.test_valid_token_is_redeemed = async (charity, donor, beneficiary) => {
     expect(donor.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
 

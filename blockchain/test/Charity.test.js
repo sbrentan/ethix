@@ -54,17 +54,17 @@ describe("Charity", function () {
 
 		after(() => log());
 
-		// should be authorized to verify the organization
-		it("T003 - Should revert the verification", () => test_verification_is_not_authorized(charity, other, beneficiary));
+		// non-owner should not be authorized to verify the organization
+		it("T001 - Should revert the verification if not from owner", () => test_verification_fails_from_non_owner(charity, other, beneficiary));
 
 		// if authorized, should verify the organization
-		it("T004 - Should verify the organization", () => test_verification_is_performed(charity, beneficiary));
+		it("T002 - Should verify the organization if from owner", () => test_verification(charity, beneficiary));
 
-		// should be authorized to revoke the organization verification
-		it("T005 - Should revert the revocation", () => test_revocation_is_not_authorized(charity, other, beneficiary));
+		// non-owner should be authorized to revoke the organization verification
+		it("T003 - Should revert the revocation if not from owner", () => test_revocation_fails_from_non_owner(charity, other, beneficiary));
 
 		// should revoke the organization verification
-		it("T006 - Should revoke the verification", () => test_revocation_is_performed(charity, beneficiary));
+		it("T004 - Should revoke the verification if from owner", () => test_revocation(charity, beneficiary));
 
 	});
 
@@ -74,31 +74,32 @@ describe("Charity", function () {
 
 		// should revert if parameters are not properly defined ???
 		// eg. expect(title).to.be.a('string'); expect(startingDate).to.be.a('number'); etc.
+		// TODO: to do so, we need to validate the params in the contract first
 
 		// should revert if beneficiary is unverified
-		it("T007 - Should revert if beneficiary is unverified", () => test_beneficiary_is_not_verified(charity, donor, beneficiary));
+		it("T001 - Should revert if beneficiary is unverified", () => test_beneficiary_is_not_verified(charity, donor, beneficiary));
 
-		// should verify if the campaign doesn't already exist
-		// ISSUE: the campaign id is always unique
+		// should verify if campaign id is different even when the same parameters are given
+		it("T002 - Should verify the campaign id is always different", () => test_campaign_id_is_different(charity, donor, beneficiary));
 
 		// should verify the date is proper defined:
 		/*
 			- startingDate < deadline
 			- startingDate >= block.timestamp
 		*/
-		it("T008 - Should revert if improper dates are given", () => test_dates_are_properly_defined(charity, donor, beneficiary));
+		it("T003 - Should revert if improper dates are given", () => test_dates_are_properly_defined(charity, donor, beneficiary));
 
 		// should verify the tokenGoal is less than maxTokens
-		it("T009 - Should revert if tokenGoal is greater than maxTokens", () => test_token_goal_is_less_than_max_tokens(charity, donor, beneficiary));
+		it("T004 - Should revert if tokenGoal is greater than maxTokens", () => test_token_goal_is_less_than_max_tokens(charity, donor, beneficiary));
 
 		// should verify if the signature is correct
-		it("T010 - Should revert if the signature is incorrect", () => test_creation_signature_is_correct(charity, donor, beneficiary));
+		it("T005 - Should revert if the signature is incorrect", () => test_creation_signature_is_correct(charity, donor, beneficiary));
 
 		// should create the campaign
-		it("T011 - Should create the campaign", () => test_campaign_creation(charity, donor, beneficiary));
+		it("T006 - Should create the campaign", () => test_campaign_creation(charity, donor, beneficiary));
 
 		// should get the campaign
-		it("T012 - Should get the campaign details", () => test_get_campaign(charity, donor, beneficiary));
+		it("T007 - Should get the campaign details", () => test_get_campaign(charity, donor, beneficiary));
 
 	});
 
@@ -106,45 +107,45 @@ describe("Charity", function () {
 
 		after(() => log());
 
-		// should revert if the campaign is not created
-		it("T013 - Should revert if the campaign is not created", () => test_campaign_is_not_created(charity, donor));
+		// should revert if the campaign does not exist
+		it("T001 - Should revert if the campaign does not exist", () => test_not_existing_campaign(charity, donor));
 
 		// should verify commitHash and block number
 		// ISSUE: cannot verify from here
 
 		// should revert if the signature is incorrect
-		it("T014 - Should revert if the signature is incorrect", () => test_start_signature_is_correct(charity, donor, beneficiary));
+		it("T002 - Should revert if the signature is incorrect", () => test_start_fails_if_signature_is_incorrect(charity, donor, beneficiary));
 
 		// should start the campaign
-		it("T015 - Should start the campaign", () => test_campaign_start(charity, donor, beneficiary));
+		it("T003 - Should start the campaign", () => test_campaign_start(charity, donor, beneficiary));
 
 	});
 
-	describe("Token validation", function () {
+	describe("Token redeeming", function () {
 
 		after(() => log());
 
 		// should revert if the token is not valid
-		it("T016 - Should revert if a token is not valid", () => test_token_is_not_valid(charity, donor, beneficiary));
+		it("T001 - Should revert if a token is not valid", () => test_redeeming_fails_with_invalid_token(charity, donor, beneficiary));
 
-		// should validate the token
-		it("T017 - Should validate a token", () => test_token_is_valid(charity, donor, beneficiary));
+		// should redeem a valid token
+		it("T002 - Should redeem a valid token", () => test_valid_token_is_redeemed(charity, donor, beneficiary));
 
 	});
 
 	describe("Campaign end", function () {
 
 		// should revert if refund claim is not authorized
-		it("T018 - Should revert if refund claim is not authorized", () => test_refund_claim_is_not_authorized(charity, donor, beneficiary, other));
+		it("T001 - Should revert refund claiming if not from donor", () => test_refund_claim_fails_if_not_from_donor(charity, donor, beneficiary, other));
 
 		// should claim the refund
-		it("T019 - Should claim the refund", () => test_refund_is_claimed(charity, donor, beneficiary));
+		it("T002 - Should claim the refund", () => test_refund_is_claimed(charity, donor, beneficiary));
 
 		// should revert if donation claim is not authorized
-		it("T020 - Should revert if donation claim is not authorized", () => test_donation_claim_is_not_authorized(charity, donor, beneficiary, other));
+		it("T003 - Should revert donation claiming if not from beneficiary", () => test_donation_claim_fials_if_not_from_beneficiary(charity, donor, beneficiary, other));
 
 		// should claim the donation
-		it("T021 - Should claim the donation", () => test_donation_is_claimed(charity, donor, beneficiary));
+		it("T004 - Should claim the donation", () => test_donation_is_claimed(charity, donor, beneficiary));
 
 	});
 });

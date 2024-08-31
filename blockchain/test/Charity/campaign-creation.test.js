@@ -55,7 +55,7 @@ module.exports.test_beneficiary_is_not_verified = async (charity, donor, benefic
     const donor_charity = charity.connect(donor);
 
     log();
-    log(`[Test T007]: Beneficiary is unverified => revert`, tabs = 2, sep = '');
+    log(`[Test beneficiary is unverified => revert]`, tabs = 2, sep = '');
 
     const _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
@@ -63,6 +63,28 @@ module.exports.test_beneficiary_is_not_verified = async (charity, donor, benefic
 
     await assertCampaignCreationFailure(donor_charity, _params);
 }
+
+module.exports.test_campaign_id_is_different = async (charity, donor, beneficiary) => {
+    expect(donor.address).to.be.properAddress;
+    expect(beneficiary.address).to.be.properAddress;
+
+    const donor_charity = charity.connect(donor);
+
+    log();
+    log(`[Test campaign id is different]`, tabs = 2, sep = '');
+    
+    await assertOrganizationVerification(charity, beneficiary);
+
+    const _params = await prepareCreationParams({
+        beneficiary: beneficiary.address
+    }).then(this.verifyCreationParams);
+
+    const _campaignId1 = await this.assertCampaignCreation(donor_charity, _params);
+    const _campaignId2 = await this.assertCampaignCreation(donor_charity, _params);
+
+    expect(_campaignId1).to.not.equal(_campaignId2);
+}
+    
 
 module.exports.test_dates_are_properly_defined = async (charity, donor, beneficiary) => {
     expect(donor.address).to.be.properAddress;
@@ -75,7 +97,7 @@ module.exports.test_dates_are_properly_defined = async (charity, donor, benefici
     let _deadline = Math.floor(_block.timestamp - (24 * HOUR));
 
     log();
-    log(`[Test T008]`, tabs = 2, sep = '');
+    log(`[Test dates are properly defined]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(charity, beneficiary);
 
@@ -110,7 +132,7 @@ module.exports.test_token_goal_is_less_than_max_tokens = async (charity, donor, 
     const donor_charity = charity.connect(donor);
 
     log();
-    log(`[Test T009]: tokenGoal > maxTokens => revert`, tabs = 2, sep = '');
+    log(`[Test tokenGoal > maxTokens => revert]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(charity, beneficiary);
 
@@ -130,7 +152,7 @@ module.exports.test_creation_signature_is_correct = async (charity, donor, benef
     const donor_charity = charity.connect(donor);
     
     log();
-    log(`[Test T010]: Signature is incorrect => revert`, tabs = 2, sep = '');
+    log(`[Test signature is incorrect => revert]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(charity, beneficiary);
     
@@ -150,7 +172,7 @@ module.exports.test_campaign_creation = async (charity, donor, beneficiary) => {
     const donor_charity = charity.connect(donor);
 
     log();
-    log(`[Test T011]: Campaign creation`, tabs = 2, sep = '');
+    log(`[Test campaign creation]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(charity, beneficiary);
     
@@ -171,7 +193,7 @@ module.exports.test_get_campaign = async (charity, donor, beneficiary) => {
     const donor_charity = charity.connect(donor);
 
     log();
-    log(`[Test T012]: View campaigns details`, tabs = 2, sep = '');
+    log(`[Test view campaigns details]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(charity, beneficiary);
 
@@ -186,6 +208,7 @@ module.exports.test_get_campaign = async (charity, donor, beneficiary) => {
 
 Object.assign(global, {
     test_beneficiary_is_not_verified: module.exports.test_beneficiary_is_not_verified,
+    test_campaign_id_is_different: module.exports.test_campaign_id_is_different,
     test_dates_are_properly_defined: module.exports.test_dates_are_properly_defined,
     test_token_goal_is_less_than_max_tokens: module.exports.test_token_goal_is_less_than_max_tokens,
     test_creation_signature_is_correct: module.exports.test_creation_signature_is_correct,

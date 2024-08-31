@@ -48,7 +48,7 @@ module.exports.verifyStartParams = (params) => {
     return params;
 }
 
-module.exports.test_campaign_is_not_created = async (charity, donor) => {
+module.exports.test_not_existing_campaign = async (charity, donor) => {
     expect(donor.address).to.be.properAddress;
 
     const donor_charity = charity.connect(donor);
@@ -60,7 +60,7 @@ module.exports.test_campaign_is_not_created = async (charity, donor) => {
     await assertCampaignStartFailure(donor_charity, _params);
 }
 
-module.exports.test_start_signature_is_correct = async (charity, donor, beneficiary) => {
+module.exports.test_start_fails_if_signature_is_incorrect = async (charity, donor, beneficiary) => {
     expect(donor.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
 
@@ -114,7 +114,7 @@ module.exports.test_campaign_start = async (charity, donor, beneficiary) => {
 }
 
 Object.assign(global, {
-    test_campaign_is_not_created: module.exports.test_campaign_is_not_created,
-    test_start_signature_is_correct: module.exports.test_start_signature_is_correct,
+    test_not_existing_campaign: module.exports.test_not_existing_campaign,
+    test_start_fails_if_signature_is_incorrect: module.exports.test_start_fails_if_signature_is_incorrect,
     test_campaign_start: module.exports.test_campaign_start
 });

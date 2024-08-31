@@ -17,7 +17,7 @@ const {
 const { log } = require("../common/utils.js");
 const { expect } = require("chai");
 
-module.exports.test_refund_claim_is_not_authorized = async (charity, donor, beneficiary, other) => {
+module.exports.test_refund_claim_fails_if_not_from_donor = async (charity, donor, beneficiary, other) => {
     expect(donor.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
     expect(other.address).to.be.properAddress;
@@ -83,7 +83,7 @@ module.exports.test_refund_is_claimed = async (charity, donor, beneficiary) => {
     expect(refund_tx_outcome.refund_amount).to.be.a("number").that.is.at.least(0);
 }
 
-module.exports.test_donation_claim_is_not_authorized = async (charity, donor, beneficiary, other) => {
+module.exports.test_donation_claim_fials_if_not_from_beneficiary = async (charity, donor, beneficiary, other) => {
     expect(donor.address).to.be.properAddress;
     expect(beneficiary.address).to.be.properAddress;
     expect(other.address).to.be.properAddress;

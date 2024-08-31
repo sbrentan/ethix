@@ -17,7 +17,7 @@ module.exports.assertOrganizationRevocation = async (charity, beneficiary) => {
     expect(revoke_tx_outcome.status).to.be.false;
 }
 
-module.exports.test_verification_is_not_authorized = async (charity, other, beneficiary) => {
+module.exports.test_verification_fails_from_non_owner = async (charity, other, beneficiary) => {
     log();
     log(`[Test T003]: Unauthorized verification`, tabs = 2, sep = '');
 
@@ -31,7 +31,7 @@ module.exports.test_verification_is_not_authorized = async (charity, other, bene
     expect(verify_tx_outcome.tx).to.be.null;
 }
 
-module.exports.test_verification_is_performed = async (charity, beneficiary) => {  
+module.exports.test_verification = async (charity, beneficiary) => {  
     log();
     log(`[Test T004]: Authorized verification`, tabs = 2, sep = '');
 
@@ -40,7 +40,7 @@ module.exports.test_verification_is_performed = async (charity, beneficiary) => 
     await this.assertOrganizationVerification(charity, beneficiary);
 }
 
-module.exports.test_revocation_is_not_authorized = async (charity, other, beneficiary) => {
+module.exports.test_revocation_fails_from_non_owner = async (charity, other, beneficiary) => {
     log();
     log(`[Test T005]: Unauthorized revocation`, tabs = 2, sep = '');
 
@@ -54,7 +54,7 @@ module.exports.test_revocation_is_not_authorized = async (charity, other, benefi
     expect(revoke_tx_outcome.tx).to.be.null;
 }
 
-module.exports.test_revocation_is_performed = async (charity, beneficiary) => {
+module.exports.test_revocation = async (charity, beneficiary) => {
     log();
     log(`[Test T006]: Authorized revocation`, tabs = 2, sep = '');
 
@@ -65,8 +65,8 @@ module.exports.test_revocation_is_performed = async (charity, beneficiary) => {
 }
 
 Object.assign(global, {
-    test_verification_is_not_authorized: module.exports.test_verification_is_not_authorized,
-    test_verification_is_performed: module.exports.test_verification_is_performed,
-    test_revocation_is_not_authorized: module.exports.test_revocation_is_not_authorized,
-    test_revocation_is_performed: module.exports.test_revocation_is_performed
+    test_verification_fails_from_non_owner: module.exports.test_verification_fails_from_non_owner,
+    test_verification: module.exports.test_verification,
+    test_revocation_fails_from_non_owner: module.exports.test_revocation_fails_from_non_owner,
+    test_revocation: module.exports.test_revocation
 });
