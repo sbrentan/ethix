@@ -20,7 +20,15 @@ if (findTestsResult === '') {
 
 // Run `npx hardhat test` with the result from `find_tests.js`
 try{
-    execSync(`${debug_msg}npx hardhat test --grep "${findTestsResult}"`, { stdio: 'inherit' });
+    //check if on windows
+    if(process.platform === 'win32') {
+        if (debug_msg !== '')
+            execSync(`(set DEBUG=true && npx hardhat test --grep "${findTestsResult}")`, { stdio: 'inherit' });
+        else
+            execSync(`npx hardhat test --grep "${findTestsResult}"`, { stdio: 'inherit' });
+    } else {
+        execSync(`${debug_msg}npx hardhat test --grep "${findTestsResult}"`, { stdio: 'inherit' });
+    }
 } catch (error) {
     process.exit(1);
 }
