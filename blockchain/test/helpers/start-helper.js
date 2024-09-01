@@ -13,12 +13,11 @@ const {
     DEFAULT_DEADLINE_SHIFT,
     DEFAULT_INVALID_TOKENS, 
 } = require('../common/constants.js');
-const crypto = require('crypto');
 
 const prepareStartParams = async (params = {}) => {
     const _rwallet = web3.eth.accounts.create();
     
-    const _randomString = crypto.randomBytes(20).toString('hex');
+    const _randomString = web3.utils.randomHex(32);
     const _campaignId = params.campaignId || web3.utils.keccak256(_randomString);
     const _seed = params.seed || web3.utils.randomHex(32);
     const _combinedHash = encodePacked(_rwallet.address, _campaignId);

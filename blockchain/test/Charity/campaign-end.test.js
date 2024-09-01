@@ -5,6 +5,7 @@ const {
     claimRefund,
     claimDonation
 } = require("../helpers/end-helper.js");
+const { assertAccountsValidity } = require("./contract-deployment.test.js");
 const { assertOrganizationVerification } = require("./organization-verification.test.js");
 const { 
     verifyCreationParams,
@@ -17,24 +18,20 @@ const {
 const { log } = require("../common/utils.js");
 const { expect } = require("chai");
 
-module.exports.test_refund_claim_fails_if_not_from_donor = async (charity, donor, beneficiary, other) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-    expect(other.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
-    const other_charity = charity.connect(other);
+module.exports.test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => {
+    
+    const { donor, beneficiary, other } = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test T018]: Refund claim is not authorized => revert`, tabs = 2, sep = '');
+    log(`[Test refund claim is not authorized => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     let _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
     }).then(verifyCreationParams);
 
-    const _campaignId = await assertCampaignCreation(donor_charity, _params);
+    const _campaignId = await assertCampaignCreation(donor.contract, _params);
 
     _params = await prepareStartParams({
         campaignId: _campaignId,
@@ -42,29 +39,27 @@ module.exports.test_refund_claim_fails_if_not_from_donor = async (charity, donor
         generateTokens: true
     }).then(verifyStartParams);
     
-    const _jwts = await assertCampaignStart(donor_charity, _params, owner_contract = charity);
+    const _jwts = await assertCampaignStart(donor.contract, _params, contract);
 
-    const refund_tx_outcome = await claimRefund(other_charity, _campaignId);
+    const refund_tx_outcome = await claimRefund(other.contract, _campaignId);
     await expect(refund_tx_outcome.method).to.be.reverted;
     expect(refund_tx_outcome.tx).to.be.null;
 }
 
-module.exports.test_refund_is_claimed = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
+module.exports.test_refund_is_claimed = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test T019]: Refund claim is performed`, tabs = 2, sep = '');
+    log(`[Test refund claim is performed]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     let _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
     }).then(verifyCreationParams);
 
-    const _campaignId = await assertCampaignCreation(donor_charity, _params);
+    const _campaignId = await assertCampaignCreation(donor.contract, _params);
 
     _params = await prepareStartParams({
         campaignId: _campaignId,
@@ -73,34 +68,30 @@ module.exports.test_refund_is_claimed = async (charity, donor, beneficiary) => {
         validAmount: 3
     }).then(verifyStartParams);
     
-    const _jwts = await assertCampaignStart(donor_charity, _params, owner_contract = charity);
+    const _jwts = await assertCampaignStart(donor.contract, _params, contract);
 
-    _retVal = await validateToken(charity, _campaignId, _jwts.valid);
-    expect(_retVal).to.be.true;
+    const isTokenValid = await validateToken(contract, _campaignId, _jwts.valid);
+    expect(isTokenValid).to.be.true;
 
-    const refund_tx_outcome = await claimRefund(donor_charity, _campaignId);
-    await expect(refund_tx_outcome.tx).to.emit(donor_charity, 'RefundClaimed');
+    const refund_tx_outcome = await claimRefund(donor.contract, _campaignId);
+    await expect(refund_tx_outcome.tx).to.emit(donor.contract, 'RefundClaimed');
     expect(refund_tx_outcome.refund_amount).to.be.a("number").that.is.at.least(0);
 }
 
-module.exports.test_donation_claim_fials_if_not_from_beneficiary = async (charity, donor, beneficiary, other) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-    expect(other.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
-    const other_charity = charity.connect(other);
+module.exports.test_donation_claim_fials_if_not_from_beneficiary = async (contract, accounts) => {
+    
+    const { donor, beneficiary, other } = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test T020]: Donation claim is not authorized => revert`, tabs = 2, sep = '');
+    log(`[Test donation claim is not authorized => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     let _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
     }).then(verifyCreationParams);
 
-    const _campaignId = await assertCampaignCreation(donor_charity, _params);
+    const _campaignId = await assertCampaignCreation(donor.contract, _params);
 
     _params = await prepareStartParams({
         campaignId: _campaignId,
@@ -108,30 +99,27 @@ module.exports.test_donation_claim_fials_if_not_from_beneficiary = async (charit
         generateTokens: true
     }).then(verifyStartParams);
     
-    const _jwts = await assertCampaignStart(donor_charity, _params, owner_contract = charity);
+    const _jwts = await assertCampaignStart(donor.contract, _params, contract);
 
-    const donation_tx_outcome = await claimDonation(other_charity, _campaignId);
+    const donation_tx_outcome = await claimDonation(other.contract, _campaignId);
     await expect(donation_tx_outcome.method).to.be.reverted;
     expect(donation_tx_outcome.tx).to.be.null;
 }
 
-module.exports.test_donation_is_claimed = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
-    const beneficiary_charity = charity.connect(beneficiary);
+module.exports.test_donation_is_claimed = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test T021]: Donation claim is performed`, tabs = 2, sep = '');
+    log(`[Test donation claim is performed]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     let _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
     }).then(verifyCreationParams);
 
-    const _campaignId = await assertCampaignCreation(donor_charity, _params);
+    const _campaignId = await assertCampaignCreation(donor.contract, _params);
 
     _params = await prepareStartParams({
         campaignId: _campaignId,
@@ -140,13 +128,13 @@ module.exports.test_donation_is_claimed = async (charity, donor, beneficiary) =>
         validAmount: 3
     }).then(verifyStartParams);
     
-    const _jwts = await assertCampaignStart(donor_charity, _params, owner_contract = charity);
+    const _jwts = await assertCampaignStart(donor.contract, _params, contract);
 
-    _retVal = await validateToken(charity, _campaignId, _jwts.valid);
-    expect(_retVal).to.be.true;
+    const isTokenValid = await validateToken(contract, _campaignId, _jwts.valid);
+    expect(isTokenValid).to.be.true;
 
-    const donation_tx_outcome = await claimDonation(beneficiary_charity, _campaignId);
-    await expect(donation_tx_outcome.tx).to.emit(beneficiary_charity, 'DonationClaimed');
+    const donation_tx_outcome = await claimDonation(beneficiary.contract, _campaignId);
+    await expect(donation_tx_outcome.tx).to.emit(beneficiary.contract, 'DonationClaimed');
     expect(donation_tx_outcome.donation_amount).to.be.a("number").that.is.at.least(0);
 }
 

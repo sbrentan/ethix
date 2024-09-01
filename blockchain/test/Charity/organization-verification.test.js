@@ -1,3 +1,4 @@
+const { assertAccountsValidity } = require("./contract-deployment.test.js");
 const { 
     verifyOrganization,
     revokeOrganization 
@@ -5,63 +6,57 @@ const {
 const { log } = require("../common/utils.js");
 const { expect } = require("chai");
 
-module.exports.assertOrganizationVerification = async (charity, beneficiary) => {
-    const verify_tx_outcome = await verifyOrganization(charity, beneficiary.address);
-    await expect(verify_tx_outcome.tx).to.emit(charity, "OrganizationVerified");
+module.exports.assertOrganizationVerification = async (contract, beneficiary) => {
+    const verify_tx_outcome = await verifyOrganization(contract, beneficiary.address);
+    await expect(verify_tx_outcome.tx).to.emit(contract, "OrganizationVerified");
     expect(verify_tx_outcome.status).to.be.true;
 }
 
-module.exports.assertOrganizationRevocation = async (charity, beneficiary) => {
-    const revoke_tx_outcome = await revokeOrganization(charity, beneficiary.address);
-    await expect(revoke_tx_outcome.tx).to.emit(charity, "OrganizationRevoked");
+module.exports.assertOrganizationRevocation = async (contract, beneficiary) => {
+    const revoke_tx_outcome = await revokeOrganization(contract, beneficiary.address);
+    await expect(revoke_tx_outcome.tx).to.emit(contract, "OrganizationRevoked");
     expect(revoke_tx_outcome.status).to.be.false;
 }
 
-module.exports.test_verification_fails_from_non_owner = async (charity, other, beneficiary) => {
+module.exports.test_verification_fails_from_non_owner = async (contract, accounts) => {
     log();
-    log(`[Test T003]: Unauthorized verification`, tabs = 2, sep = '');
+    log(`[Test verification fails from non owner]`, tabs = 2, sep = '');
 
-    expect(other.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
+    const { beneficiary, other } = assertAccountsValidity(contract, accounts);
 
-    const other_charity = charity.connect(other);
-
-    const verify_tx_outcome = await verifyOrganization(other_charity, beneficiary.address);
+    const verify_tx_outcome = await verifyOrganization(other.contract, beneficiary.address);
     await expect(verify_tx_outcome.method).to.be.reverted;
     expect(verify_tx_outcome.tx).to.be.null;
 }
 
-module.exports.test_verification = async (charity, beneficiary) => {  
+module.exports.test_verification = async (contract, accounts) => {  
     log();
-    log(`[Test T004]: Authorized verification`, tabs = 2, sep = '');
+    log(`[Test verification]`, tabs = 2, sep = '');
 
-    expect(beneficiary.address).to.be.properAddress;
+    const { beneficiary } = assertAccountsValidity(contract, accounts);
 
-    await this.assertOrganizationVerification(charity, beneficiary);
+    await this.assertOrganizationVerification(contract, beneficiary);
 }
 
-module.exports.test_revocation_fails_from_non_owner = async (charity, other, beneficiary) => {
+module.exports.test_revocation_fails_from_non_owner = async (contract, accounts) => {
     log();
-    log(`[Test T005]: Unauthorized revocation`, tabs = 2, sep = '');
+    log(`[Test revocation fails from non owner]`, tabs = 2, sep = '');
 
-    expect(other.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
+    const { beneficiary, other } = assertAccountsValidity(contract, accounts);
 
-    const other_charity = charity.connect(other);
-
-    const revoke_tx_outcome = await revokeOrganization(other_charity, beneficiary.address);
+    const revoke_tx_outcome = await revokeOrganization(other.contract, beneficiary.address);
     await expect(revoke_tx_outcome.method).to.be.reverted;
     expect(revoke_tx_outcome.tx).to.be.null;
 }
 
-module.exports.test_revocation = async (charity, beneficiary) => {
+module.exports.test_revocation = async (contract, accounts) => {
     log();
-    log(`[Test T006]: Authorized revocation`, tabs = 2, sep = '');
+    log(`[Test revocation]`, tabs = 2, sep = '');
 
-    expect(beneficiary.address).to.be.properAddress;
+    const { beneficiary } = assertAccountsValidity(contract, accounts);
 
-    await this.assertOrganizationVerification(charity, beneficiary);
-    await this.assertOrganizationRevocation(charity, beneficiary);
+    await this.assertOrganizationVerification(contract, beneficiary);
+    await this.assertOrganizationRevocation(contract, beneficiary);
 }
 
 Object.assign(global, {

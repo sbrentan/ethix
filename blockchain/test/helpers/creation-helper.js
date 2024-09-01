@@ -16,9 +16,9 @@ const {
 
 const prepareCreationParams = async (params = {}) => {
     const _title = params.title || DEFAULT_TITLE;
-    
-    let block = await ethers.provider.getBlock("latest");
-    const _startingDate = params.startingDate || Math.floor(block.timestamp + (DEFAULT_STARTDATE_SHIFT * HOUR));
+
+    const _block = await web3.eth.getBlock("latest");
+    const _startingDate = params.startingDate || Math.floor(_block.timestamp + (DEFAULT_STARTDATE_SHIFT * HOUR));
     const _deadline = params.deadline || Math.floor(_startingDate + (DEFAULT_DEADLINE_SHIFT * HOUR));
 
     const _tokenGoal = params.tokenGoal || DEFAULT_TOKEN_GOAL;

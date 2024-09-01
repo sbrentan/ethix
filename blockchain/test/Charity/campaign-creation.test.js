@@ -3,6 +3,7 @@ const {
     createCampaign,
     getCampaign
 } = require("../helpers/creation-helper.js");
+const { assertAccountsValidity } = require("./contract-deployment.test.js");
 const { assertOrganizationVerification } = require("./organization-verification.test.js");
 const { log } = require("../common/utils.js");
 const { HOUR } = require('../common/constants.js');
@@ -50,9 +51,9 @@ module.exports.verifyCreationParams = (params) => {
     return params;
 }
 
-module.exports.test_beneficiary_is_not_verified = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    const donor_charity = charity.connect(donor);
+module.exports.test_beneficiary_is_not_verified = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test beneficiary is unverified => revert]`, tabs = 2, sep = '');
@@ -61,45 +62,40 @@ module.exports.test_beneficiary_is_not_verified = async (charity, donor, benefic
         beneficiary: beneficiary.address 
     }).then(this.verifyCreationParams);
 
-    await assertCampaignCreationFailure(donor_charity, _params);
+    await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_campaign_id_is_different = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
+module.exports.test_campaign_id_is_different = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test campaign id is different]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     const _params = await prepareCreationParams({
         beneficiary: beneficiary.address
     }).then(this.verifyCreationParams);
 
-    const _campaignId1 = await this.assertCampaignCreation(donor_charity, _params);
-    const _campaignId2 = await this.assertCampaignCreation(donor_charity, _params);
+    const _campaignId1 = await this.assertCampaignCreation(donor.contract, _params);
+    const _campaignId2 = await this.assertCampaignCreation(donor.contract, _params);
 
     expect(_campaignId1).to.not.equal(_campaignId2);
 }
     
+module.exports.test_dates_are_properly_defined = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
-module.exports.test_dates_are_properly_defined = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
-
-    let _block = await ethers.provider.getBlock("latest");
+    const _block = await web3.eth.getBlock('latest');
     let _startingDate = Math.floor(_block.timestamp + (12 * HOUR));
     let _deadline = Math.floor(_block.timestamp - (24 * HOUR));
 
     log();
     log(`[Test dates are properly defined]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     log();
     log(`* [Case 1]: Starting date > deadline => revert`, tabs = 3, sep = '');
@@ -109,7 +105,7 @@ module.exports.test_dates_are_properly_defined = async (charity, donor, benefici
         beneficiary: beneficiary.address
     }).then(this.verifyCreationParams)
     
-    await assertCampaignCreationFailure(donor_charity, _params);
+    await assertCampaignCreationFailure(donor.contract, _params);
 
     _startingDate = Math.floor(_block.timestamp - (12 * HOUR));
     _deadline = Math.floor(_block.timestamp + (24 * HOUR));
@@ -122,19 +118,17 @@ module.exports.test_dates_are_properly_defined = async (charity, donor, benefici
         beneficiary: beneficiary.address
     }).then(this.verifyCreationParams)
 
-    await assertCampaignCreationFailure(donor_charity, _params);
+    await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_token_goal_is_less_than_max_tokens = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
+module.exports.test_token_goal_is_less_than_max_tokens = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test tokenGoal > maxTokens => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     const _params = await prepareCreationParams({
         tokenGoal: 10,
@@ -142,19 +136,17 @@ module.exports.test_token_goal_is_less_than_max_tokens = async (charity, donor, 
         beneficiary: beneficiary.address
     }).then(this.verifyCreationParams);
 
-    await assertCampaignCreationFailure(donor_charity, _params);
+    await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_creation_signature_is_correct = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
+module.exports.test_creation_signature_is_correct = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
     
     log();
     log(`[Test signature is incorrect => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
     
     const _key = (await ethers.Wallet.createRandom()).privateKey;
     const _params = await prepareCreationParams({
@@ -162,48 +154,44 @@ module.exports.test_creation_signature_is_correct = async (charity, donor, benef
         beneficiary: beneficiary.address
     }).then(this.verifyCreationParams);
 
-    await assertCampaignCreationFailure(donor_charity, _params);
+    await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_campaign_creation = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
+module.exports.test_campaign_creation = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test campaign creation]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
     
     const _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
     }).then(this.verifyCreationParams);
     
-    const _campaignId = await this.assertCampaignCreation(donor_charity, _params);
+    const _campaignId = await this.assertCampaignCreation(donor.contract, _params);
 
-    const _campaigns = await charity.getCampaignsIds()
+    const _campaigns = await contract.getCampaignsIds()
     expect(_campaigns).to.be.an("array").that.includes(_campaignId);
 }
 
-module.exports.test_get_campaign = async (charity, donor, beneficiary) => {
-    expect(donor.address).to.be.properAddress;
-    expect(beneficiary.address).to.be.properAddress;
-
-    const donor_charity = charity.connect(donor);
+module.exports.test_get_campaign = async (contract, accounts) => {
+    
+    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test view campaigns details]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(charity, beneficiary);
+    await assertOrganizationVerification(contract, beneficiary);
 
     const _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
     }).then(this.verifyCreationParams);
 
-    const _campaignId = await this.assertCampaignCreation(donor_charity, _params);
+    const _campaignId = await this.assertCampaignCreation(donor.contract, _params);
 
-    await getCampaign(charity, _campaignId).then(this.verifyCreationParams);
+    await getCampaign(contract, _campaignId).then(this.verifyCreationParams);
 }
 
 Object.assign(global, {
