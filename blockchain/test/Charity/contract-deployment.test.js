@@ -30,9 +30,11 @@ module.exports.test_contract_is_deployed = async (contract) => {
     expect(contract_address).to.be.properAddress;
 }
 
-module.exports.test_owner_is_correct = async (contract, owner) => {
+module.exports.test_owner_is_correct = async (contract, accounts) => {
     log();
     log(`[Test contract owner is correct]`, tabs = 2, sep = '');
+
+    const { owner } = this.assertAccountsValidity(contract, accounts);
 
     log(`Owner address: ${owner.address}`);
     log(`Contract owner address: ${contract.runner.address}`);

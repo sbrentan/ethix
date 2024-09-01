@@ -48,7 +48,7 @@ describe("Charity", function () {
 
 		it("T001 - Should deploy the contract", () => test_contract_is_deployed(charity));
 
-		it("T002 - Should set the right owner", () => test_owner_is_correct(charity, accounts.owner));
+		it("T002 - Should set the right owner", () => test_owner_is_correct(charity, accounts));
 
 	});
 
