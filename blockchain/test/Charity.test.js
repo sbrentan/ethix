@@ -1,6 +1,4 @@
-const {
-	loadFixture,
-} = require("@nomicfoundation/hardhat-toolbox/network-helpers");
+const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const CharityModule = require("../ignition/modules/Charity");
 
 const { log } = require("./common/utils.js");
@@ -38,8 +36,8 @@ describe("Charity", function () {
 
 	beforeEach(async function () {
 		// Runs before each test (it) in this block
-		const _fixture = await loadFixture(deployCharityFixture);
-		charity = _fixture.charity;
+		const fixture = await loadFixture(deployCharityFixture);
+		charity = fixture.charity;
 	});
 
 	describe("Deployment", function () {
