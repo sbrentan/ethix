@@ -6,13 +6,13 @@ const {
     DEFAULT_MAX_TOKENS,
     DEFAULT_STARTDATE_SHIFT,
     DEFAULT_DEADLINE_SHIFT 
-} = require('../common/constants.js');
+} = require('../../common/constants.js');
 const { 
     log,
     formatDate,
     getPrivateKey,
     logJson
-} = require('../common/utils.js');
+} = require('../../common/utils.js');
 
 const prepareCreationParams = async (params = {}) => {
     const _title = params.title || DEFAULT_TITLE;

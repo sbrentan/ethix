@@ -1,9 +1,9 @@
-const { validateToken } = require("../helpers/token-helper.js");
+const { validateToken } = require("../helpers/charity/token-helper.js");
 const {
     prepareCreationParams,
     getCampaign
-} = require("../helpers/creation-helper.js");
-const { prepareStartParams } = require("../helpers/start-helper.js");
+} = require("../helpers/charity/creation-helper.js");
+const { prepareStartParams } = require("../helpers/charity/start-helper.js");
 const { assertAccountsValidity } = require("./contract-deployment.test.js");
 const { assertOrganizationVerification } = require("./organization-verification.test.js");
 const { 

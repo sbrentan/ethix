@@ -1,11 +1,11 @@
 const { 
     log,
     increaseTime 
-} = require('../common/utils.js');
+} = require('../../common/utils.js');
 const {
     DEFAULT_STARTDATE_SHIFT,
     DEFAULT_DEADLINE_SHIFT
-} = require('../common/constants.js');
+} = require('../../common/constants.js');
 
 const claimRefund = async (contract, campaignAddress) => {  
     const refundClaim = () => contract.claimRefund(campaignAddress);     

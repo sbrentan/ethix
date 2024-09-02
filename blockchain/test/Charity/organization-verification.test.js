@@ -2,7 +2,7 @@ const { assertAccountsValidity } = require("./contract-deployment.test.js");
 const { 
     verifyOrganization,
     revokeOrganization 
-} = require("../helpers/verification-helper.js");
+} = require("../helpers/charity/verification-helper.js");
 const { log } = require("../common/utils.js");
 const { expect } = require("chai");
 
