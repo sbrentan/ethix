@@ -9,7 +9,7 @@ const {
     verifyCreationParams,
     assertCampaignCreation 
 } = require("./campaign-creation.test.js");
-const { log } = require("../common/utils.js");
+const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 
 const assertCampaignStartFailure = async (donor_charity, params) => {

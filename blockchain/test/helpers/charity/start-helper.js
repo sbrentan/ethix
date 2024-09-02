@@ -4,7 +4,7 @@ const {
     getPrivateKey,
     encodePacked,
     increaseTime 
-} = require("../../common/utils.js");
+} = require("../../../common/utils.js");
 const { 
     DEFAULT_SLICE,
     DEFAULT_VALUE,
@@ -12,7 +12,7 @@ const {
     DEFAULT_STARTDATE_SHIFT,
     DEFAULT_DEADLINE_SHIFT,
     DEFAULT_INVALID_TOKENS, 
-} = require('../../common/constants.js');
+} = require('../../../common/constants.js');
 
 const prepareStartParams = async (params = {}) => {
     const _rwallet = web3.eth.accounts.create();

@@ -25,7 +25,7 @@ module.exports.test_contract_is_deployed = async (contract) => {
     log(`[Test contract deployment]`, tabs = 2, sep = '');
 
     const contract_address = await contract.getAddress();
-    log(`Charity deployed to: ${contract_address}`);
+    log(`Campaign deployed to: ${contract_address}`);
 
     expect(contract_address).to.be.properAddress;
 }

@@ -5,8 +5,8 @@ const {
 } = require("../helpers/charity/creation-helper.js");
 const { assertAccountsValidity } = require("./contract-deployment.test.js");
 const { assertOrganizationVerification } = require("./organization-verification.test.js");
-const { log } = require("../common/utils.js");
-const { HOUR } = require('../common/constants.js');
+const { log } = require("../../common/utils.js");
+const { HOUR } = require('../../common/constants.js');
 const { expect } = require("chai");
 
 const assertCampaignCreationFailure = async (donor_charity, params) => {

@@ -3,7 +3,7 @@ const {
     verifyOrganization,
     revokeOrganization 
 } = require("../helpers/charity/verification-helper.js");
-const { log } = require("../common/utils.js");
+const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 
 module.exports.assertOrganizationVerification = async (contract, beneficiary) => {

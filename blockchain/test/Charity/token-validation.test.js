@@ -14,7 +14,7 @@ const {
     verifyStartParams,
     assertCampaignStart 
 } = require("./campaign-start.test.js");
-const { log } = require("../common/utils.js");
+const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 
 

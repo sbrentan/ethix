@@ -1,16 +1,19 @@
 const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
-const CampaignModule = require("../ignition/modules/Campaign");
+const buildCampaign = require("../ignition/modules/Campaign");
 
-const { log } = require("./common/utils.js");
+const { log } = require("../common/utils.js");
 
 require("@nomicfoundation/hardhat-chai-matchers");
 
-describe("Charity", function () {
+require("./Campaign/contract-deployment.test.js");
+
+describe("Campaign", function () {
 
 	let campaign; // contract instance of owner
 	let accounts; // owner, donor, beneficiary, other
 
 	async function deployCampaignFixture() {
+		const CampaignModule = await buildCampaign(accounts);
 		const { campaign } = await ignition.deploy(CampaignModule);
 		return { campaign: campaign };
 	}
@@ -33,4 +36,13 @@ describe("Charity", function () {
 		campaign = fixture.campaign;
 	});
 
+	describe("Deployment", function () {
+
+		after(() => log());
+
+		it("T001 - Should deploy the contract", () => test_contract_is_deployed(campaign));
+
+		it("T002 - Should set the right owner", () => test_owner_is_correct(campaign, accounts));
+
+	});
 });

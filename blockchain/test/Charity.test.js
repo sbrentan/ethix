@@ -1,9 +1,9 @@
 const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const CharityModule = require("../ignition/modules/Charity");
 
-const { log } = require("./common/utils.js");
+const { log } = require("../common/utils.js");
 
-require("@nomicfoundation/hardhat-chai-matchers");
+//require("@nomicfoundation/hardhat-chai-matchers");
 
 require("./Charity/contract-deployment.test.js");
 require("./Charity/organization-verification.test.js");

@@ -15,7 +15,7 @@ const {
     verifyStartParams,
     assertCampaignStart 
 } = require("./campaign-start.test.js");
-const { log } = require("../common/utils.js");
+const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 
 module.exports.test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => {
