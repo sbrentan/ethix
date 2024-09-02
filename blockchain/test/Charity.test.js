@@ -1,16 +1,56 @@
 const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const CharityModule = require("../ignition/modules/Charity");
+const buildCampaign = require("../ignition/modules/Campaign");
 
 const { log } = require("../common/utils.js");
 
 //require("@nomicfoundation/hardhat-chai-matchers");
 
-require("./Charity/contract-deployment.test.js");
-require("./Charity/organization-verification.test.js");
-require("./Charity/campaign-creation.test.js");
-require("./Charity/campaign-start.test.js");
-require("./Charity/token-validation.test.js");
-require("./Charity/campaign-end.test.js");
+// Deployment test cases
+const {
+	test_contract_is_deployed,
+	test_owner_is_correct
+} = require("./Charity/contract-deployment.test.js").tests;
+
+// Organization/Beneficiary verification test cases
+const {
+	test_verification_fails_from_non_owner,
+	test_verification,
+	test_revocation_fails_from_non_owner,
+	test_revocation
+} = require("./Charity/organization-verification.test.js").tests;
+
+// Campaign creation test cases
+const {
+	test_beneficiary_is_not_verified,
+	test_campaign_id_is_different,
+	test_dates_are_properly_defined,
+	test_token_goal_is_less_than_max_tokens,
+	test_creation_signature_is_correct,
+	test_campaign_creation,
+	test_get_campaign
+} = require("./Charity/campaign-creation.test.js").tests;
+
+// Campaign start/funding test cases
+const {
+	test_not_existing_campaign,
+	test_start_fails_if_signature_is_incorrect,
+	test_campaign_start
+} = require("./Charity/campaign-start.test.js").tests;
+
+// Token redeeming test cases
+const {
+	test_redeeming_fails_with_invalid_token,
+	test_valid_token_is_redeemed
+} = require("./Charity/token-validation.test.js").tests;
+
+// Campaign end test cases
+const {
+	test_refund_claim_fails_if_not_from_donor,
+	test_refund_is_claimed,
+	test_donation_claim_fails_if_not_from_beneficiary,
+	test_donation_is_claimed
+} = require("./Charity/campaign-end.test.js").tests;
 
 describe("Charity", function () {
 
@@ -20,6 +60,12 @@ describe("Charity", function () {
 	async function deployCharityFixture() {
 		const { charity } = await ignition.deploy(CharityModule);
 		return { charity: charity };
+	}
+
+	async function deployCampaignFixture() {
+		const CampaignModule = await buildCampaign(accounts);
+		const { campaign } = await ignition.deploy(CampaignModule);
+		return { campaign: campaign };
 	}
 
 	before(async function () {
@@ -142,7 +188,7 @@ describe("Charity", function () {
 		it("T002 - Should claim the refund", () => test_refund_is_claimed(charity, accounts));
 
 		// should revert if donation claim is not authorized
-		it("T003 - Should revert donation claiming if not from beneficiary", () => test_donation_claim_fials_if_not_from_beneficiary(charity, accounts));
+		it("T003 - Should revert donation claiming if not from beneficiary", () => test_donation_claim_fails_if_not_from_beneficiary(charity, accounts));
 
 		// should claim the donation
 		it("T004 - Should claim the donation", () => test_donation_is_claimed(charity, accounts));

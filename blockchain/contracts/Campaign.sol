@@ -5,6 +5,15 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 contract Campaign {
+
+    // Campaign events
+    event CampaignStarted(bytes32 campaignId);
+    event CampaignCreated(bytes32 campaignId);
+    event WalletAddressSet();
+    event TokensRedeemed(uint256 count);
+    event RefundClaimed(uint256 amount);
+    event DonationClaimed(uint256 amount);
+
     // ====================================== STRUCTS ======================================
 
     struct TokenBlock {
@@ -141,6 +150,8 @@ contract Campaign {
         campaignDetails.beneficiary = payable(_beneficiary);
         campaignDetails.tokensCount = _tokensCount;
         campaignDetails.maxTokensCount = _maxTokensCount;
+
+        emit CampaignCreated(_campaignId);
     }
 
 
@@ -163,10 +174,13 @@ contract Campaign {
 
         // set the campaign as funded
         campaignDetails.funded = true;
+
+        emit CampaignStarted(campaignDetails.campaignId);
     }
 
     function setWalletAddress(address _walletAddress) external onlyOwner {
         walletAddress = _walletAddress;
+        emit WalletAddressSet();
     }
 
 
@@ -202,6 +216,8 @@ contract Campaign {
         campaignDetails.refunds = _refunds;
         campaignDetails.donor.transfer(_refunds);
         campaignDetails.refundClaimed = true;
+
+        emit RefundClaimed(_refunds);
     }
 
 
@@ -227,6 +243,8 @@ contract Campaign {
         campaignDetails.donations = _donations;
         campaignDetails.beneficiary.transfer(_donations);
         campaignDetails.donationClaimed = true;
+
+        emit DonationClaimed(_donations);
     }
 
     function redeemTokensBatch(
@@ -253,6 +271,8 @@ contract Campaign {
         }
         
         campaignDetails.redeemedTokensCount += _tokens.length;
+
+        emit TokensRedeemed(_tokens.length);
     }
 
     // check if a token is valid

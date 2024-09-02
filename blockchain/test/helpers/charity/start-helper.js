@@ -68,7 +68,10 @@ const startCampaign = async (contract, params, owner_contract = null) => {
     try {
         const start_tx = await campaignStart();
         const start_receipt = await start_tx.wait();
-        const start_data = start_receipt?.logs[0]?.data; // campaign id
+        const campaignId = start_receipt?.logs[0]?.data; // campaign id
+        
+        const campaign_address = start_receipt?.logs[1]?.args[0];
+        const campaign = await ethers.getContractAt("Campaign", campaign_address);
 
         let validJWTTokens, invalidJWTTokens;
 
@@ -87,7 +90,8 @@ const startCampaign = async (contract, params, owner_contract = null) => {
 
         return { 
             tx: start_tx,
-            campaignId: start_data,
+            campaign_contract: campaign,
+            campaignId: campaignId,
             jwts: {
                 valid: {
                     tokens: validTokens,

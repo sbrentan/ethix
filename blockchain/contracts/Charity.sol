@@ -16,12 +16,7 @@ contract Charity {
     // Charity events
     event OrganizationVerified();
     event OrganizationRevoked();
-
-    // Campaign events
-    event CampaignStarted(bytes32 campaignId); // useless since it's an input parameter of the startCampaign function
-    event CampaignCreated(bytes32 campaignId);
-    event RefundClaimed(uint256 amount);
-    event DonationClaimed(uint256 amount);
+    event CampaignAddress(address campaignAddress);
 
     // ====================================== STRUCTS ======================================
 
@@ -164,7 +159,7 @@ contract Charity {
         );
         campaignsIds.push(campaignId);
 
-        emit CampaignCreated(campaignId);
+        emit CampaignAddress(address(campaigns[campaignId]));
     }
 
     // fund and start an existing campaign
@@ -225,7 +220,7 @@ contract Charity {
             msg.sender
         );
 
-        emit CampaignStarted(_campaignId);
+        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // returns the IDs of all campaigns
@@ -250,7 +245,7 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimRefund(msg.sender);
-        emit RefundClaimed(campaigns[_campaignId].getDetails().refunds);
+        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // claim a donation for an ended campaign
@@ -258,7 +253,7 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimDonation(msg.sender);
-        emit DonationClaimed(campaigns[_campaignId].getDetails().donations);
+        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // redeem a batch of tokens
@@ -268,6 +263,7 @@ contract Charity {
         Campaign.Signature[] calldata _signatures
     ) external onlyExistingCampaign(_campaignId) onlyOwner {
         campaigns[_campaignId].redeemTokensBatch(_tokens, _signatures);
+        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // function to check if a token is valid

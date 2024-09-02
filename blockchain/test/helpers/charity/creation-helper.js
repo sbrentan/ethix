@@ -11,7 +11,8 @@ const {
     log,
     formatDate,
     getPrivateKey,
-    logJson
+    logJson,
+    getLogsFromTopic
 } = require('../../../common/utils.js');
 
 const prepareCreationParams = async (params = {}) => {
@@ -74,11 +75,15 @@ const createCampaign = async (contract, params) => {
     try {
         const create_tx = await campaignCreate();
         const create_receipt = await create_tx.wait();
-        const create_data = create_receipt?.logs[0]?.data; // campaign id
+        const campaignId = create_receipt?.logs[0]?.data;
+        const campaign_address = create_receipt?.logs[1]?.args[0];
 
-        log(`Campaign ID: ${create_data}`);
+        log(`Campaign ID: ${campaignId}`);
+        log(`Campaign address: ${campaign_address}`);
 
-        return { tx: create_tx, campaignId: create_data }
+        const campaign = await ethers.getContractAt("Campaign", campaign_address);
+
+        return { tx: create_tx, campaign_contract: campaign, campaignId: campaignId }
 
     } catch (e) {
         return { 

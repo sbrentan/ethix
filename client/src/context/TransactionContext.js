@@ -423,56 +423,6 @@ export const TransactionsProvider = ({ children }) => {
         }
     }, [wallet]);
 
-    useEffect(() => {
-
-        // Subscriptions to contract events
-        
-        const organizationVerifiedSubscription = charityContract.events.OrganizationVerified();
-        const organizationRevokedSubscription = charityContract.events.OrganizationRevoked();
-        const campaignCreatedSubscription = charityContract.events.CampaignCreated();
-        const campaignStartedSubscription = charityContract.events.CampaignStarted();
-        const refundClaimedSubscription = charityContract.events.RefundClaimed();
-        const donationClaimedSubscription = charityContract.events.DonationClaimed();
-
-        // Logging events to console
-
-        organizationVerifiedSubscription.on("data", (event) => {
-            console.log(`Organization verified`);
-        });
-
-        organizationRevokedSubscription.on("data", (event) => {
-            console.log(`Organization unverified`);
-        });
-
-        campaignCreatedSubscription.on("data", (event) => {
-            console.log(`Campaign [${event.returnValues.campaignId}] created`);
-        });
-
-        campaignStartedSubscription.on("data", (event) => {
-            console.log(`Campaign [${event.returnValues.campaignId}] started`);
-        });
-
-        refundClaimedSubscription.on("data", (event) => {
-            console.log(`Refund of [${web3.utils.fromWei(event.returnValues.amount, 'ether')}] ETH claimed`);
-        });
-
-        donationClaimedSubscription.on("data", (event) => {
-            console.log(`Donation of [${web3.utils.fromWei(event.returnValues.amount, 'ether')}] ETH claimed`);
-        });
-
-        // Unsubscribing from events on unmount
-
-        return () => {
-            organizationVerifiedSubscription.unsubscribe();
-            organizationRevokedSubscription.unsubscribe();
-            campaignCreatedSubscription.unsubscribe();
-            campaignStartedSubscription.unsubscribe();
-            refundClaimedSubscription.unsubscribe();
-            donationClaimedSubscription.unsubscribe();
-        }
-
-    }, []);
-
     /* ------------------------ PROVIDER ------------------------ */
 
     return (

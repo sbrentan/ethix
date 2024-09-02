@@ -7,8 +7,8 @@ const {
     DEFAULT_DEADLINE_SHIFT
 } = require('../../../common/constants.js');
 
-const claimRefund = async (contract, campaignAddress) => {  
-    const refundClaim = () => contract.claimRefund(campaignAddress);     
+const claimRefund = async (contract, campaignId) => {  
+    const refundClaim = () => contract.claimRefund(campaignId);     
     try {
 
         await increaseTime(DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT + 1);
@@ -22,11 +22,14 @@ const claimRefund = async (contract, campaignAddress) => {
 		const refund_amount = refund_receipt?.logs[0]?.data;
         const refund_eth = Number(web3.utils.fromWei(refund_amount, 'ether'));
 
+        const campaign_address = refund_receipt?.logs[1]?.args[0];
+        const campaign = await ethers.getContractAt("Campaign", campaign_address);
+
         log(`Refund process:`, tabs = 3, sep = '');
         log(`Refund amount of ${refund_eth.toFixed(2)} ETH claimed`, tabs = 4);
         log();
 
-        return { tx: refund_tx, refund_amount: refund_eth }
+        return { tx: refund_tx, campaign_contract: campaign, refund_amount: refund_eth }
 
     } catch (e) {
         return { 
@@ -36,8 +39,8 @@ const claimRefund = async (contract, campaignAddress) => {
     }
 }
 
-const claimDonation = async (contract, campaignAddress) => {  
-    const donationClaim = () => contract.claimDonation(campaignAddress);     
+const claimDonation = async (contract, campaignId) => {  
+    const donationClaim = () => contract.claimDonation(campaignId);     
     try {
 
         await increaseTime(DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT + 1);
@@ -51,11 +54,14 @@ const claimDonation = async (contract, campaignAddress) => {
 		const donation_amount = donation_receipt?.logs[0]?.data;
         const donation_eth = Number(web3.utils.fromWei(donation_amount, 'ether'));
 
+        const campaign_address = donation_receipt?.logs[1]?.args[0];
+        const campaign = await ethers.getContractAt("Campaign", campaign_address);
+
         log(`Donation process:`, tabs = 3, sep = '');
         log(`Donation amount of ${donation_eth.toFixed(2)} ETH claimed`, tabs = 4);
         log();
 
-        return { tx: donation_tx, donation_amount: donation_eth }
+        return { tx: donation_tx, campaign_contract: campaign, donation_amount: donation_eth }
 
     } catch (e) {
         return { 

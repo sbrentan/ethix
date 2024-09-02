@@ -1,7 +1,7 @@
 const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 
-module.exports.assertAccountsValidity = (contract, accounts) => {
+const assertAccountsValidity = (contract, accounts) => {
     
     expect(contract.target).to.be.properAddress;
     expect(contract.runner.address).to.be.properAddress;
@@ -20,7 +20,7 @@ module.exports.assertAccountsValidity = (contract, accounts) => {
     return _signers;
 }
 
-module.exports.test_contract_is_deployed = async (contract) => {
+const test_contract_is_deployed = async (contract) => {
     log();
     log(`[Test contract deployment]`, tabs = 2, sep = '');
 
@@ -30,11 +30,11 @@ module.exports.test_contract_is_deployed = async (contract) => {
     expect(contract_address).to.be.properAddress;
 }
 
-module.exports.test_owner_is_correct = async (contract, accounts) => {
+const test_owner_is_correct = async (contract, accounts) => {
     log();
     log(`[Test contract owner is correct]`, tabs = 2, sep = '');
 
-    const { owner } = this.assertAccountsValidity(contract, accounts);
+    const { owner } = assertAccountsValidity(contract, accounts);
 
     log(`Owner address: ${owner.address}`);
     log(`Contract owner address: ${contract.runner.address}`);
@@ -42,7 +42,12 @@ module.exports.test_owner_is_correct = async (contract, accounts) => {
     expect(contract.runner.address).to.equal(owner.address);
 }
 
-Object.assign(global, {
-    test_contract_is_deployed: module.exports.test_contract_is_deployed,
-    test_owner_is_correct: module.exports.test_owner_is_correct
-});
+module.exports = {
+    assertions: {
+        assertAccountsValidity
+    },
+    tests: {
+        test_contract_is_deployed,
+        test_owner_is_correct
+    }
+}

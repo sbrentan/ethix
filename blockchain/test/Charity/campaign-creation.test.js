@@ -3,28 +3,29 @@ const {
     createCampaign,
     getCampaign
 } = require("../helpers/charity/creation-helper.js");
-const { assertAccountsValidity } = require("./contract-deployment.test.js");
-const { assertOrganizationVerification } = require("./organization-verification.test.js");
+const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
+const { assertOrganizationVerification } = require("./organization-verification.test.js").assertions;
 const { log } = require("../../common/utils.js");
 const { HOUR } = require('../../common/constants.js');
 const { expect } = require("chai");
 
-const assertCampaignCreationFailure = async (donor_charity, params) => {
-    const create_tx_outcome = await createCampaign(donor_charity, params);
-    await expect(create_tx_outcome.method).to.be.reverted;
-    expect(create_tx_outcome.tx).to.be.null;
-}
-
-module.exports.assertCampaignCreation = async (donor_charity, params) => {
-    const create_tx_outcome = await createCampaign(donor_charity, params);
-    await expect(create_tx_outcome.tx).to.emit(donor_charity, "CampaignCreated");
+const assertCampaignCreation = async (contract, params) => {
+    const create_tx_outcome = await createCampaign(contract, params);
+    await expect(create_tx_outcome.tx).to.emit(create_tx_outcome.campaign_contract, "CampaignCreated");
     expect(create_tx_outcome.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
     return create_tx_outcome.campaignId;
 }
 
-module.exports.verifyCreationParams = (params) => {
+const assertCampaignCreationFailure = async (contract, params) => {
+    const create_tx_outcome = await createCampaign(contract, params);
+    await expect(create_tx_outcome.method).to.be.reverted;
+    expect(create_tx_outcome.tx).to.be.null;
+}
+
+const assertCreationParamsValidity = (params) => {
 
     // General verification
+    params?.campaignAddress && expect(params.campaignAddress).to.be.properAddress;
     params?.campaignId && expect(params.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
     params?.title && expect(params.title).to.be.a("string").that.is.not.empty;
     params?.startingDate && expect(params.startingDate).to.be.a("number").that.is.above(0);
@@ -51,7 +52,7 @@ module.exports.verifyCreationParams = (params) => {
     return params;
 }
 
-module.exports.test_beneficiary_is_not_verified = async (contract, accounts) => {
+const test_beneficiary_is_not_verified = async (contract, accounts) => {
     
     const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
@@ -60,12 +61,12 @@ module.exports.test_beneficiary_is_not_verified = async (contract, accounts) => 
 
     const _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
-    }).then(this.verifyCreationParams);
+    }).then(assertCreationParamsValidity);
 
     await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_campaign_id_is_different = async (contract, accounts) => {
+const test_campaign_id_is_different = async (contract, accounts) => {
     
     const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
@@ -76,15 +77,15 @@ module.exports.test_campaign_id_is_different = async (contract, accounts) => {
 
     const _params = await prepareCreationParams({
         beneficiary: beneficiary.address
-    }).then(this.verifyCreationParams);
+    }).then(assertCreationParamsValidity);
 
-    const _campaignId1 = await this.assertCampaignCreation(donor.contract, _params);
-    const _campaignId2 = await this.assertCampaignCreation(donor.contract, _params);
+    const _campaignId1 = await assertCampaignCreation(donor.contract, _params);
+    const _campaignId2 = await assertCampaignCreation(donor.contract, _params);
 
     expect(_campaignId1).to.not.equal(_campaignId2);
 }
     
-module.exports.test_dates_are_properly_defined = async (contract, accounts) => {
+const test_dates_are_properly_defined = async (contract, accounts) => {
     
     const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
@@ -103,7 +104,7 @@ module.exports.test_dates_are_properly_defined = async (contract, accounts) => {
         startingDate: _startingDate,
         deadline: _deadline,
         beneficiary: beneficiary.address
-    }).then(this.verifyCreationParams)
+    }).then(assertCreationParamsValidity)
     
     await assertCampaignCreationFailure(donor.contract, _params);
 
@@ -116,12 +117,12 @@ module.exports.test_dates_are_properly_defined = async (contract, accounts) => {
         startingDate: _startingDate,
         deadline: _deadline,
         beneficiary: beneficiary.address
-    }).then(this.verifyCreationParams)
+    }).then(assertCreationParamsValidity)
 
     await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_token_goal_is_less_than_max_tokens = async (contract, accounts) => {
+const test_token_goal_is_less_than_max_tokens = async (contract, accounts) => {
     
     const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
@@ -134,12 +135,12 @@ module.exports.test_token_goal_is_less_than_max_tokens = async (contract, accoun
         tokenGoal: 10,
         maxTokens: 5,
         beneficiary: beneficiary.address
-    }).then(this.verifyCreationParams);
+    }).then(assertCreationParamsValidity);
 
     await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_creation_signature_is_correct = async (contract, accounts) => {
+const test_creation_signature_is_correct = async (contract, accounts) => {
     
     const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
     
@@ -152,12 +153,12 @@ module.exports.test_creation_signature_is_correct = async (contract, accounts) =
     const _params = await prepareCreationParams({
         private_key: _key,
         beneficiary: beneficiary.address
-    }).then(this.verifyCreationParams);
+    }).then(assertCreationParamsValidity);
 
     await assertCampaignCreationFailure(donor.contract, _params);
 }
 
-module.exports.test_campaign_creation = async (contract, accounts) => {
+const test_campaign_creation = async (contract, accounts) => {
     
     const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
@@ -168,15 +169,15 @@ module.exports.test_campaign_creation = async (contract, accounts) => {
     
     const _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
-    }).then(this.verifyCreationParams);
+    }).then(assertCreationParamsValidity);
     
-    const _campaignId = await this.assertCampaignCreation(donor.contract, _params);
+    const _campaignId = await assertCampaignCreation(donor.contract, _params);
 
     const _campaigns = await contract.getCampaignsIds()
     expect(_campaigns).to.be.an("array").that.includes(_campaignId);
 }
 
-module.exports.test_get_campaign = async (contract, accounts) => {
+const test_get_campaign = async (contract, accounts) => {
     
     const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
 
@@ -187,19 +188,26 @@ module.exports.test_get_campaign = async (contract, accounts) => {
 
     const _params = await prepareCreationParams({ 
         beneficiary: beneficiary.address 
-    }).then(this.verifyCreationParams);
+    }).then(assertCreationParamsValidity);
 
-    const _campaignId = await this.assertCampaignCreation(donor.contract, _params);
+    const _campaignId = await assertCampaignCreation(donor.contract, _params);
 
-    await getCampaign(contract, _campaignId).then(this.verifyCreationParams);
+    await getCampaign(contract, _campaignId).then(assertCreationParamsValidity);
 }
 
-Object.assign(global, {
-    test_beneficiary_is_not_verified: module.exports.test_beneficiary_is_not_verified,
-    test_campaign_id_is_different: module.exports.test_campaign_id_is_different,
-    test_dates_are_properly_defined: module.exports.test_dates_are_properly_defined,
-    test_token_goal_is_less_than_max_tokens: module.exports.test_token_goal_is_less_than_max_tokens,
-    test_creation_signature_is_correct: module.exports.test_creation_signature_is_correct,
-    test_campaign_creation: module.exports.test_campaign_creation,
-    test_get_campaign: module.exports.test_get_campaign
-});
+module.exports = {
+    assertions: {
+        assertCampaignCreation,
+        assertCampaignCreationFailure,
+        assertCreationParamsValidity
+    },
+    tests: {
+        test_beneficiary_is_not_verified,
+        test_campaign_id_is_different,
+        test_dates_are_properly_defined,
+        test_token_goal_is_less_than_max_tokens,
+        test_creation_signature_is_correct,
+        test_campaign_creation,
+        test_get_campaign
+    }
+}
