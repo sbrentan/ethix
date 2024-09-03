@@ -1,4 +1,4 @@
-const { log } = require('../../../common/utils.js');
+const { log } = require('../../common/utils.js');
 
 const verifyOrganization = async (signer, beneficiary) => {  
     const verifyBeneficiary = () => signer.contract.verifyOrganization(beneficiary.address);

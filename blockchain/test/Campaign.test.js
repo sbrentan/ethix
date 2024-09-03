@@ -76,4 +76,22 @@ describe("CCampaign", function () {
 		it("T004 - Should revert if the campaign has been already funded", () => test_start_fails_if_is_already_started(campaign, accounts));
 
 	});
+
+	describe("Token redeeming", function () {
+
+		after(() => log());
+
+		// should revert if the token doesn't have the corresponding signature
+		it("T001 - Should revert if the token doesn't have the corresponding signature", () => {});
+
+		// should revert if token goal is already reached when redeeming
+		it("T002 - Should revert if token goal is already reached when redeeming", () => {});
+
+		// should revert if the token is not valid
+		it("T003 - Should revert if the token is not valid", () => {});
+
+		// should redeem the token
+		it("T004 - Should redeem the token", () => {});
+
+	});
 });

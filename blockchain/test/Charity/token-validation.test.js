@@ -1,9 +1,9 @@
-const { validateToken } = require("../helpers/charity/token-helper.js");
+const { validateToken } = require("../helpers/token-helper.js");
 const {
     prepareCreationParams,
     getCampaign
-} = require("../helpers/charity/creation-helper.js");
-const { prepareStartParams } = require("../helpers/charity/start-helper.js");
+} = require("../helpers/creation-helper.js");
+const { prepareStartParams } = require("../helpers/start-helper.js");
 const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
 const { assertOrganizationVerification } = require("./organization-verification.test.js").assertions;
 const { 
@@ -49,18 +49,12 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
     _params = await prepareStartParams({
         campaignId: _campaignId,
         seed: _params.seed,
-        generateTokens: true,
-        invalidAmount: 1
+        generateTokens: true
     }).then(assertStartParamsValidity);
 
     const _jwts = await assertCampaignStart(_signers, _params);
 
-    _params = {
-        jwts: _jwts.invalid, 
-        valid: false
-    }
-
-    await assertTokenValidityFailure(contract, _params);
+    await assertTokenValidityFailure(contract, { jwts: _jwts.invalid, valid: false });
 
     await getCampaign(contract, _campaignId)
     .then(data => {
@@ -86,18 +80,12 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
     _params = await prepareStartParams({
         campaignId: _campaignId,
         seed: _params.seed,
-        generateTokens: true,
-        validAmount: 1
+        generateTokens: true
     }).then(assertStartParamsValidity);
     
     const _jwts = await assertCampaignStart(_signers, _params);
 
-    _params = {
-        jwts: _jwts.valid, 
-        valid: true
-    }
-
-    await assertTokenValidity(contract, _params);
+    await assertTokenValidity(contract, { jwts: _jwts.valid, valid: true });
 
     await getCampaign(contract, _campaignId)
     .then(data => {

@@ -7,9 +7,8 @@ import "hardhat/console.sol";
 contract Campaign {
 
     // Campaign events
-    event CampaignStarted(bytes32 campaignId);
     event CampaignCreated(bytes32 campaignId);
-    event WalletAddressSet();
+    event CampaignStarted(bytes32 campaignId);
     event TokensRedeemed(uint256 count);
     event RefundClaimed(uint256 amount);
     event DonationClaimed(uint256 amount);
@@ -177,12 +176,6 @@ contract Campaign {
 
         emit CampaignStarted(campaignDetails.campaignId);
     }
-
-    function setWalletAddress(address _walletAddress) external onlyOwner {
-        walletAddress = _walletAddress;
-        emit WalletAddressSet();
-    }
-
 
     function getDetails() external view returns (CampaignDetails memory) {
         return campaignDetails;

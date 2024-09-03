@@ -3,13 +3,24 @@ const {
     log,
     logJson,
     encodePacked
-} = require('../../../common/utils.js');
-const { DEFAULT_SLICE } = require('../../../common/constants.js');
+} = require('../../common/utils.js');
+const { 
+    DEFAULT_SLICE,
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_INVALID_TOKENS 
+} = require('../../common/constants.js');
 const crypto = require('crypto');
 const ethUtil = require('ethereumjs-util');
 const jwt = require('jsonwebtoken');
 
-const generateTokens = async (contract, seed, campaignId, rwallet, amount = 1, valid = true) => {
+const generateTokens = async (contract, params) => {
+
+    const campaignId = params.campaignId;
+    const seed = params.seed;
+    const rwallet = params.wallet;
+    const valid = params.valid;
+    const amount = valid ? DEFAULT_MAX_TOKENS : DEFAULT_INVALID_TOKENS;
+
     try {
 
         if (amount < 1) return null;

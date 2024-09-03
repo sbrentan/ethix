@@ -1,10 +1,10 @@
-const { validateToken } = require("../helpers/charity/token-helper.js");
-const { prepareCreationParams } = require("../helpers/charity/creation-helper.js");
-const { prepareStartParams } = require("../helpers/charity/start-helper.js");
+const { validateToken } = require("../helpers/token-helper.js");
+const { prepareCreationParams } = require("../helpers/creation-helper.js");
+const { prepareStartParams } = require("../helpers/start-helper.js");
 const {
     claimRefund,
     claimDonation
-} = require("../helpers/charity/end-helper.js");
+} = require("../helpers/end-helper.js");
 const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
 const { assertOrganizationVerification } = require("./organization-verification.test.js").assertions;
 const { 

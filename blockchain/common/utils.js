@@ -4,6 +4,7 @@ const {
 } = require('./constants.js');
 const network_helpers = require("@nomicfoundation/hardhat-network-helpers");
 
+
 const log = (message, tabs = 3, sep = "-") => {
     if (process.env.DEBUG) {
         if (!message) message = "";
@@ -49,11 +50,18 @@ const increaseTime = async (hours) => {
     await network_helpers.time.increase(hours * HOUR);
 }
 
+const getTestName = () => {
+    const stack = new Error().stack;
+    const caller = stack.split("\n")[3].split(" ").pop();
+    return caller.includes("Charity") ? "Charity" : "Campaign";
+}
+
 module.exports = {
     log,
     logJson,
     formatDate,
     getPrivateKey,
     encodePacked,
-    increaseTime
+    increaseTime,
+    getTestName
 };

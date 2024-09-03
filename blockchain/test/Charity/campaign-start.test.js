@@ -1,8 +1,8 @@
-const { prepareCreationParams } = require("../helpers/charity/creation-helper.js");
+const { prepareCreationParams } = require("../helpers/creation-helper.js");
 const { 
     prepareStartParams, 
     startCampaign 
-} = require("../helpers/charity/start-helper.js");
+} = require("../helpers/start-helper.js");
 const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
 const { assertOrganizationVerification } = require("./organization-verification.test.js").assertions;
 const { 

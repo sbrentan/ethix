@@ -2,7 +2,7 @@ const {
     prepareCreationParams,
     createCampaign,
     getCampaign
-} = require("../helpers/charity/creation-helper.js");
+} = require("../helpers/creation-helper.js");
 const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
 const { assertOrganizationVerification } = require("./organization-verification.test.js").assertions;
 const { log } = require("../../common/utils.js");
