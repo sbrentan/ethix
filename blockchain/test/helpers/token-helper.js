@@ -2,28 +2,23 @@ require('dotenv').config();
 const {
     log,
     logJson,
+    getTestName,
     encodePacked
 } = require('../../common/utils.js');
-const { 
-    DEFAULT_SLICE,
-    DEFAULT_MAX_TOKENS,
-    DEFAULT_INVALID_TOKENS 
-} = require('../../common/constants.js');
+const { DEFAULT_SLICE } = require('../../common/constants.js');
 const crypto = require('crypto');
-const ethUtil = require('ethereumjs-util');
 const jwt = require('jsonwebtoken');
 
-const generateTokens = async (contract, params) => {
+const generateToken = async (contract, params, index = 0, valid = true) => {
+
+    const is_charity_test = getTestName() === "Charity";
 
     const campaignId = params.campaignId;
     const seed = params.seed;
-    const rwallet = params.wallet;
-    const valid = params.valid;
-    const amount = valid ? DEFAULT_MAX_TOKENS : DEFAULT_INVALID_TOKENS;
+    const wallet = params.wallet;
+    const decode = params.decode;
 
     try {
-
-        if (amount < 1) return null;
 
         log();
         log(`Token generation [${valid ? 'VALID' : 'INVALID'}]`, tabs = 3, sep = '');
@@ -31,84 +26,60 @@ const generateTokens = async (contract, params) => {
         const tokenSeed = crypto.createHash('sha256').update(seed + new Date().getTime()).digest('hex');
         log(`tokenSeed: ${tokenSeed}`);
 
-        const t1_tokens = [];
-        const salts = [];
-        const t15_tokens = [];
-        for (let i = 0; i < amount; i++) {
-            let t1_token = '0x' + crypto.createHash('sha256').update(tokenSeed + i).digest('hex');
-            t1_tokens.push(t1_token);
+        const t1_token = '0x' + crypto.createHash('sha256').update(tokenSeed + index).digest('hex');
+        log(`T1_token: ${t1_token}`);
 
-            let tokenSalt = crypto.createHash('sha256').update(String(i + new Date().getTime())).digest('hex');
-            salts.push(tokenSalt);
+        const tokenSalt = crypto.createHash('sha256').update(String(index + new Date().getTime())).digest('hex');
+        log(`Token_salt: ${tokenSalt}`);
 
-            let t15_token = '0x' + crypto.createHash('sha256').update(t1_token + tokenSalt).digest('hex');
-            t15_tokens.push(t15_token);
-        }
+        const t15_token = '0x' + crypto.createHash('sha256').update(t1_token + tokenSalt).digest('hex');
+        log(`T15_token: ${t15_token}`);
 
-        log(`T1_tokens:`);
-        t1_tokens.forEach((t1, i) => {
-            log(`${t1}`, tabs = 4, sep = '*');
-        });
+        const t2_token =
+            is_charity_test
+                ? (await contract.generateTokenHashes(campaignId, [t15_token]))[0]
+                : await contract.generateTokenHash(t15_token);
 
-        log(`Salts:`);
-        salts.forEach((salt, i) => {
-            log(`${salt}`, tabs = 4, sep = '*');
-        });
+        log(`T2_token: ${t2_token}`);
 
-        log(`T15_tokens:`);
-        t15_tokens.forEach((t15, i) => {
-            log(`${t15}`, tabs = 4, sep = '*');
-        });
+        log(`Campaign Id: ${campaignId}`);
+        log(`Wallet private key: ${wallet.privateKey}`);
 
-        let t2_tokens = await contract.generateTokenHashes(campaignId, t15_tokens);
-        log(`T2_tokens:`);
-        t2_tokens.forEach((t2, i) => {
-            log(`${t2}`, tabs = 4, sep = '*');
-        });
+        !valid && log(`Changing wallet to generate invalid signature...`);
+        const invalid_wallet = !valid && web3.eth.accounts.create();
+        !valid && log(`Invalid wallet private key: ${invalid_wallet.privateKey}`);
 
-        if (!valid)
-            t2_tokens = t2_tokens.map((t2, i) => '0x' + crypto.createHash('sha256').update(t2 + "notvalid" + i).digest('hex'));
+        const _combinedHash = encodePacked(t2_token, campaignId);
+        const t2_signature =
+            valid
+                ? web3.eth.accounts.sign(_combinedHash, wallet.privateKey)
+                : web3.eth.accounts.sign(_combinedHash, invalid_wallet.privateKey);
 
-        log(`Campaign address: ${campaignId}`);
-        log(`Rwallet private key: ${rwallet.privateKey}`);
+        log(`Signature: ${t2_signature.signature.slice(0, DEFAULT_SLICE) + "........." + t2_signature.signature.slice(-DEFAULT_SLICE)}`);
 
-        log(`Signature hashes:`);
-        const t2_signatures = t2_tokens.map(t2_token => {
-            const _combinedHash = encodePacked(t2_token, campaignId);
-            log(`${_combinedHash}`, tabs = 4, sep = '*');
-            return web3.eth.accounts.sign(_combinedHash, rwallet.privateKey);
-        });
-
-        const signed_tokens = t1_tokens.map((token, i) => {
-            return {
-                token: token,
-                signature: t2_signatures[i].signature,
-            };
-        });
-
-        const jwt_tokens = signed_tokens.map((signed) => {
-            return {
-                token: jwt.sign({
-                    campaignId: undefined,
-                    campaignAddress: campaignId,
-                    tokenId: signed.token,
-                    signature: signed.signature,
-                },
-                    process.env.REFRESH_TOKEN_SECRET || ""
-                )
+        const token = jwt.sign({
+            campaignId: campaignId,
+            tokenId: t1_token,
+            signature: {
+                r: t2_signature.r,
+                s: t2_signature.s,
+                v: t2_signature.v
             }
-        });
+        },
+            process.env.REFRESH_TOKEN_SECRET || ""
+        );
 
-        log(`JWT tokens:`);
-        jwt_tokens.forEach((jwt, i) => {
-            log(`${jwt.token.slice(0, DEFAULT_SLICE) + "........." + jwt.token.slice(-DEFAULT_SLICE)}`, tabs = 4, sep = '*');
-        });
+        log(`JWT token: ${token.slice(0, DEFAULT_SLICE) + "........." + token.slice(-DEFAULT_SLICE)}`);
 
-        return {
-            jwt_tokens: jwt_tokens,
-            token_seed: tokenSeed,
-            token_salts: salts
-        }
+        let return_params = {};
+
+        return_params.jwt = token;
+        return_params.seed = tokenSeed;
+        return_params.salt = tokenSalt;
+
+        decode && (return_params.decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET || ""));
+
+        return return_params;
 
     } catch (error) {
         console.error(error);
@@ -116,96 +87,114 @@ const generateTokens = async (contract, params) => {
     }
 }
 
-const validateToken = async (contract, jwts, valid = true) => {
-    
-    let campaignId, t15_token, signature;
+const alterToken = (token, params) => {
+    if (!token) return null;
 
-    try {
-        log();
-        log(`Token validation [${valid ? 'VALID' : 'INVALID'}]`, tabs = 3, sep = '');
+    if (params.remove_signature) delete token.decoded.signature;
+    if (params.remove_campaignId) delete token.decoded.campaignId;
+    if (params.remove_tokenId) delete token.decoded.tokenId;
 
-        log(`JWT tokens:`);
-        jwts.tokens.forEach((jwt, i) => {
-            log(`${jwt.slice(0, DEFAULT_SLICE) + "........." + jwt.slice(-DEFAULT_SLICE)}`, tabs = 4, sep = '*');
-        });
+    log();
+    log(`Altered token:`);
+    logJson(token.decoded);
 
-        log(`Pick a random JWT token...`);
-        const index = Math.floor(Math.random() * jwts.tokens.length);
-        log(`Index picked: ${index}`);
-
-        const jwt_token = jwts.tokens[index];
-        const decoded = jwt.verify(jwt_token, process.env.REFRESH_TOKEN_SECRET || "");
-
-        log(`Decoded JWT:`);
-        logJson(decoded);
-
-        campaignId = decoded.campaignAddress;
-        const t1_token = decoded.tokenId;
-        const token_salt = jwts.salts[index];
-        const token_seed = jwts.seed;
-
-        log(`T1 token: ${t1_token}`);
-        log(`Token_seed: ${token_seed}`);
-        log(`Token_salt: ${token_salt}`);
-
-        t15_token = '0x' + crypto.createHash('sha256').update(t1_token + token_salt).digest('hex');
-
-        log(`T15_token: ${t15_token}`);
-
-        const { v, r, s } = ethUtil.fromRpcSig(decoded.signature);
-
-        log(`Signature: ${decoded.signature.slice(0, DEFAULT_SLICE) + "........." + decoded.signature.slice(-DEFAULT_SLICE)}`);
-        log(`r: ${Buffer.from(r).toString('hex')}`, tabs = 4, sep = '*');
-        log(`s: ${Buffer.from(s).toString('hex')}`, tabs = 4, sep = '*');
-        log(`v: ${v}`, tabs = 4, sep = '*');
-
-        signature = {
-            r: r,
-            s: s,
-            v: v
-        }
-
-    } catch (error) {
-        console.error(error);
+    const altered = {
+        jwt: jwt.sign(token.decoded, process.env.REFRESH_TOKEN_SECRET || ""),
+        seed: token.seed,
+        salt: token.salt
     }
 
-    let isTokenValid;
-    const batchRedeem = () => contract.redeemTokensBatch(
-        campaignId,
-        [t15_token],
-        [signature]
-    );
+    return altered;
+}
+
+const validateToken = async (contract, token) => {
+
+    const is_charity_test = getTestName() === "Charity";
+
+    let campaignId, t15_token, signature;
+
+    
+    log();
+    log(`Token validation:`, tabs = 3, sep = '');
+
+    log(`JWT token: ${token.jwt.slice(0, DEFAULT_SLICE) + "........." + token.jwt.slice(-DEFAULT_SLICE)}`);
+
+    const decoded = jwt.verify(token.jwt, process.env.REFRESH_TOKEN_SECRET || "");
+
+    log(`Decoded JWT:`);
+    logJson(decoded);
+
+    campaignId = decoded?.campaignId;
+    const t1_token = decoded?.tokenId;
+    signature = decoded?.signature;
+    const salt = token.salt;
+    const seed = token.seed;
+
+    log(`T1 token: ${t1_token}`);
+    log(`Token_seed: ${seed}`);
+    log(`Token_salt: ${salt}`);
+
+    t15_token = '0x' + crypto.createHash('sha256').update(t1_token + salt).digest('hex');
+
+    log(`T15_token: ${t15_token}`);
+
+    log(`Signature:`);
+    if (signature) {
+        log(`r: ${signature.r}`, tabs = 4, sep = '*');
+        log(`s: ${signature.s}`, tabs = 4, sep = '*');
+        log(`v: ${signature.v}`, tabs = 4, sep = '*');
+    } else log(`Signature not found!`);
+
+    let is_token_valid = false;
+
+    const tokenValid = () => 
+        is_charity_test
+            ? contract.isTokenValid(campaignId, t15_token, signature)
+            : contract.isTokenValid(t15_token, signature);
+
+    const tokenRedeem = () =>
+        is_charity_test
+            ? contract.redeemTokensBatch(campaignId, [t15_token], signature ? [signature] : [])
+            : contract.redeemTokensBatch([t15_token], signature ? [signature] : []);
 
     try {
-        isTokenValid = await contract.isTokenValid(campaignId, t15_token, signature);
-        log(`isTokenValid: ${isTokenValid}`);
+        is_token_valid = await tokenValid();
+        log(`isTokenValid: ${is_token_valid}`);
+    } catch (e) {
+        log(`isTokenValid failed!`);
+    }
 
-        const redeem_tx = await batchRedeem();
+    try {
+        const redeem_tx = await tokenRedeem();
         const redeem_receipt = await redeem_tx.wait();
         const count_data = Number(redeem_receipt?.logs[0]?.data);
 
-        log(`Batch size: ${count_data}`);
+        log(`Redeemed tokens till now: ${count_data}`);
 
-        const campaign_address = await contract.getCampaignAddress(campaignId);
-        const campaign = await ethers.getContractAt("Campaign", campaign_address);
+        const campaign_address = is_charity_test && await contract.getCampaignAddress(campaignId);
+        const campaign = is_charity_test && await ethers.getContractAt("Campaign", campaign_address);
 
+        let return_params = {};
+        
+        return_params.tx = redeem_tx;
+        return_params.is_redeemable = true;
+        return_params.redemeed_tokens = count_data;
+
+        is_charity_test && (return_params.campaign_contract = campaign);
+
+        return return_params;
+
+    } catch (e) {
         return {
-            tx: redeem_tx,
-            is_valid: isTokenValid,
-            batch_size: count_data,
-            campaign_contract: campaign
-        };
-
-    } catch (error) {
-        return { 
             tx: null,
-            is_valid: isTokenValid,
-            get method() { return (batchRedeem)() }
+            is_redeemable: false,
+            get method() { return (tokenRedeem)() }
         }
     }
 }
 
 module.exports = {
-    generateTokens,
+    generateToken,
+    alterToken,
     validateToken
 }

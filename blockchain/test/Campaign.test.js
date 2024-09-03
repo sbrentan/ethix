@@ -19,6 +19,13 @@ const {
 	test_start_fails_if_is_already_started
 } = require("./Campaign/campaign-start.test.js").tests;
 
+const {
+	test_token_redeem_fails_without_signature,
+	test_token_redeem_fails_if_goal_already_reached,
+	test_redeeming_fails_with_invalid_token,
+	test_valid_token_is_redeemed
+} = require("./Campaign/token-validation.test.js").tests;
+
 describe("CCampaign", function () {
 
 	let campaign; // contract instance of owner
@@ -82,16 +89,16 @@ describe("CCampaign", function () {
 		after(() => log());
 
 		// should revert if the token doesn't have the corresponding signature
-		it("T001 - Should revert if the token doesn't have the corresponding signature", () => {});
+		it("T001 - Should revert if the token doesn't have the corresponding signature", () => test_token_redeem_fails_without_signature(campaign, accounts));
 
 		// should revert if token goal is already reached when redeeming
-		it("T002 - Should revert if token goal is already reached when redeeming", () => {});
+		it("T002 - Should revert if token goal is already reached when redeeming", () => test_token_redeem_fails_if_goal_already_reached(campaign, accounts));
 
 		// should revert if the token is not valid
-		it("T003 - Should revert if the token is not valid", () => {});
+		it("T003 - Should revert if the token is not valid", () => test_redeeming_fails_with_invalid_token(campaign, accounts));
 
 		// should redeem the token
-		it("T004 - Should redeem the token", () => {});
+		it("T004 - Should redeem the token", () => test_valid_token_is_redeemed(campaign, accounts));
 
 	});
 });

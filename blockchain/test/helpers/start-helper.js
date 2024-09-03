@@ -1,4 +1,4 @@
-const { generateTokens } = require("./token-helper.js");
+const { generateToken } = require("./token-helper.js");
 const { 
     log,
     getTestName,
@@ -11,6 +11,7 @@ const {
     DEFAULT_VALUE,
     DEFAULT_STARTDATE_SHIFT,
     DEFAULT_DEADLINE_SHIFT,
+    DEFAULT_GENERATED_TOKENS
 } = require('../../common/constants.js');
 
 const prepareStartParams = async (params = {}) => {
@@ -26,8 +27,10 @@ const prepareStartParams = async (params = {}) => {
     const private_key = is_charity_test && params.private_key || getPrivateKey();
     const _sigdata = is_charity_test && await web3.eth.accounts.sign(_combinedHash, private_key);
     const _generateTokens = params.generateTokens || false;
+    const _amount = params.amount || DEFAULT_GENERATED_TOKENS;
+    const _decode = params.decode || false;
     const _value = params.value || DEFAULT_VALUE;
-    const _from = !is_charity_test && params.from.address || (await ethers.Wallet.createRandom()).address;
+    const _from = !is_charity_test && params.from.address || web3.eth.accounts.create().address;
 
     log();
     log(`Start params:`, tabs = 3, sep = '');
@@ -37,6 +40,8 @@ const prepareStartParams = async (params = {}) => {
     is_charity_test && log(`Signature: ${_sigdata.signature.slice(0, DEFAULT_SLICE) + "........." + _sigdata.signature.slice(-DEFAULT_SLICE)}`);
     !is_charity_test && log(`From: ${_from}`);
     log(`Generate tokens: ${_generateTokens}`);
+    log(`Amount of valid tokens: ${_amount}`);
+    log(`Decode: ${_decode}`);
     log(`Value: ${_value} ETH`);
 
     let return_params = {};
@@ -44,6 +49,8 @@ const prepareStartParams = async (params = {}) => {
     return_params.seed = _seed;
     return_params.wallet = _rwallet;
     return_params.generateTokens = _generateTokens;
+    return_params.amount = _amount;
+    return_params.decode = _decode;
     return_params.value = _value;
 
     is_charity_test && (return_params.campaignId = _campaignId);
@@ -94,11 +101,14 @@ const startCampaign = async (signers, params) => {
         const campaign_address = is_charity_test && await owner_contract.getCampaignAddress(campaignId);
         const campaign = is_charity_test && await ethers.getContractAt("Campaign", campaign_address);
 
-        params.valid = true;
-        const validJWTTokens = params.generateTokens ? await generateTokens(owner_contract, params) : null;
-        
-        params.valid = false;
-        const invalidJWTTokens = params.generateTokens ? await generateTokens(owner_contract, params) : null;
+        // By default, repeat params.amount times
+        const validTokens = 
+            params.generateTokens
+                ? await Promise.all(Array.from({ length: params.amount }, (_, i) => generateToken(owner_contract, params, index = i, valid = true)))
+                : [];
+
+        // By default, repeat only once
+        const invalidToken = params.generateTokens && await generateToken(owner_contract, params, index = 0, valid = false);
 
         await increaseTime(Math.floor((DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT) / 2));
 
@@ -109,18 +119,10 @@ const startCampaign = async (signers, params) => {
 
         return_params.tx = start_tx;
         return_params.campaignId = campaignId;
-        return_params.jwts = { 
-            valid: {
-                tokens: validJWTTokens ? validJWTTokens.jwt_tokens.map((jwt, _) => { return jwt.token; }) : [],
-                salts: validJWTTokens ? validJWTTokens.token_salts : [],
-                seed: validJWTTokens ? validJWTTokens.token_seed : null
-            },
-            invalid: {
-                tokens: invalidJWTTokens ? invalidJWTTokens.jwt_tokens.map((jwt, _) => { return jwt.token; }) : [],
-                salts: invalidJWTTokens ? invalidJWTTokens.token_salts : [],
-                seed: invalidJWTTokens ? invalidJWTTokens.token_seed : null
-            }
-        }
+        return_params.tokens = params.generateTokens ? {
+            valid: validTokens,
+            invalid: invalidToken
+        } : null;
 
         is_charity_test && (return_params.campaign_contract = campaign);
         !is_charity_test && (return_params.contract = donor_contract);

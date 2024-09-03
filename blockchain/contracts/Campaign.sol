@@ -265,7 +265,7 @@ contract Campaign {
         
         campaignDetails.redeemedTokensCount += _tokens.length;
 
-        emit TokensRedeemed(_tokens.length);
+        emit TokensRedeemed(campaignDetails.redeemedTokensCount);
     }
 
     // check if a token is valid

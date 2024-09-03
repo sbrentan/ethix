@@ -72,9 +72,9 @@ const test_refund_is_claimed = async (contract, accounts) => {
         validAmount: 3
     }).then(assertStartParamsValidity);
     
-    const _jwts = await assertCampaignStart(_signers, _params);
+    const _tokens = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidity(contract, { jwts: _jwts.valid, valid: true });
+    await assertTokenValidity(contract, _tokens.valid[0]);
 
     delete _signers.beneficiary;
     delete _signers.other;
@@ -137,9 +137,9 @@ const test_donation_is_claimed = async (contract, accounts) => {
         validAmount: 3
     }).then(assertStartParamsValidity);
     
-    const _jwts = await assertCampaignStart(_signers, _params);
+    const _tokens = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidity(contract, { jwts: _jwts.valid, valid: true });
+    await assertTokenValidity(contract, _tokens.valid[0]);
 
     delete _signers.donor;
     delete _signers.other;

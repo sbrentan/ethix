@@ -17,17 +17,17 @@ const {
 const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 
-const assertTokenValidity = async (contract, params) => {
-    const validate_tx_outcome = await validateToken(contract, params.jwts, params.valid);
+const assertTokenValidity = async (contract, token) => {
+    const validate_tx_outcome = await validateToken(contract, token);
     await expect(validate_tx_outcome.tx).to.emit(validate_tx_outcome.campaign_contract, "TokensRedeemed");
-    expect(validate_tx_outcome.is_valid).to.be.true;
-    expect(validate_tx_outcome.batch_size).to.be.a("number").that.is.greaterThan(0);
+    expect(validate_tx_outcome.is_redeemable).to.be.true;
+    expect(validate_tx_outcome.redemeed_tokens).to.be.a("number").that.is.greaterThan(0);
 }
 
-const assertTokenValidityFailure = async (contract, params) => {
-    const validate_tx_outcome = await validateToken(contract, params.jwts, params.valid);
+const assertTokenValidityFailure = async (contract, token) => {
+    const validate_tx_outcome = await validateToken(contract, token);
     await expect(validate_tx_outcome.method).to.be.reverted;
-    expect(validate_tx_outcome.is_valid).to.be.false;
+    expect(validate_tx_outcome.is_redeemable).to.be.false;
     expect(validate_tx_outcome.tx).to.be.null;
 }
 
@@ -52,9 +52,9 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
         generateTokens: true
     }).then(assertStartParamsValidity);
 
-    const _jwts = await assertCampaignStart(_signers, _params);
+    const _tokens = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidityFailure(contract, { jwts: _jwts.invalid, valid: false });
+    await assertTokenValidityFailure(contract, _tokens.invalid);
 
     await getCampaign(contract, _campaignId)
     .then(data => {
@@ -83,9 +83,9 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
         generateTokens: true
     }).then(assertStartParamsValidity);
     
-    const _jwts = await assertCampaignStart(_signers, _params);
+    const _tokens = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidity(contract, { jwts: _jwts.valid, valid: true });
+    await assertTokenValidity(contract, _tokens.valid[0]);
 
     await getCampaign(contract, _campaignId)
     .then(data => {

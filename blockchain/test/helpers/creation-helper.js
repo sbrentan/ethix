@@ -23,7 +23,7 @@ const prepareCreationParams = async (params = {}) => {
 
     const _tokenGoal = params.tokenGoal || DEFAULT_TOKEN_GOAL;
     const _maxTokens = params.maxTokens || DEFAULT_MAX_TOKENS;
-    const _beneficiary = params.beneficiary.address || (await ethers.Wallet.createRandom()).address;
+    const _beneficiary = params.beneficiary.address || web3.eth.accounts.create().address;
 
     const _seed = web3.utils.randomHex(32);
     const _seedHash = web3.utils.keccak256(_seed);
