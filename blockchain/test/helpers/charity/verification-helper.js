@@ -1,16 +1,16 @@
 const { log } = require('../../../common/utils.js');
 
-const verifyOrganization = async (contract, beneficiary) => {   
-    const verifyBeneficiary = () => contract.verifyOrganization(beneficiary);
+const verifyOrganization = async (signer, beneficiary) => {  
+    const verifyBeneficiary = () => signer.contract.verifyOrganization(beneficiary.address);
     try {
-        const pre_verify = await contract.isOrganizationVerified(beneficiary);
+        const pre_verify = await signer.contract.isOrganizationVerified(beneficiary.address);
         const verify_tx = await verifyBeneficiary();
-        const post_verify = await contract.isOrganizationVerified(beneficiary);
+        const post_verify = await signer.contract.isOrganizationVerified(beneficiary.address);
 
         log();
         log(`Verification process:`, tabs = 3, sep = '');
-        log(`Organization ${beneficiary} => current status: [${pre_verify}]`);
-        log(`Organization ${beneficiary} => status after verification: [${post_verify}]`);
+        log(`Organization ${beneficiary.address} => current status: [${pre_verify}]`);
+        log(`Organization ${beneficiary.address} => status after verification: [${post_verify}]`);
 
         return { tx: verify_tx, status: post_verify };
 
@@ -22,17 +22,17 @@ const verifyOrganization = async (contract, beneficiary) => {
     }
 }
 
-const revokeOrganization = async (contract, beneficiary) => {
-    const revokeBeneficiary = () => contract.revokeOrganization(beneficiary);
+const revokeOrganization = async (signer, beneficiary) => {
+    const revokeBeneficiary = () => signer.contract.revokeOrganization(beneficiary.address);
     try {
-        const pre_revoke = await contract.isOrganizationVerified(beneficiary);
+        const pre_revoke = await signer.contract.isOrganizationVerified(beneficiary.address);
         const revoke_tx = await revokeBeneficiary();
-        const post_revoke = await contract.isOrganizationVerified(beneficiary);
+        const post_revoke = await signer.contract.isOrganizationVerified(beneficiary.address);
 
         log();
         log(`Revocation process:`, tabs = 3, sep = '');
-        log(`Organization ${beneficiary} => current status: [${pre_revoke}]`);
-        log(`Organization ${beneficiary} => status after revocation: [${post_revoke}]`);
+        log(`Organization ${beneficiary.address} => current status: [${pre_revoke}]`);
+        log(`Organization ${beneficiary.address} => status after revocation: [${post_revoke}]`);
 
         return { tx: revoke_tx, status: post_revoke };
 

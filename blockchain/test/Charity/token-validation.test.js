@@ -33,18 +33,18 @@ const assertTokenValidityFailure = async (contract, params) => {
 
 const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test token is not valid => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
     let _params = await prepareCreationParams({ 
-        beneficiary: beneficiary.address 
+        beneficiary: _signers.beneficiary 
     }).then(assertCreationParamsValidity);
 
-    const _campaignId = await assertCampaignCreation(donor.contract, _params);
+    const _campaignId = await assertCampaignCreation(_signers, _params);
 
     _params = await prepareStartParams({
         campaignId: _campaignId,
@@ -53,7 +53,7 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
         invalidAmount: 1
     }).then(assertStartParamsValidity);
 
-    const _jwts = await assertCampaignStart(donor.contract, _params, contract);
+    const _jwts = await assertCampaignStart(_signers, _params);
 
     _params = {
         jwts: _jwts.invalid, 
@@ -70,18 +70,18 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
 
 const test_valid_token_is_redeemed = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test token is not valid => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
     let _params = await prepareCreationParams({ 
-        beneficiary: beneficiary.address 
+        beneficiary: _signers.beneficiary 
     }).then(assertCreationParamsValidity);
     
-    const _campaignId = await assertCampaignCreation(donor.contract, _params);
+    const _campaignId = await assertCampaignCreation(_signers, _params);
 
     _params = await prepareStartParams({
         campaignId: _campaignId,
@@ -90,7 +90,7 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
         validAmount: 1
     }).then(assertStartParamsValidity);
     
-    const _jwts = await assertCampaignStart(donor.contract, _params, contract);
+    const _jwts = await assertCampaignStart(_signers, _params);
 
     _params = {
         jwts: _jwts.valid, 

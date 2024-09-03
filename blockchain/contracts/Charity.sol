@@ -16,7 +16,6 @@ contract Charity {
     // Charity events
     event OrganizationVerified();
     event OrganizationRevoked();
-    event CampaignAddress(address campaignAddress);
 
     // ====================================== STRUCTS ======================================
 
@@ -158,8 +157,6 @@ contract Charity {
             _maxTokensCount
         );
         campaignsIds.push(campaignId);
-
-        emit CampaignAddress(address(campaigns[campaignId]));
     }
 
     // fund and start an existing campaign
@@ -219,8 +216,6 @@ contract Charity {
             _campaignWallet,
             msg.sender
         );
-
-        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // returns the IDs of all campaigns
@@ -245,7 +240,6 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimRefund(msg.sender);
-        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // claim a donation for an ended campaign
@@ -253,7 +247,6 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimDonation(msg.sender);
-        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // redeem a batch of tokens
@@ -263,7 +256,6 @@ contract Charity {
         Campaign.Signature[] calldata _signatures
     ) external onlyExistingCampaign(_campaignId) onlyOwner {
         campaigns[_campaignId].redeemTokensBatch(_tokens, _signatures);
-        emit CampaignAddress(address(campaigns[_campaignId]));
     }
 
     // function to check if a token is valid
@@ -277,6 +269,18 @@ contract Charity {
         }
 
         return campaigns[_campaignId].isTokenValid(_tokenId, _signature);
+    }
+
+    function getCampaignAddress(
+        bytes32 _campaignId
+    )
+        external
+        view
+        onlyExistingCampaign(_campaignId)
+        onlyOwner
+        returns (address)
+    {
+        return address(campaigns[_campaignId]);
     }
 
     function generateTokenHashes(

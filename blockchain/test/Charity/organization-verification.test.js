@@ -6,15 +6,15 @@ const {
 const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 
-const assertOrganizationVerification = async (contract, beneficiary) => {
-    const verify_tx_outcome = await verifyOrganization(contract, beneficiary.address);
-    await expect(verify_tx_outcome.tx).to.emit(contract, "OrganizationVerified");
+const assertOrganizationVerification = async (signer, beneficiary) => {
+    const verify_tx_outcome = await verifyOrganization(signer, beneficiary);
+    await expect(verify_tx_outcome.tx).to.emit(signer.contract, "OrganizationVerified");
     expect(verify_tx_outcome.status).to.be.true;
 }
 
-const assertOrganizationRevocation = async (contract, beneficiary) => {
-    const revoke_tx_outcome = await revokeOrganization(contract, beneficiary.address);
-    await expect(revoke_tx_outcome.tx).to.emit(contract, "OrganizationRevoked");
+const assertOrganizationRevocation = async (signer, beneficiary) => {
+    const revoke_tx_outcome = await revokeOrganization(signer, beneficiary);
+    await expect(revoke_tx_outcome.tx).to.emit(signer.contract, "OrganizationRevoked");
     expect(revoke_tx_outcome.status).to.be.false;
 }
 
@@ -24,7 +24,7 @@ const test_verification_fails_from_non_owner = async (contract, accounts) => {
 
     const { beneficiary, other } = assertAccountsValidity(contract, accounts);
 
-    const verify_tx_outcome = await verifyOrganization(other.contract, beneficiary.address);
+    const verify_tx_outcome = await verifyOrganization(other, beneficiary);
     await expect(verify_tx_outcome.method).to.be.reverted;
     expect(verify_tx_outcome.tx).to.be.null;
 }
@@ -33,9 +33,9 @@ const test_verification = async (contract, accounts) => {
     log();
     log(`[Test verification]`, tabs = 2, sep = '');
 
-    const { beneficiary } = assertAccountsValidity(contract, accounts);
+    const { owner, beneficiary } = assertAccountsValidity(contract, accounts);
 
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(owner, beneficiary);
 }
 
 const test_revocation_fails_from_non_owner = async (contract, accounts) => {
@@ -44,7 +44,7 @@ const test_revocation_fails_from_non_owner = async (contract, accounts) => {
 
     const { beneficiary, other } = assertAccountsValidity(contract, accounts);
 
-    const revoke_tx_outcome = await revokeOrganization(other.contract, beneficiary.address);
+    const revoke_tx_outcome = await revokeOrganization(other, beneficiary);
     await expect(revoke_tx_outcome.method).to.be.reverted;
     expect(revoke_tx_outcome.tx).to.be.null;
 }
@@ -53,10 +53,10 @@ const test_revocation = async (contract, accounts) => {
     log();
     log(`[Test revocation]`, tabs = 2, sep = '');
 
-    const { beneficiary } = assertAccountsValidity(contract, accounts);
+    const { owner, beneficiary } = assertAccountsValidity(contract, accounts);
 
-    await assertOrganizationVerification(contract, beneficiary);
-    await assertOrganizationRevocation(contract, beneficiary);
+    await assertOrganizationVerification(owner, beneficiary);
+    await assertOrganizationRevocation(owner, beneficiary);
 }
 
 module.exports = {

@@ -7,7 +7,11 @@ const {
     DEFAULT_DEADLINE_SHIFT
 } = require('../../../common/constants.js');
 
-const claimRefund = async (contract, campaignId) => {  
+const claimRefund = async (signers, campaignId) => {
+
+    const owner_contract = signers.owner.contract;
+    const contract = signers?.donor?.contract || signers?.beneficiary?.contract || signers?.other?.contract;
+    
     const refundClaim = () => contract.claimRefund(campaignId);     
     try {
 
@@ -22,7 +26,7 @@ const claimRefund = async (contract, campaignId) => {
 		const refund_amount = refund_receipt?.logs[0]?.data;
         const refund_eth = Number(web3.utils.fromWei(refund_amount, 'ether'));
 
-        const campaign_address = refund_receipt?.logs[1]?.args[0];
+        const campaign_address = await owner_contract.getCampaignAddress(campaignId);
         const campaign = await ethers.getContractAt("Campaign", campaign_address);
 
         log(`Refund process:`, tabs = 3, sep = '');
@@ -39,7 +43,11 @@ const claimRefund = async (contract, campaignId) => {
     }
 }
 
-const claimDonation = async (contract, campaignId) => {  
+const claimDonation = async (signers, campaignId) => { 
+    
+    const owner_contract = signers.owner.contract;
+    const contract = signers?.donor?.contract || signers?.beneficiary?.contract || signers?.other?.contract;
+
     const donationClaim = () => contract.claimDonation(campaignId);     
     try {
 
@@ -54,7 +62,7 @@ const claimDonation = async (contract, campaignId) => {
 		const donation_amount = donation_receipt?.logs[0]?.data;
         const donation_eth = Number(web3.utils.fromWei(donation_amount, 'ether'));
 
-        const campaign_address = donation_receipt?.logs[1]?.args[0];
+        const campaign_address = await owner_contract.getCampaignAddress(campaignId);
         const campaign = await ethers.getContractAt("Campaign", campaign_address);
 
         log(`Donation process:`, tabs = 3, sep = '');

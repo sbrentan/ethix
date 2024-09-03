@@ -24,7 +24,7 @@ const prepareCreationParams = async (params = {}) => {
 
     const _tokenGoal = params.tokenGoal || DEFAULT_TOKEN_GOAL;
     const _maxTokens = params.maxTokens || DEFAULT_MAX_TOKENS;
-    const _beneficiary = params.beneficiary || (await ethers.Wallet.createRandom()).address;
+    const _beneficiary = params.beneficiary.address || (await ethers.Wallet.createRandom()).address;
 
     const _seed = web3.utils.randomHex(32);
     const _seedHash = web3.utils.keccak256(_seed);
@@ -60,8 +60,12 @@ const prepareCreationParams = async (params = {}) => {
     }
 }
 
-const createCampaign = async (contract, params) => {
-    const campaignCreate = () => contract.createCampaign(
+const createCampaign = async (signers, params) => {
+
+    const owner_contract = signers.owner.contract;
+    const donor_contract = signers.donor.contract;
+
+    const campaignCreate = () => donor_contract.createCampaign(
         params.title,
         params.startingDate,
         params.deadline,
@@ -76,12 +80,11 @@ const createCampaign = async (contract, params) => {
         const create_tx = await campaignCreate();
         const create_receipt = await create_tx.wait();
         const campaignId = create_receipt?.logs[0]?.data;
-        const campaign_address = create_receipt?.logs[1]?.args[0];
+        const campaign_address = await owner_contract.getCampaignAddress(campaignId);
+        const campaign = await ethers.getContractAt("Campaign", campaign_address);
 
         log(`Campaign ID: ${campaignId}`);
-        log(`Campaign address: ${campaign_address}`);
-
-        const campaign = await ethers.getContractAt("Campaign", campaign_address);
+        log(`Campaign contract address: ${campaign_address}`);
 
         return { tx: create_tx, campaign_contract: campaign, campaignId: campaignId }
 
@@ -93,8 +96,8 @@ const createCampaign = async (contract, params) => {
     }
 }
 
-const getCampaign = async (contract, campaignAddress) => {
-    const _campaign = await contract.getCampaign(campaignAddress);
+const getCampaign = async (contract, campaignId) => {
+    const _campaign = await contract.getCampaign(campaignId);
 
     if (_campaign.length == 0) return null;
 
@@ -102,7 +105,7 @@ const getCampaign = async (contract, campaignAddress) => {
     const deadline_timestamp = Number(_campaign[3]);
 
     let data = {
-        campaignId: _campaign[0],
+        campaignId: campaignId,
         title: _campaign[1],
         startingDate: formatDate(start_timestamp),
         deadline: formatDate(deadline_timestamp),

@@ -9,15 +9,15 @@ const { log } = require("../../common/utils.js");
 const { HOUR } = require('../../common/constants.js');
 const { expect } = require("chai");
 
-const assertCampaignCreation = async (contract, params) => {
-    const create_tx_outcome = await createCampaign(contract, params);
+const assertCampaignCreation = async (signers, params) => {
+    const create_tx_outcome = await createCampaign(signers, params);
     await expect(create_tx_outcome.tx).to.emit(create_tx_outcome.campaign_contract, "CampaignCreated");
     expect(create_tx_outcome.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
     return create_tx_outcome.campaignId;
 }
 
-const assertCampaignCreationFailure = async (contract, params) => {
-    const create_tx_outcome = await createCampaign(contract, params);
+const assertCampaignCreationFailure = async (signers, params) => {
+    const create_tx_outcome = await createCampaign(signers, params);
     await expect(create_tx_outcome.method).to.be.reverted;
     expect(create_tx_outcome.tx).to.be.null;
 }
@@ -25,7 +25,6 @@ const assertCampaignCreationFailure = async (contract, params) => {
 const assertCreationParamsValidity = (params) => {
 
     // General verification
-    params?.campaignAddress && expect(params.campaignAddress).to.be.properAddress;
     params?.campaignId && expect(params.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
     params?.title && expect(params.title).to.be.a("string").that.is.not.empty;
     params?.startingDate && expect(params.startingDate).to.be.a("number").that.is.above(0);
@@ -54,40 +53,40 @@ const assertCreationParamsValidity = (params) => {
 
 const test_beneficiary_is_not_verified = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test beneficiary is unverified => revert]`, tabs = 2, sep = '');
 
     const _params = await prepareCreationParams({ 
-        beneficiary: beneficiary.address 
+        beneficiary: _signers.beneficiary 
     }).then(assertCreationParamsValidity);
 
-    await assertCampaignCreationFailure(donor.contract, _params);
+    await assertCampaignCreationFailure(_signers, _params);
 }
 
 const test_campaign_id_is_different = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test campaign id is different]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
     const _params = await prepareCreationParams({
-        beneficiary: beneficiary.address
+        beneficiary: _signers.beneficiary
     }).then(assertCreationParamsValidity);
 
-    const _campaignId1 = await assertCampaignCreation(donor.contract, _params);
-    const _campaignId2 = await assertCampaignCreation(donor.contract, _params);
+    const _campaignId1 = await assertCampaignCreation(_signers, _params);
+    const _campaignId2 = await assertCampaignCreation(_signers, _params);
 
     expect(_campaignId1).to.not.equal(_campaignId2);
 }
     
 const test_dates_are_properly_defined = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     const _block = await web3.eth.getBlock('latest');
     let _startingDate = Math.floor(_block.timestamp + (12 * HOUR));
@@ -96,17 +95,17 @@ const test_dates_are_properly_defined = async (contract, accounts) => {
     log();
     log(`[Test dates are properly defined]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
     log();
     log(`* [Case 1]: Starting date > deadline => revert`, tabs = 3, sep = '');
     let _params = await prepareCreationParams({
         startingDate: _startingDate,
         deadline: _deadline,
-        beneficiary: beneficiary.address
+        beneficiary: _signers.beneficiary
     }).then(assertCreationParamsValidity)
     
-    await assertCampaignCreationFailure(donor.contract, _params);
+    await assertCampaignCreationFailure(_signers, _params);
 
     _startingDate = Math.floor(_block.timestamp - (12 * HOUR));
     _deadline = Math.floor(_block.timestamp + (24 * HOUR));
@@ -116,62 +115,62 @@ const test_dates_are_properly_defined = async (contract, accounts) => {
     _params = await prepareCreationParams({
         startingDate: _startingDate,
         deadline: _deadline,
-        beneficiary: beneficiary.address
+        beneficiary: _signers.beneficiary
     }).then(assertCreationParamsValidity)
 
-    await assertCampaignCreationFailure(donor.contract, _params);
+    await assertCampaignCreationFailure(_signers, _params);
 }
 
 const test_token_goal_is_less_than_max_tokens = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test tokenGoal > maxTokens => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
     const _params = await prepareCreationParams({
         tokenGoal: 10,
         maxTokens: 5,
-        beneficiary: beneficiary.address
+        beneficiary: _signers.beneficiary
     }).then(assertCreationParamsValidity);
 
-    await assertCampaignCreationFailure(donor.contract, _params);
+    await assertCampaignCreationFailure(_signers, _params);
 }
 
 const test_creation_signature_is_correct = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
     
     log();
     log(`[Test signature is incorrect => revert]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
     
     const _key = (await ethers.Wallet.createRandom()).privateKey;
     const _params = await prepareCreationParams({
         private_key: _key,
-        beneficiary: beneficiary.address
+        beneficiary: _signers.beneficiary
     }).then(assertCreationParamsValidity);
 
-    await assertCampaignCreationFailure(donor.contract, _params);
+    await assertCampaignCreationFailure(_signers, _params);
 }
 
 const test_campaign_creation = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test campaign creation]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
     
     const _params = await prepareCreationParams({ 
-        beneficiary: beneficiary.address 
+        beneficiary: _signers.beneficiary 
     }).then(assertCreationParamsValidity);
     
-    const _campaignId = await assertCampaignCreation(donor.contract, _params);
+    const _campaignId = await assertCampaignCreation(_signers, _params);
 
     const _campaigns = await contract.getCampaignsIds()
     expect(_campaigns).to.be.an("array").that.includes(_campaignId);
@@ -179,18 +178,18 @@ const test_campaign_creation = async (contract, accounts) => {
 
 const test_get_campaign = async (contract, accounts) => {
     
-    const { donor, beneficiary } = await assertAccountsValidity(contract, accounts);
+    const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
     log(`[Test view campaigns details]`, tabs = 2, sep = '');
     
-    await assertOrganizationVerification(contract, beneficiary);
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
     const _params = await prepareCreationParams({ 
-        beneficiary: beneficiary.address 
+        beneficiary: _signers.beneficiary 
     }).then(assertCreationParamsValidity);
 
-    const _campaignId = await assertCampaignCreation(donor.contract, _params);
+    const _campaignId = await assertCampaignCreation(_signers, _params);
 
     await getCampaign(contract, _campaignId).then(assertCreationParamsValidity);
 }

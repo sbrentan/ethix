@@ -175,7 +175,7 @@ const validateToken = async (contract, jwts, valid = true) => {
 
         log(`Batch size: ${count_data}`);
 
-        const campaign_address = redeem_receipt?.logs[1]?.args[0];
+        const campaign_address = await contract.getCampaignAddress(campaignId);
         const campaign = await ethers.getContractAt("Campaign", campaign_address);
 
         return {

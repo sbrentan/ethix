@@ -54,8 +54,12 @@ const prepareStartParams = async (params = {}) => {
     }
 }
 
-const startCampaign = async (contract, params, owner_contract = null) => {
-    const campaignStart = () => contract.startCampaign(
+const startCampaign = async (signers, params) => {
+
+    const owner_contract = signers.owner.contract;
+    const donor_contract = signers.donor.contract;
+
+    const campaignStart = () => donor_contract.startCampaign(
         params.campaignId,
         params.seed,
         params.wallet.address,
@@ -70,7 +74,7 @@ const startCampaign = async (contract, params, owner_contract = null) => {
         const start_receipt = await start_tx.wait();
         const campaignId = start_receipt?.logs[0]?.data; // campaign id
         
-        const campaign_address = start_receipt?.logs[1]?.args[0];
+        const campaign_address = await owner_contract.getCampaignAddress(campaignId);
         const campaign = await ethers.getContractAt("Campaign", campaign_address);
 
         let validJWTTokens, invalidJWTTokens;
