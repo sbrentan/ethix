@@ -3,8 +3,8 @@ const {
     createCampaign,
     getCampaign
 } = require("../helpers/creation-helper.js");
-const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
-const { assertOrganizationVerification } = require("./organization-verification.test.js").assertions;
+const { assertAccountsValidity } = require("./charity-deployment.test.js").assertions;
+const { assertOrganizationVerification } = require("./charity-verification.test.js").assertions;
 const { log } = require("../../common/utils.js");
 const { HOUR } = require('../../common/constants.js');
 const { expect } = require("chai");

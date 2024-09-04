@@ -9,7 +9,7 @@ require("@nomicfoundation/hardhat-chai-matchers");
 const {
 	test_contract_is_deployed,
 	test_owner_is_correct
-} = require("./Campaign/contract-deployment.test.js").tests;
+} = require("./Campaign/campaign-deployment.test.js").tests;
 
 // Campaign start/funding test cases
 const {
@@ -24,7 +24,7 @@ const {
 	test_token_redeem_fails_if_goal_already_reached,
 	test_redeeming_fails_with_invalid_token,
 	test_valid_token_is_redeemed
-} = require("./Campaign/token-validation.test.js").tests;
+} = require("./Campaign/campaign-redeeming.test.js").tests;
 
 describe("CCampaign", function () {
 

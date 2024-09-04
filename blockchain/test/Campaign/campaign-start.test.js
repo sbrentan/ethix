@@ -2,7 +2,7 @@ const {
     prepareStartParams,
     startCampaign 
 } = require("../helpers/start-helper.js");
-const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
+const { assertAccountsValidity } = require("./campaign-deployment.test.js").assertions;
 const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 

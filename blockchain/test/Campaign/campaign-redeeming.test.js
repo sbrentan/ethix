@@ -3,7 +3,7 @@ const {
     alterToken,
     validateToken 
 } = require("../helpers/token-helper.js");
-const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
+const { assertAccountsValidity } = require("./campaign-deployment.test.js").assertions;
 const { assertCampaignStart } = require("./campaign-start.test.js").assertions;
 const { log } = require("../../common/utils.js");
 const { DEFAULT_TOKEN_GOAL } = require("../../common/constants.js");

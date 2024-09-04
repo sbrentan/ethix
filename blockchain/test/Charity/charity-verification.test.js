@@ -1,4 +1,4 @@
-const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
+const { assertAccountsValidity } = require("./charity-deployment.test.js").assertions;
 const { 
     verifyOrganization,
     revokeOrganization 

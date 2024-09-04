@@ -5,17 +5,17 @@ const {
     claimRefund,
     claimDonation
 } = require("../helpers/end-helper.js");
-const { assertAccountsValidity } = require("./contract-deployment.test.js").assertions;
-const { assertOrganizationVerification } = require("./organization-verification.test.js").assertions;
+const { assertAccountsValidity } = require("./charity-deployment.test.js").assertions;
+const { assertOrganizationVerification } = require("./charity-verification.test.js").assertions;
 const { 
     assertCampaignCreation, 
     assertCreationParamsValidity
-} = require("./campaign-creation.test.js").assertions;
+} = require("./charity-creation.test.js").assertions;
 const { 
     assertCampaignStart, 
     assertStartParamsValidity
-} = require("./campaign-start.test.js").assertions;
-const { assertTokenValidity } = require("./token-validation.test.js").assertions;
+} = require("./charity-start.test.js").assertions;
+const { assertTokenValidity } = require("./charity-redeeming.test.js").assertions;
 const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
 

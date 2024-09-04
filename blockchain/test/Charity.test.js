@@ -10,7 +10,7 @@ const { log } = require("../common/utils.js");
 const {
 	test_contract_is_deployed,
 	test_owner_is_correct
-} = require("./Charity/contract-deployment.test.js").tests;
+} = require("./Charity/charity-deployment.test.js").tests;
 
 // Organization/Beneficiary verification test cases
 const {
@@ -18,7 +18,7 @@ const {
 	test_verification,
 	test_revocation_fails_from_non_owner,
 	test_revocation
-} = require("./Charity/organization-verification.test.js").tests;
+} = require("./Charity/charity-verification.test.js").tests;
 
 // Campaign creation test cases
 const {
@@ -29,20 +29,20 @@ const {
 	test_creation_signature_is_correct,
 	test_campaign_creation,
 	test_get_campaign
-} = require("./Charity/campaign-creation.test.js").tests;
+} = require("./Charity/charity-creation.test.js").tests;
 
 // Campaign start/funding test cases
 const {
 	test_not_existing_campaign,
 	test_start_fails_if_signature_is_incorrect,
 	test_campaign_start
-} = require("./Charity/campaign-start.test.js").tests;
+} = require("./Charity/charity-start.test.js").tests;
 
 // Token redeeming test cases
 const {
 	test_redeeming_fails_with_invalid_token,
 	test_valid_token_is_redeemed
-} = require("./Charity/token-validation.test.js").tests;
+} = require("./Charity/charity-redeeming.test.js").tests;
 
 // Campaign end test cases
 const {
@@ -50,7 +50,7 @@ const {
 	test_refund_is_claimed,
 	test_donation_claim_fails_if_not_from_beneficiary,
 	test_donation_is_claimed
-} = require("./Charity/campaign-end.test.js").tests;
+} = require("./Charity/charity-end.test.js").tests;
 
 describe("Charity", function () {
 
