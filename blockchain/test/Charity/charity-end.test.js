@@ -1,7 +1,7 @@
-const { validateToken } = require("../helpers/token-helper.js");
 const { prepareCreationParams } = require("../helpers/creation-helper.js");
 const { prepareStartParams } = require("../helpers/start-helper.js");
 const {
+    prepareEndParams,
     claimRefund,
     claimDonation
 } = require("../helpers/end-helper.js");
@@ -18,6 +18,30 @@ const {
 const { assertTokenValidity } = require("./charity-redeeming.test.js").assertions;
 const { log } = require("../../common/utils.js");
 const { expect } = require("chai");
+
+const assertRefundClaim = async (signers, params) => {
+    const refund_tx_outcome = await claimRefund(signers, params);
+    await expect(refund_tx_outcome.tx).to.emit(refund_tx_outcome.campaign_contract, "RefundClaimed");
+    expect(refund_tx_outcome.refund_amount).to.be.a("number").that.is.at.least(0);
+}
+
+const assertRefudClaimFailure = async (signers, params) => {
+    const refund_tx_outcome = await claimRefund(signers, params);
+    await expect(refund_tx_outcome.method).to.be.reverted;
+    expect(refund_tx_outcome.tx).to.be.null;
+}
+
+const assertDonationClaim = async (signers, params) => {
+    const donation_tx_outcome = await claimDonation(signers, params);
+    await expect(donation_tx_outcome.tx).to.emit(donation_tx_outcome.campaign_contract, "DonationClaimed");
+    expect(donation_tx_outcome.donation_amount).to.be.a("number").that.is.at.least(0);
+}
+
+const assertDonationClaimFailure = async (signers, params) => {
+    const donation_tx_outcome = await claimDonation(signers, params);
+    await expect(donation_tx_outcome.method).to.be.reverted;
+    expect(donation_tx_outcome.tx).to.be.null;
+}
 
 const test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => {
     
@@ -42,12 +66,12 @@ const test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => 
     
     await assertCampaignStart(_signers, _params);
 
-    delete _signers.donor;
-    delete _signers.beneficiary;
+    _params = await prepareEndParams({
+        campaignId: _campaignId
+    });
 
-    const refund_tx_outcome = await claimRefund(_signers, _campaignId);
-    await expect(refund_tx_outcome.method).to.be.reverted;
-    expect(refund_tx_outcome.tx).to.be.null;
+    _signers.donor = _signers.other;
+    await assertRefudClaimFailure(_signers, _params);
 }
 
 const test_refund_is_claimed = async (contract, accounts) => {
@@ -72,16 +96,15 @@ const test_refund_is_claimed = async (contract, accounts) => {
         validAmount: 3
     }).then(assertStartParamsValidity);
     
-    const _tokens = await assertCampaignStart(_signers, _params);
+    const { tokens } = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidity(contract, _tokens.valid[0]);
+    await assertTokenValidity(contract, tokens.valid[0]);
 
-    delete _signers.beneficiary;
-    delete _signers.other;
+    _params = await prepareEndParams({
+        campaignId: _campaignId
+    });
 
-    const refund_tx_outcome = await claimRefund(_signers, _campaignId);
-    await expect(refund_tx_outcome.tx).to.emit(refund_tx_outcome.campaign_contract, 'RefundClaimed');
-    expect(refund_tx_outcome.refund_amount).to.be.a("number").that.is.at.least(0);
+    await assertRefundClaim(_signers, _params);
 }
 
 const test_donation_claim_fails_if_not_from_beneficiary = async (contract, accounts) => {
@@ -107,12 +130,12 @@ const test_donation_claim_fails_if_not_from_beneficiary = async (contract, accou
     
     await assertCampaignStart(_signers, _params);
 
-    delete _signers.donor;
-    delete _signers.beneficiary;
+    _params = await prepareEndParams({
+        campaignId: _campaignId
+    });
 
-    const donation_tx_outcome = await claimDonation(_signers, _campaignId);
-    await expect(donation_tx_outcome.method).to.be.reverted;
-    expect(donation_tx_outcome.tx).to.be.null;
+    _signers.beneficiary = _signers.other;
+    await assertDonationClaimFailure(_signers, _params);
 }
 
 const test_donation_is_claimed = async (contract, accounts) => {
@@ -137,19 +160,24 @@ const test_donation_is_claimed = async (contract, accounts) => {
         validAmount: 3
     }).then(assertStartParamsValidity);
     
-    const _tokens = await assertCampaignStart(_signers, _params);
+    const { tokens } = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidity(contract, _tokens.valid[0]);
+    await assertTokenValidity(contract, tokens.valid[0]);
 
-    delete _signers.donor;
-    delete _signers.other;
+    _params = await prepareEndParams({
+        campaignId: _campaignId
+    });
 
-    const donation_tx_outcome = await claimDonation(_signers, _campaignId);
-    await expect(donation_tx_outcome.tx).to.emit(donation_tx_outcome.campaign_contract, 'DonationClaimed');
-    expect(donation_tx_outcome.donation_amount).to.be.a("number").that.is.at.least(0);
+    await assertDonationClaim(_signers, _params);
 }
 
 module.exports = {
+    assertions: {
+        assertRefundClaim,
+        assertRefudClaimFailure,
+        assertDonationClaim,
+        assertDonationClaimFailure
+    },
     tests: {
         test_refund_claim_fails_if_not_from_donor,
         test_refund_is_claimed,

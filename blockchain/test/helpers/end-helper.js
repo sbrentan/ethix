@@ -1,39 +1,81 @@
 const { 
     log,
-    increaseTime 
+    increaseTime,
+    getTestName 
 } = require('../../common/utils.js');
 const {
     DEFAULT_STARTDATE_SHIFT,
     DEFAULT_DEADLINE_SHIFT
 } = require('../../common/constants.js');
 
-const claimRefund = async (signers, campaignId) => {
+const prepareEndParams = async (params = {}) => {
+
+    const is_charity_test = getTestName() === "Charity";
+
+    const _randomString = web3.utils.randomHex(32);
+    const _campaignId = params.campaignId || web3.utils.keccak256(_randomString);
+    const _from = !is_charity_test && (params.from.address || web3.eth.accounts.create().address);
+    const _increaseTime = params.increaseTime === false ? false : true;
+
+    log();
+    log(`End params:`, tabs = 3, sep = '');
+    log(`Campaign ID: ${_campaignId}`);
+    log(`Increase time: ${_increaseTime}`);
+    !is_charity_test && log(`From: ${_from}`);
+
+    let return_params = {};
+
+    return_params.campaignId = _campaignId;
+    return_params.increaseTime = _increaseTime;
+    
+    !is_charity_test && (return_params.from = _from);
+
+    return return_params;
+}
+
+const claimRefund = async (signers, params) => {
+
+    const is_charity_test = getTestName() === "Charity";
 
     const owner_contract = signers.owner.contract;
-    const contract = signers?.donor?.contract || signers?.beneficiary?.contract || signers?.other?.contract;
+    const donor_contract = signers.donor.contract;
     
-    const refundClaim = () => contract.claimRefund(campaignId);     
+    const refundClaim = () => 
+        is_charity_test
+            ? donor_contract.claimRefund(params.campaignId)
+            : owner_contract.claimRefund(params.from);
+         
     try {
 
-        await increaseTime(DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT + 1);
+        if (params.increaseTime){
+            await increaseTime(DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT + 1);
 
-        log();
-        log(`Campaign has ended...`, tabs = 3, sep = '');
-        log();
+            log();
+            log(`Campaign has ended...`, tabs = 3, sep = '');
+            log();
+        }
 
         const refund_tx = await refundClaim();
 		const refund_receipt = await refund_tx.wait();
 		const refund_amount = refund_receipt?.logs[0]?.data;
         const refund_eth = Number(web3.utils.fromWei(refund_amount, 'ether'));
 
-        const campaign_address = await owner_contract.getCampaignAddress(campaignId);
-        const campaign = await ethers.getContractAt("Campaign", campaign_address);
+        const campaign_address = is_charity_test && await owner_contract.getCampaignAddress(params.campaignId);
+        const campaign = is_charity_test && await ethers.getContractAt("Campaign", campaign_address);
 
         log(`Refund process:`, tabs = 3, sep = '');
         log(`Refund amount of ${refund_eth.toFixed(2)} ETH claimed`, tabs = 4);
         log();
 
-        return { tx: refund_tx, campaign_contract: campaign, refund_amount: refund_eth }
+        let return_params = {};
+
+        return_params.tx = refund_tx;
+        return_params.refund_amount = refund_eth;
+
+        is_charity_test && (return_params.campaign_contract = campaign);
+        !is_charity_test && (return_params.contract = owner_contract);
+
+        return return_params;
 
     } catch (e) {
         return { 
@@ -43,33 +85,49 @@ const claimRefund = async (signers, campaignId) => {
     }
 }
 
-const claimDonation = async (signers, campaignId) => { 
+const claimDonation = async (signers, params) => { 
     
-    const owner_contract = signers.owner.contract;
-    const contract = signers?.donor?.contract || signers?.beneficiary?.contract || signers?.other?.contract;
+    const is_charity_test = getTestName() === "Charity";
 
-    const donationClaim = () => contract.claimDonation(campaignId);     
+    const owner_contract = signers.owner.contract;
+    const beneficiary_contract = signers.beneficiary.contract;
+    
+    const donationClaim = () => 
+        is_charity_test
+            ? beneficiary_contract.claimDonation(params.campaignId)
+            : owner_contract.claimDonation(params.from);
+  
     try {
 
-        await increaseTime(DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT + 1);
+        if (params.increaseTime){
+            await increaseTime(DEFAULT_STARTDATE_SHIFT + DEFAULT_DEADLINE_SHIFT + 1);
 
-        log();
-        log(`Campaign has ended...`, tabs = 3, sep = '');
-        log();
+            log();
+            log(`Campaign has ended...`, tabs = 3, sep = '');
+            log();
+        }
 
         const donation_tx = await donationClaim();
 		const donation_receipt = await donation_tx.wait();
 		const donation_amount = donation_receipt?.logs[0]?.data;
         const donation_eth = Number(web3.utils.fromWei(donation_amount, 'ether'));
 
-        const campaign_address = await owner_contract.getCampaignAddress(campaignId);
-        const campaign = await ethers.getContractAt("Campaign", campaign_address);
+        const campaign_address = is_charity_test && await owner_contract.getCampaignAddress(params.campaignId);
+        const campaign = is_charity_test && await ethers.getContractAt("Campaign", campaign_address);
 
         log(`Donation process:`, tabs = 3, sep = '');
         log(`Donation amount of ${donation_eth.toFixed(2)} ETH claimed`, tabs = 4);
         log();
 
-        return { tx: donation_tx, campaign_contract: campaign, donation_amount: donation_eth }
+        let return_params = {};
+
+        return_params.tx = donation_tx;
+        return_params.donation_amount = donation_eth;
+
+        is_charity_test && (return_params.campaign_contract = campaign);
+        !is_charity_test && (return_params.contract = owner_contract);
+
+        return return_params;
 
     } catch (e) {
         return { 
@@ -80,6 +138,7 @@ const claimDonation = async (signers, campaignId) => {
 }
 
 module.exports = {
+    prepareEndParams,
     claimRefund,
     claimDonation
 }

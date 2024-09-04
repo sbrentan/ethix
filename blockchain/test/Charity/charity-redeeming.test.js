@@ -52,9 +52,9 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
         generateTokens: true
     }).then(assertStartParamsValidity);
 
-    const _tokens = await assertCampaignStart(_signers, _params);
+    const { tokens } = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidityFailure(contract, _tokens.invalid);
+    await assertTokenValidityFailure(contract, tokens.invalid);
 
     await getCampaign(contract, _campaignId)
     .then(data => {
@@ -83,9 +83,9 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
         generateTokens: true
     }).then(assertStartParamsValidity);
     
-    const _tokens = await assertCampaignStart(_signers, _params);
+    const { tokens } = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidity(contract, _tokens.valid[0]);
+    await assertTokenValidity(contract, tokens.valid[0]);
 
     await getCampaign(contract, _campaignId)
     .then(data => {

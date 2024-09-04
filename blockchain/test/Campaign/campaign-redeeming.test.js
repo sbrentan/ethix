@@ -35,8 +35,8 @@ const test_token_redeem_fails_without_signature = async (contract, accounts) => 
         decode: true 
     });
 
-    const _tokens = await assertCampaignStart(_signers, _params);
-    const _altered = alterToken(_tokens.valid[0], { remove_signature: true });
+    const { tokens } = await assertCampaignStart(_signers, _params);
+    const _altered = alterToken(tokens.valid[0], { remove_signature: true });
 
     await assertTokenValidityFailure(_signers.owner.contract, _altered);
 }
@@ -53,12 +53,12 @@ const test_token_redeem_fails_if_goal_already_reached = async (contract, account
         amount: DEFAULT_TOKEN_GOAL + 1
     });
 
-    const _tokens = await assertCampaignStart(_signers, _params);
+    const { tokens } = await assertCampaignStart(_signers, _params);
 
-    for (let i = 0; i < _tokens.valid.length - 1; i++)
-        await assertTokenValidity(_signers.owner.contract, _tokens.valid[i]);
+    for (let i = 0; i < tokens.valid.length - 1; i++)
+        await assertTokenValidity(_signers.owner.contract, tokens.valid[i]);
 
-    await assertTokenValidityFailure(_signers.owner.contract, _tokens.valid[_tokens.valid.length - 1]);
+    await assertTokenValidityFailure(_signers.owner.contract, tokens.valid[tokens.valid.length - 1]);
 }
 
 const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
@@ -72,9 +72,9 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
         generateTokens: true
     });
 
-    const _tokens = await assertCampaignStart(_signers, _params);
+    const { tokens } = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidityFailure(_signers.owner.contract, _tokens.invalid);
+    await assertTokenValidityFailure(_signers.owner.contract, tokens.invalid);
 }
 
 const test_valid_token_is_redeemed = async (contract, accounts) => {
@@ -88,9 +88,9 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
         generateTokens: true
     });
 
-    const _tokens = await assertCampaignStart(_signers, _params);
+    const { tokens } = await assertCampaignStart(_signers, _params);
 
-    await assertTokenValidity(_signers.owner.contract, _tokens.valid[0]);
+    await assertTokenValidity(_signers.owner.contract, tokens.valid[0]);
 }
 
 module.exports = {

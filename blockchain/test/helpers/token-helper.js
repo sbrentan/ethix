@@ -169,7 +169,7 @@ const validateToken = async (contract, token) => {
         const redeem_receipt = await redeem_tx.wait();
         const count_data = Number(redeem_receipt?.logs[0]?.data);
 
-        log(`Redeemed tokens till now: ${count_data}`);
+        log(`Total redeemed tokens: ${count_data}`);
 
         const campaign_address = is_charity_test && await contract.getCampaignAddress(campaignId);
         const campaign = is_charity_test && await ethers.getContractAt("Campaign", campaign_address);

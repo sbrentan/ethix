@@ -16,7 +16,14 @@ const assertCampaignStart = async (signers, params) => {
     const start_tx_outcome = await startCampaign(signers, params);
     await expect(start_tx_outcome.tx).to.emit(start_tx_outcome.campaign_contract, "CampaignStarted");
     expect(start_tx_outcome.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
-    return start_tx_outcome.tokens;
+    expect(start_tx_outcome.tokens).to.satisfy((tokens) => tokens === null || typeof tokens === 'object');
+    start_tx_outcome.tokens && expect(start_tx_outcome.tokens).to.include.keys('valid', 'invalid');
+    start_tx_outcome.tokens && expect(start_tx_outcome.tokens.valid).to.be.a("array").that.is.not.empty;
+    start_tx_outcome.tokens && expect(start_tx_outcome.tokens.invalid).to.be.a("object");
+    return {
+        campaignId: start_tx_outcome.campaignId,
+        tokens: start_tx_outcome.tokens
+    }
 }
 
 const assertCampaignStartFailure = async (signers, params) => {

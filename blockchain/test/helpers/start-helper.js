@@ -82,7 +82,7 @@ const startCampaign = async (signers, params) => {
                 {
                     value: web3.utils.toWei(`${params.value}`, 'ether')
                 })
-            : donor_contract.start(
+            : owner_contract.start(
                 params.seed,
                 params.wallet.address,
                 params.from,
@@ -125,7 +125,7 @@ const startCampaign = async (signers, params) => {
         } : null;
 
         is_charity_test && (return_params.campaign_contract = campaign);
-        !is_charity_test && (return_params.contract = donor_contract);
+        !is_charity_test && (return_params.contract = owner_contract);
 
         return return_params;
 
