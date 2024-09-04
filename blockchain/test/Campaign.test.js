@@ -44,7 +44,7 @@ const {
 	test_donation_claim_succeeds
 } = require("./Campaign/campaign-donation.test.js").tests;
 
-describe("CCampaign", function () {
+describe("Campaign", function () {
 
 	let campaign; // contract instance of owner
 	let accounts; // owner, donor, beneficiary, other
