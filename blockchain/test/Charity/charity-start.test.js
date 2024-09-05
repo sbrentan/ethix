@@ -24,7 +24,7 @@ const test_not_existing_campaign = async (contract, accounts) => {
     await assertCampaignStartFailure(_signers, _params);
 }
 
-const test_start_fails_if_seed_doesnt_match_commit_hash = async (contract, accounts) => {
+const test_start_fails_if_seed_doesnt_match_commit_hash_seed = async (contract, accounts) => {
 
     const _signers = await assertAccountsValidity(contract, accounts);
 
@@ -97,7 +97,7 @@ const test_campaign_start = async (contract, accounts) => {
 
 module.exports = {
     test_not_existing_campaign,
-    test_start_fails_if_seed_doesnt_match_commit_hash,
+    test_start_fails_if_seed_doesnt_match_commit_hash_seed,
     test_start_fails_if_signature_is_incorrect,
     test_campaign_start
 }

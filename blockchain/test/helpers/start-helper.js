@@ -92,9 +92,13 @@ const startCampaign = async (signers, params) => {
             )
 
     try {
+        log(`[Pre] Block number: ${await web3.eth.getBlockNumber()}`);
+
         const start_tx = await campaignStart();
         const start_receipt = await start_tx.wait();
         const campaignId = start_receipt?.logs[0]?.data; // campaign id
+
+        log(`[Post] Block number: ${start_receipt.blockNumber}`);
 
         params.campaignId = campaignId;
 

@@ -34,7 +34,7 @@ const {
 // Campaign start/funding test cases
 const {
 	test_not_existing_campaign,
-	test_start_fails_if_seed_doesnt_match_commit_hash,
+	test_start_fails_if_seed_doesnt_match_commit_hash_seed,
 	test_start_fails_if_signature_is_incorrect,
 	test_campaign_start
 } = require("./Charity/charity-start.test.js");
@@ -158,7 +158,7 @@ describe("Charity", function () {
 		it("T001 - Should revert if the campaign does not exist", () => test_not_existing_campaign(charity, accounts));
 
 		// should revert if the seed doesn't match the commitHash of the creation
-		it("T002 - Should revert if the seed doesn't match the commitHash of the creation", () => test_start_fails_if_seed_doesnt_match_commit_hash(charity, accounts));
+		it("T002 - Should revert if the seed doesn't match the commitHash of the creation", () => test_start_fails_if_seed_doesnt_match_commit_hash_seed(charity, accounts));
 
 		// should revert if the signature is incorrect
 		it("T003 - Should revert if the signature is incorrect", () => test_start_fails_if_signature_is_incorrect(charity, accounts));
