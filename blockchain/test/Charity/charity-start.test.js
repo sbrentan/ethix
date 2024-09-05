@@ -1,60 +1,17 @@
 const { prepareCreationParams } = require("../helpers/creation-helper.js");
-const { 
-    prepareStartParams, 
-    startCampaign 
-} = require("../helpers/start-helper.js");
-const { assertAccountsValidity } = require("./charity-deployment.test.js").assertions;
-const { assertOrganizationVerification } = require("./charity-verification.test.js").assertions;
+const { prepareStartParams } = require("../helpers/start-helper.js");
+const { assertAccountsValidity } = require("../assertions/deployment-assertions.js");
+const { assertOrganizationVerification } = require("../assertions/verification-assertions.js");
 const { 
     assertCampaignCreation, 
     assertCreationParamsValidity
-} = require("./charity-creation.test.js").assertions;
+} = require("../assertions/creation-assertions.js");
+const { 
+    assertCampaignStart, 
+    assertCampaignStartFailure,
+    assertStartParamsValidity 
+} = require("../assertions/start-assertions.js");
 const { log } = require("../../common/utils.js");
-const { expect } = require("chai");
-
-const assertCampaignStart = async (signers, params) => {
-    const start_tx_outcome = await startCampaign(signers, params);
-    await expect(start_tx_outcome.tx).to.emit(start_tx_outcome.campaign_contract, "CampaignStarted");
-    expect(start_tx_outcome.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
-    expect(start_tx_outcome.tokens).to.satisfy((tokens) => tokens === null || typeof tokens === 'object');
-    start_tx_outcome.tokens && expect(start_tx_outcome.tokens).to.include.keys('valid', 'invalid');
-    start_tx_outcome.tokens && expect(start_tx_outcome.tokens.valid).to.be.a("array").that.is.not.empty;
-    start_tx_outcome.tokens && expect(start_tx_outcome.tokens.invalid).to.be.a("object");
-    return {
-        campaignId: start_tx_outcome.campaignId,
-        tokens: start_tx_outcome.tokens
-    }
-}
-
-const assertCampaignStartFailure = async (signers, params) => {
-    const start_tx_outcome = await startCampaign(signers, params);
-    await expect(start_tx_outcome.method).to.be.reverted;
-    expect(start_tx_outcome.tx).to.be.null;
-}
-
-const assertStartParamsValidity = (params) => {
-
-    // Start params verification
-    params?.campaignId && expect(params.campaignId).to.be.a("string").that.matches(/^0x[0-9a-fA-F]{64}$/);
-    params?.seed && expect(params.seed).to.be.a("string").that.matches(/^0x[0-9a-fA-F]{64}$/);
-    params?.wallet && expect(params.wallet).to.be.an("object").that.includes.keys('address', 'privateKey');
-    expect(params.wallet.address).to.be.a("string").that.matches(/^0x[a-fA-F0-9]{40}$/);
-    expect(params.wallet.privateKey).to.be.a("string").that.matches(/^0x[0-9a-fA-F]{64}$/);
-    params?.value && expect(params.value).to.be.a("number").that.is.greaterThan(0);
-
-    // Verifying the signature object
-    params?.signature && expect(params.signature).to.be.an("object").that.includes.keys('r', 's', 'v');
-    params?.signature?.r && expect(params.signature.r).to.be.a("string").that.matches(/^0x[0-9a-fA-F]{64}$/);
-    params?.signature?.s && expect(params.signature.s).to.be.a("string").that.matches(/^0x[0-9a-fA-F]{64}$/);
-    params?.signature?.v && expect(params.signature.v).to.be.a("string").that.matches(/^0x[0-9a-fA-F]{2}$/);
-
-    // Verifying the optional parameters
-    params?.generateTokens && expect(params.generateTokens).to.be.a("boolean");
-    params?.validAmount && expect(params.validAmount).to.be.a("number").that.is.at.least(0);
-    params?.invalidAmount && expect(params.invalidAmount).to.be.a("number").that.is.at.least(0);
-
-    return params;
-}
 
 const test_not_existing_campaign = async (contract, accounts) => {
     
@@ -116,14 +73,7 @@ const test_campaign_start = async (contract, accounts) => {
 }
 
 module.exports = {
-    assertions: {
-        assertCampaignStart,
-        assertCampaignStartFailure,
-        assertStartParamsValidity
-    },
-    tests: {
-        test_not_existing_campaign,
-        test_start_fails_if_signature_is_incorrect,
-        test_campaign_start
-    }
+    test_not_existing_campaign,
+    test_start_fails_if_signature_is_incorrect,
+    test_campaign_start
 }

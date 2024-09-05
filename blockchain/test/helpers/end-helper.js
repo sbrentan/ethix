@@ -71,9 +71,7 @@ const claimRefund = async (signers, params) => {
 
         return_params.tx = refund_tx;
         return_params.refund_amount = refund_eth;
-
-        is_charity_test && (return_params.campaign_contract = campaign);
-        !is_charity_test && (return_params.contract = owner_contract);
+        return_params.contract = is_charity_test ? campaign : owner_contract;
 
         return return_params;
 
@@ -123,9 +121,7 @@ const claimDonation = async (signers, params) => {
 
         return_params.tx = donation_tx;
         return_params.donation_amount = donation_eth;
-
-        is_charity_test && (return_params.campaign_contract = campaign);
-        !is_charity_test && (return_params.contract = owner_contract);
+        return_params.contract = is_charity_test ? campaign : owner_contract;
 
         return return_params;
 

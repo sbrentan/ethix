@@ -1,35 +1,24 @@
-const { validateToken } = require("../helpers/token-helper.js");
 const {
     prepareCreationParams,
     getCampaign
 } = require("../helpers/creation-helper.js");
 const { prepareStartParams } = require("../helpers/start-helper.js");
-const { assertAccountsValidity } = require("./charity-deployment.test.js").assertions;
-const { assertOrganizationVerification } = require("./charity-verification.test.js").assertions;
+const { assertAccountsValidity } = require("../assertions/deployment-assertions.js");
+const { assertOrganizationVerification } = require("../assertions/verification-assertions.js");
 const { 
     assertCampaignCreation, 
     assertCreationParamsValidity
-} = require("./charity-creation.test.js").assertions;
+} = require("../assertions/creation-assertions.js");
 const { 
     assertCampaignStart, 
     assertStartParamsValidity
-} = require("./charity-start.test.js").assertions;
+} = require("../assertions/start-assertions.js");
+const {
+    assertTokenValidity,
+    assertTokenValidityFailure,
+    assertTokenCountToBe
+} = require("../assertions/token-assertions.js");
 const { log } = require("../../common/utils.js");
-const { expect } = require("chai");
-
-const assertTokenValidity = async (contract, token) => {
-    const validate_tx_outcome = await validateToken(contract, token);
-    await expect(validate_tx_outcome.tx).to.emit(validate_tx_outcome.campaign_contract, "TokensRedeemed");
-    expect(validate_tx_outcome.is_redeemable).to.be.true;
-    expect(validate_tx_outcome.redemeed_tokens).to.be.a("number").that.is.greaterThan(0);
-}
-
-const assertTokenValidityFailure = async (contract, token) => {
-    const validate_tx_outcome = await validateToken(contract, token);
-    await expect(validate_tx_outcome.method).to.be.reverted;
-    expect(validate_tx_outcome.is_redeemable).to.be.false;
-    expect(validate_tx_outcome.tx).to.be.null;
-}
 
 const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
     
@@ -58,7 +47,7 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
 
     await getCampaign(contract, _campaignId)
     .then(data => {
-        expect(data.redeemedTokenCount).to.equal(0);
+        assertTokenCountToBe(data.redeemedTokenCount, 0);
     });
 }
 
@@ -89,17 +78,11 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
 
     await getCampaign(contract, _campaignId)
     .then(data => {
-        expect(data.redeemedTokenCount).to.equal(1);
+        assertTokenCountToBe(data.redeemedTokenCount, 1);
     });
 }
 
 module.exports = {
-    assertions: {
-        assertTokenValidity,
-        assertTokenValidityFailure
-    },
-    tests: {
-        test_redeeming_fails_with_invalid_token,
-        test_valid_token_is_redeemed
-    }
+    test_redeeming_fails_with_invalid_token,
+    test_valid_token_is_redeemed
 }

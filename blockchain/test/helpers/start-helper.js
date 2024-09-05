@@ -1,12 +1,12 @@
 const { generateToken } = require("./token-helper.js");
-const { 
+const {
     log,
     getTestName,
     getPrivateKey,
     encodePacked,
-    increaseTime 
+    increaseTime
 } = require("../../common/utils.js");
-const { 
+const {
     DEFAULT_SLICE,
     DEFAULT_VALUE,
     DEFAULT_STARTDATE_SHIFT,
@@ -19,7 +19,7 @@ const prepareStartParams = async (params = {}) => {
     const is_charity_test = getTestName() === "Charity";
 
     const _rwallet = web3.eth.accounts.create();
-    
+
     const _randomString = is_charity_test && web3.utils.randomHex(32);
     const _campaignId = is_charity_test && (params.campaignId || web3.utils.keccak256(_randomString));
     const _seed = params.seed || web3.utils.randomHex(32);
@@ -30,7 +30,7 @@ const prepareStartParams = async (params = {}) => {
     const _amount = params.amount || DEFAULT_GENERATED_TOKENS;
     const _decode = params.decode || false;
     const _value = params.value || DEFAULT_VALUE;
-    const _from = !is_charity_test && params.from.address || web3.eth.accounts.create().address;
+    const _from = !is_charity_test && (params.from.address || web3.eth.accounts.create().address);
 
     log();
     log(`Start params:`, tabs = 3, sep = '');
@@ -45,7 +45,7 @@ const prepareStartParams = async (params = {}) => {
     log(`Value: ${_value} ETH`);
 
     let return_params = {};
-    
+
     return_params.seed = _seed;
     return_params.wallet = _rwallet;
     return_params.generateTokens = _generateTokens;
@@ -72,8 +72,8 @@ const startCampaign = async (signers, params) => {
     const owner_contract = signers.owner.contract;
     const donor_contract = signers.donor.contract;
 
-    const campaignStart = () => 
-        is_charity_test 
+    const campaignStart = () =>
+        is_charity_test
             ? donor_contract.startCampaign(
                 params.campaignId,
                 params.seed,
@@ -97,15 +97,14 @@ const startCampaign = async (signers, params) => {
         const campaignId = start_receipt?.logs[0]?.data; // campaign id
 
         params.campaignId = campaignId;
-        
+
         const campaign_address = is_charity_test && await owner_contract.getCampaignAddress(campaignId);
         const campaign = is_charity_test && await ethers.getContractAt("Campaign", campaign_address);
 
         // By default, repeat params.amount times
-        const validTokens = 
+        const validTokens =
             params.generateTokens
-                ? await Promise.all(Array.from({ length: params.amount }, (_, i) => generateToken(owner_contract, params, index = i, valid = true)))
-                : [];
+                && await Promise.all(Array.from({ length: params.amount }, (_, i) => generateToken(owner_contract, params, index = i, valid = true)));
 
         // By default, repeat only once
         const invalidToken = params.generateTokens && await generateToken(owner_contract, params, index = 0, valid = false);
@@ -124,14 +123,13 @@ const startCampaign = async (signers, params) => {
             invalid: invalidToken
         } : null;
 
-        is_charity_test && (return_params.campaign_contract = campaign);
-        !is_charity_test && (return_params.contract = owner_contract);
+        return_params.contract = is_charity_test ? campaign : owner_contract;
 
         return return_params;
 
     } catch (e) {
-        return { 
-            tx: null, 
+        return {
+            tx: null,
             get method() { return (campaignStart)() }
         }
     }

@@ -85,7 +85,7 @@ const createCampaign = async (signers, params) => {
         log(`Campaign ID: ${campaignId}`);
         log(`Campaign contract address: ${campaign_address}`);
 
-        return { tx: create_tx, campaign_contract: campaign, campaignId: campaignId }
+        return { tx: create_tx, contract: campaign, campaignId: campaignId }
 
     } catch (e) {
         return { 

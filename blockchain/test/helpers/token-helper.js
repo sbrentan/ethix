@@ -107,6 +107,12 @@ const alterToken = (token, params) => {
     return altered;
 }
 
+const decodeToken = (jwtToken) => {
+    if (!jwtToken) return null;
+
+    return jwt.verify(jwtToken, process.env.REFRESH_TOKEN_SECRET || "");
+}
+
 const validateToken = async (contract, token) => {
 
     const is_charity_test = getTestName() === "Charity";
@@ -180,7 +186,7 @@ const validateToken = async (contract, token) => {
         return_params.is_redeemable = true;
         return_params.redemeed_tokens = count_data;
 
-        is_charity_test && (return_params.campaign_contract = campaign);
+        return_params.contract = is_charity_test ? campaign : contract;
 
         return return_params;
 
@@ -196,5 +202,6 @@ const validateToken = async (contract, token) => {
 module.exports = {
     generateToken,
     alterToken,
+    decodeToken,
     validateToken
 }

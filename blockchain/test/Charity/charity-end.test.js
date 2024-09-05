@@ -1,47 +1,25 @@
 const { prepareCreationParams } = require("../helpers/creation-helper.js");
 const { prepareStartParams } = require("../helpers/start-helper.js");
-const {
-    prepareEndParams,
-    claimRefund,
-    claimDonation
-} = require("../helpers/end-helper.js");
-const { assertAccountsValidity } = require("./charity-deployment.test.js").assertions;
-const { assertOrganizationVerification } = require("./charity-verification.test.js").assertions;
+const { prepareEndParams } = require("../helpers/end-helper.js");
+const { assertAccountsValidity } = require("../assertions/deployment-assertions.js");
+const { assertOrganizationVerification } = require("../assertions/verification-assertions.js");
 const { 
     assertCampaignCreation, 
     assertCreationParamsValidity
-} = require("./charity-creation.test.js").assertions;
+} = require("../assertions/creation-assertions.js");
 const { 
     assertCampaignStart, 
     assertStartParamsValidity
-} = require("./charity-start.test.js").assertions;
-const { assertTokenValidity } = require("./charity-redeeming.test.js").assertions;
+} = require("../assertions/start-assertions.js");
+const { assertTokenValidity } = require("../assertions/token-assertions.js");
+const {
+    assertRefundClaim,
+    assertRefudClaimFailure,
+    assertDonationClaim,
+    assertDonationClaimFailure,
+    assertEndParamsValidity
+} = require("../assertions/end-assertions.js");
 const { log } = require("../../common/utils.js");
-const { expect } = require("chai");
-
-const assertRefundClaim = async (signers, params) => {
-    const refund_tx_outcome = await claimRefund(signers, params);
-    await expect(refund_tx_outcome.tx).to.emit(refund_tx_outcome.campaign_contract, "RefundClaimed");
-    expect(refund_tx_outcome.refund_amount).to.be.a("number").that.is.at.least(0);
-}
-
-const assertRefudClaimFailure = async (signers, params) => {
-    const refund_tx_outcome = await claimRefund(signers, params);
-    await expect(refund_tx_outcome.method).to.be.reverted;
-    expect(refund_tx_outcome.tx).to.be.null;
-}
-
-const assertDonationClaim = async (signers, params) => {
-    const donation_tx_outcome = await claimDonation(signers, params);
-    await expect(donation_tx_outcome.tx).to.emit(donation_tx_outcome.campaign_contract, "DonationClaimed");
-    expect(donation_tx_outcome.donation_amount).to.be.a("number").that.is.at.least(0);
-}
-
-const assertDonationClaimFailure = async (signers, params) => {
-    const donation_tx_outcome = await claimDonation(signers, params);
-    await expect(donation_tx_outcome.method).to.be.reverted;
-    expect(donation_tx_outcome.tx).to.be.null;
-}
 
 const test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => {
     
@@ -68,7 +46,7 @@ const test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => 
 
     _params = await prepareEndParams({
         campaignId: _campaignId
-    });
+    }).then(assertEndParamsValidity);
 
     _signers.donor = _signers.other;
     await assertRefudClaimFailure(_signers, _params);
@@ -102,7 +80,7 @@ const test_refund_is_claimed = async (contract, accounts) => {
 
     _params = await prepareEndParams({
         campaignId: _campaignId
-    });
+    }).then(assertEndParamsValidity);
 
     await assertRefundClaim(_signers, _params);
 }
@@ -132,7 +110,7 @@ const test_donation_claim_fails_if_not_from_beneficiary = async (contract, accou
 
     _params = await prepareEndParams({
         campaignId: _campaignId
-    });
+    }).then(assertEndParamsValidity);
 
     _signers.beneficiary = _signers.other;
     await assertDonationClaimFailure(_signers, _params);
@@ -166,22 +144,14 @@ const test_donation_is_claimed = async (contract, accounts) => {
 
     _params = await prepareEndParams({
         campaignId: _campaignId
-    });
+    }).then(assertEndParamsValidity);
 
     await assertDonationClaim(_signers, _params);
 }
 
 module.exports = {
-    assertions: {
-        assertRefundClaim,
-        assertRefudClaimFailure,
-        assertDonationClaim,
-        assertDonationClaimFailure
-    },
-    tests: {
-        test_refund_claim_fails_if_not_from_donor,
-        test_refund_is_claimed,
-        test_donation_claim_fails_if_not_from_beneficiary,
-        test_donation_is_claimed
-    }
+    test_refund_claim_fails_if_not_from_donor,
+    test_refund_is_claimed,
+    test_donation_claim_fails_if_not_from_beneficiary,
+    test_donation_is_claimed
 }

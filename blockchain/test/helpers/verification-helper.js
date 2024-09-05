@@ -12,7 +12,7 @@ const verifyOrganization = async (signer, beneficiary) => {
         log(`Organization ${beneficiary.address} => current status: [${pre_verify}]`);
         log(`Organization ${beneficiary.address} => status after verification: [${post_verify}]`);
 
-        return { tx: verify_tx, status: post_verify };
+        return { tx: verify_tx, contract: signer.contract, status: post_verify };
 
     } catch (e) { 
         return { 
@@ -34,7 +34,7 @@ const revokeOrganization = async (signer, beneficiary) => {
         log(`Organization ${beneficiary.address} => current status: [${pre_revoke}]`);
         log(`Organization ${beneficiary.address} => status after revocation: [${post_revoke}]`);
 
-        return { tx: revoke_tx, status: post_revoke };
+        return { tx: revoke_tx, contract: signer.contract, status: post_revoke };
 
     } catch (e) {
         return { 

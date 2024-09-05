@@ -9,7 +9,7 @@ require("@nomicfoundation/hardhat-chai-matchers");
 const {
 	test_contract_is_deployed,
 	test_owner_is_correct
-} = require("./Campaign/campaign-deployment.test.js").tests;
+} = require("./Campaign/campaign-deployment.test.js");
 
 // Campaign start/funding test cases
 const {
@@ -17,15 +17,17 @@ const {
 	test_start_fails_if_is_not_from_donor,
 	test_campaign_start,
 	test_start_fails_if_is_already_started
-} = require("./Campaign/campaign-start.test.js").tests;
+} = require("./Campaign/campaign-start.test.js");
 
+// Token redeeming test cases
 const {
 	test_token_redeem_fails_without_signature,
 	test_token_redeem_fails_if_goal_already_reached,
 	test_redeeming_fails_with_invalid_token,
 	test_valid_token_is_redeemed
-} = require("./Campaign/campaign-redeeming.test.js").tests;
+} = require("./Campaign/campaign-redeeming.test.js");
 
+// Campaign end test cases
 const {
 	test_refund_claim_request_fails_if_is_not_from_owner,
 	test_refund_claim_fails_if_is_not_from_donor,
@@ -33,7 +35,7 @@ const {
 	test_refund_claim_fails_if_is_already_claimed,
 	test_refund_claim_fails_if_campaign_is_not_funded,
 	test_refund_claim_succeeds
-} = require("./Campaign/campaign-refund.test.js").tests;
+} = require("./Campaign/campaign-refund.test.js");
 
 const {
 	test_donation_claim_request_fails_if_is_not_from_owner,
@@ -42,7 +44,7 @@ const {
 	test_donation_claim_fails_if_is_already_claimed,
 	test_donation_claim_fails_if_campaign_is_not_funded,
 	test_donation_claim_succeeds
-} = require("./Campaign/campaign-donation.test.js").tests;
+} = require("./Campaign/campaign-donation.test.js");
 
 describe("Campaign", function () {
 
@@ -83,7 +85,7 @@ describe("Campaign", function () {
 
 	});
 
-	describe("Campaign start/funding", function () {
+	describe("Start and funding", function () {
 
 		after(() => log());
 
@@ -120,7 +122,7 @@ describe("Campaign", function () {
 
 	});
 
-	describe("Campaign end", function () {
+	describe("End", function () {
 		
 		describe("Refund claiming", function () {
 

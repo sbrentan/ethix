@@ -1,27 +1,16 @@
 const { prepareStartParams } = require("../helpers/start-helper.js");
+const { alterToken } = require("../helpers/token-helper.js");
+const { assertAccountsValidity } = require("../assertions/deployment-assertions.js");
 const { 
-    alterToken,
-    validateToken 
-} = require("../helpers/token-helper.js");
-const { assertAccountsValidity } = require("./campaign-deployment.test.js").assertions;
-const { assertCampaignStart } = require("./campaign-start.test.js").assertions;
+    assertCampaignStart,
+    assertStartParamsValidity 
+} = require("../assertions/start-assertions.js");
+const {
+    assertTokenValidity,
+    assertTokenValidityFailure
+} = require("../assertions/token-assertions.js");
 const { log } = require("../../common/utils.js");
 const { DEFAULT_TOKEN_GOAL } = require("../../common/constants.js");
-const { expect } = require("chai");
-
-const assertTokenValidity = async (contract, token) => {
-    const validate_tx_outcome = await validateToken(contract, token);
-    await expect(validate_tx_outcome.tx).to.emit(contract, "TokensRedeemed");
-    expect(validate_tx_outcome.is_redeemable).to.be.true;
-    expect(validate_tx_outcome.redemeed_tokens).to.be.a("number").that.is.greaterThan(0);
-}
-
-const assertTokenValidityFailure = async (contract, token) => {
-    const validate_tx_outcome = await validateToken(contract, token);
-    await expect(validate_tx_outcome.method).to.be.reverted;
-    expect(validate_tx_outcome.is_redeemable).to.be.false;
-    expect(validate_tx_outcome.tx).to.be.null;
-}
 
 const test_token_redeem_fails_without_signature = async (contract, accounts) => {
     log();
@@ -33,7 +22,7 @@ const test_token_redeem_fails_without_signature = async (contract, accounts) => 
         from: _signers.donor,
         generateTokens: true,
         decode: true 
-    });
+    }).then(assertStartParamsValidity);
 
     const { tokens } = await assertCampaignStart(_signers, _params);
     const _altered = alterToken(tokens.valid[0], { remove_signature: true });
@@ -51,7 +40,7 @@ const test_token_redeem_fails_if_goal_already_reached = async (contract, account
         from: _signers.donor,
         generateTokens: true,
         amount: DEFAULT_TOKEN_GOAL + 1
-    });
+    }).then(assertStartParamsValidity);
 
     const { tokens } = await assertCampaignStart(_signers, _params);
 
@@ -70,7 +59,7 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
     const _params = await prepareStartParams({ 
         from: _signers.donor,
         generateTokens: true
-    });
+    }).then(assertStartParamsValidity);
 
     const { tokens } = await assertCampaignStart(_signers, _params);
 
@@ -86,7 +75,7 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
     const _params = await prepareStartParams({ 
         from: _signers.donor,
         generateTokens: true
-    });
+    }).then(assertStartParamsValidity);
 
     const { tokens } = await assertCampaignStart(_signers, _params);
 
@@ -94,14 +83,8 @@ const test_valid_token_is_redeemed = async (contract, accounts) => {
 }
 
 module.exports = {
-    assertions: {
-        assertTokenValidity,
-        assertTokenValidityFailure
-    },
-    tests: {
-        test_token_redeem_fails_without_signature,
-        test_token_redeem_fails_if_goal_already_reached,
-        test_redeeming_fails_with_invalid_token,
-        test_valid_token_is_redeemed
-    }
+    test_token_redeem_fails_without_signature,
+    test_token_redeem_fails_if_goal_already_reached,
+    test_redeeming_fails_with_invalid_token,
+    test_valid_token_is_redeemed
 }

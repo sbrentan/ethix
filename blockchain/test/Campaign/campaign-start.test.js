@@ -1,30 +1,11 @@
+const { prepareStartParams } = require("../helpers/start-helper.js");
+const { assertAccountsValidity } = require("../assertions/deployment-assertions.js");
 const { 
-    prepareStartParams,
-    startCampaign 
-} = require("../helpers/start-helper.js");
-const { assertAccountsValidity } = require("./campaign-deployment.test.js").assertions;
+    assertCampaignStart, 
+    assertCampaignStartFailure,
+    assertStartParamsValidity 
+} = require("../assertions/start-assertions.js");
 const { log } = require("../../common/utils.js");
-const { expect } = require("chai");
-
-const assertCampaignStart = async (signers, params) => {
-    const start_tx_outcome = await startCampaign(signers, params);
-    await expect(start_tx_outcome.tx).to.emit(start_tx_outcome.contract, "CampaignStarted");
-    expect(start_tx_outcome.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
-    expect(start_tx_outcome.tokens).to.satisfy((tokens) => tokens === null || typeof tokens === 'object');
-    start_tx_outcome.tokens && expect(start_tx_outcome.tokens).to.include.keys('valid', 'invalid');
-    start_tx_outcome.tokens && expect(start_tx_outcome.tokens.valid).to.be.a("array").that.is.not.empty;
-    start_tx_outcome.tokens && expect(start_tx_outcome.tokens.invalid).to.be.a("object");
-    return {
-        campaignId: start_tx_outcome.campaignId,
-        tokens: start_tx_outcome.tokens
-    }
-}
-
-const assertCampaignStartFailure = async (signers, params) => {
-    const start_tx_outcome = await startCampaign(signers, params);
-    await expect(start_tx_outcome.method).to.be.reverted;
-    expect(start_tx_outcome.tx).to.be.null;
-}
 
 const test_start_request_fails_if_is_not_from_owner = async (contract, accounts) => {
     log();
@@ -44,7 +25,9 @@ const test_start_fails_if_is_not_from_donor = async (contract, accounts) => {
 
     const _signers = assertAccountsValidity(contract, accounts);
 
-    const _params = await prepareStartParams({ from: _signers.other });
+    const _params = await prepareStartParams({ 
+        from: _signers.other 
+    }).then(assertStartParamsValidity);
 
     await assertCampaignStartFailure(_signers, _params);
 }
@@ -55,7 +38,9 @@ const test_campaign_start = async (contract, accounts) => {
 
     const _signers = assertAccountsValidity(contract, accounts);
 
-    const _params = await prepareStartParams({ from: _signers.donor });
+    const _params = await prepareStartParams({ 
+        from: _signers.donor 
+    }).then(assertStartParamsValidity);
 
     await assertCampaignStart(_signers, _params);
 }
@@ -66,21 +51,17 @@ const test_start_fails_if_is_already_started = async (contract, accounts) => {
 
     const _signers = assertAccountsValidity(contract, accounts);
 
-    let _params = await prepareStartParams({ from: _signers.donor });
+    let _params = await prepareStartParams({ 
+        from: _signers.donor
+    }).then(assertStartParamsValidity);
 
     await assertCampaignStart(_signers, _params);
     await assertCampaignStartFailure(_signers, _params);
 }   
 
 module.exports = {
-    assertions: {
-        assertCampaignStart,
-        assertCampaignStartFailure
-    },
-    tests: {
-        test_start_request_fails_if_is_not_from_owner,
-        test_start_fails_if_is_not_from_donor,
-        test_campaign_start,
-        test_start_fails_if_is_already_started
-    }
+    test_start_request_fails_if_is_not_from_owner,
+    test_start_fails_if_is_not_from_donor,
+    test_campaign_start,
+    test_start_fails_if_is_already_started
 }
