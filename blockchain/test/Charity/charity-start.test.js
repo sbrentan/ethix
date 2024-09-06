@@ -29,7 +29,7 @@ const test_start_fails_if_seed_doesnt_match_commit_hash_seed = async (contract, 
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test token is not valid => revert]`, tabs = 2, sep = '');
+    log(`[Test seed doesn't match commit hash => revert]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -51,7 +51,7 @@ const test_start_fails_if_block_number_is_incorrect = async (contract, accounts)
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test campaign start]`, tabs = 2, sep = '');
+    log(`[Test block number is incorrect => revert]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -64,7 +64,7 @@ const test_start_fails_if_block_number_is_incorrect = async (contract, accounts)
     _params = await prepareStartParams({
         campaignId: _campaignId,
         seed: _params.seed,
-        automine: false
+        emulate: true
     }).then(assertStartParamsValidity);
     
     await assertCampaignStartFailure(_signers, _params);
@@ -75,7 +75,7 @@ const test_start_fails_if_signature_is_incorrect = async (contract, accounts) =>
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test token is not valid => revert]`, tabs = 2, sep = '');
+    log(`[Test signature is not valid => revert]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
