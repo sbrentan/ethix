@@ -47,6 +47,29 @@ const test_start_fails_if_seed_doesnt_match_commit_hash_seed = async (contract, 
     await assertCampaignStartFailure(_signers, _params);
 }
 
+const test_start_fails_if_block_number_is_incorrect = async (contract, accounts) => {
+    const _signers = await assertAccountsValidity(contract, accounts);
+
+    log();
+    log(`[Test campaign start]`, tabs = 2, sep = '');
+    
+    await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
+
+    let _params = await prepareCreationParams({ 
+        beneficiary: _signers.beneficiary 
+    }).then(assertCreationParamsValidity);
+
+    const _campaignId = await assertCampaignCreation(_signers, _params);
+
+    _params = await prepareStartParams({
+        campaignId: _campaignId,
+        seed: _params.seed,
+        automine: false
+    }).then(assertStartParamsValidity);
+    
+    await assertCampaignStartFailure(_signers, _params);
+}
+
 const test_start_fails_if_signature_is_incorrect = async (contract, accounts) => {
     
     const _signers = await assertAccountsValidity(contract, accounts);
@@ -98,6 +121,7 @@ const test_campaign_start = async (contract, accounts) => {
 module.exports = {
     test_not_existing_campaign,
     test_start_fails_if_seed_doesnt_match_commit_hash_seed,
+    test_start_fails_if_block_number_is_incorrect,
     test_start_fails_if_signature_is_incorrect,
     test_campaign_start
 }

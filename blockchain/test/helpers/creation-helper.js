@@ -77,7 +77,7 @@ const createCampaign = async (signers, params) => {
 
     try {
         
-        log(`[Pre] Block number: ${await web3.eth.getBlockNumber()}`);
+        log(`[Pre-creation] Block number: ${await web3.eth.getBlockNumber()}`);
 
         const create_tx = await campaignCreate();
         const create_receipt = await create_tx.wait();
@@ -85,8 +85,9 @@ const createCampaign = async (signers, params) => {
         const campaign_address = await owner_contract.getCampaignAddress(campaignId);
         const campaign = await ethers.getContractAt("Campaign", campaign_address);
 
-        log(`[Post] Block number: ${create_receipt.blockNumber}`);
-
+        log();
+        log(`Creation process:`, tabs = 3, sep = '');
+        log(`[Post-creation] Block number: ${await web3.eth.getBlockNumber()}`);
         log(`Campaign ID: ${campaignId}`);
         log(`Campaign contract address: ${campaign_address}`);
 

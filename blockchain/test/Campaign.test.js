@@ -3,8 +3,6 @@ const buildCampaign = require("../ignition/modules/Campaign");
 
 const { log } = require("../common/utils.js");
 
-require("@nomicfoundation/hardhat-chai-matchers");
-
 // Deployment test cases
 const {
 	test_contract_is_deployed,

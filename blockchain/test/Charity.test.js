@@ -4,8 +4,6 @@ const buildCampaign = require("../ignition/modules/Campaign");
 
 const { log } = require("../common/utils.js");
 
-require("@nomicfoundation/hardhat-chai-matchers");
-
 // Deployment test cases
 const {
 	test_contract_is_deployed,
@@ -35,6 +33,7 @@ const {
 const {
 	test_not_existing_campaign,
 	test_start_fails_if_seed_doesnt_match_commit_hash_seed,
+	test_start_fails_if_block_number_is_incorrect,
 	test_start_fails_if_signature_is_incorrect,
 	test_campaign_start
 } = require("./Charity/charity-start.test.js");
@@ -160,11 +159,14 @@ describe("Charity", function () {
 		// should revert if the seed doesn't match the commitHash of the creation
 		it("T002 - Should revert if the seed doesn't match the commitHash of the creation", () => test_start_fails_if_seed_doesnt_match_commit_hash_seed(charity, accounts));
 
+		// should revert if the block number is incorrect
+		it("T003 - Should revert if the block number is incorrect", () => test_start_fails_if_block_number_is_incorrect(charity, accounts));
+
 		// should revert if the signature is incorrect
-		it("T003 - Should revert if the signature is incorrect", () => test_start_fails_if_signature_is_incorrect(charity, accounts));
+		it("T004 - Should revert if the signature is incorrect", () => test_start_fails_if_signature_is_incorrect(charity, accounts));
 
 		// should start the campaign
-		it("T004 - Should start the campaign", () => test_campaign_start(charity, accounts));
+		it("T005 - Should start the campaign", () => test_campaign_start(charity, accounts));
 
 	});
 

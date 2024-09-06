@@ -57,6 +57,7 @@ const assertStartParamsValidity = (params) => {
     params?.generateTokens !== undefined && expect(params.generateTokens).to.be.a("boolean");
     params?.amount && expect(params.amount).to.be.a("number").that.is.at.least(0);
     params?.decode !== undefined && expect(params.decode).to.be.a("boolean");
+    params?.automine !== undefined && expect(params.automine).to.be.a("boolean");
     params?.value && expect(params.value).to.be.a("number").that.is.greaterThan(0);
     params?.from && expect(params.from).to.be.a("string").that.matches(/^0x[a-fA-F0-9]{40}$/);
 

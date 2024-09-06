@@ -29,6 +29,7 @@ const prepareStartParams = async (params = {}) => {
     const _generateTokens = params.generateTokens || false;
     const _amount = params.amount || DEFAULT_GENERATED_TOKENS;
     const _decode = params.decode || false;
+    const _automine = params.automine == false ? false : true;
     const _value = params.value || DEFAULT_VALUE;
     const _from = !is_charity_test && (params.from.address || web3.eth.accounts.create().address);
 
@@ -42,6 +43,7 @@ const prepareStartParams = async (params = {}) => {
     log(`Generate tokens: ${_generateTokens}`);
     log(`Amount of valid tokens: ${_amount}`);
     log(`Decode: ${_decode}`);
+    log(`Automine: ${_automine}`);
     log(`Value: ${_value} ETH`);
 
     let return_params = {};
@@ -51,6 +53,7 @@ const prepareStartParams = async (params = {}) => {
     return_params.generateTokens = _generateTokens;
     return_params.amount = _amount;
     return_params.decode = _decode;
+    return_params.automine = _automine;
     return_params.value = _value;
 
     is_charity_test && (return_params.campaignId = _campaignId);
@@ -74,12 +77,24 @@ const startCampaign = async (signers, params) => {
 
     const campaignStart = () =>
         is_charity_test
-            ? donor_contract.startCampaign(
-                params.campaignId,
-                params.seed,
-                params.wallet.address,
-                params.signature,
-                {
+            ? params.automine
+                ? donor_contract.startCampaign(
+                    params.campaignId,
+                    params.seed,
+                    params.wallet.address,
+                    params.signature,
+                    {
+                        value: web3.utils.toWei(`${params.value}`, 'ether')
+                    })
+                : ethers.provider.call({
+                    to: donor_contract.target,
+                    data: donor_contract.interface.encodeFunctionData("startCampaign", [
+                        params.campaignId,
+                        params.seed,
+                        params.wallet.address,
+                        params.signature
+                    ]),
+                    from: signers.donor.address,
                     value: web3.utils.toWei(`${params.value}`, 'ether')
                 })
             : owner_contract.start(
@@ -92,13 +107,15 @@ const startCampaign = async (signers, params) => {
             )
 
     try {
-        log(`[Pre] Block number: ${await web3.eth.getBlockNumber()}`);
+        log(`[Pre-start] Block number: ${await web3.eth.getBlockNumber()}`);
 
         const start_tx = await campaignStart();
         const start_receipt = await start_tx.wait();
         const campaignId = start_receipt?.logs[0]?.data; // campaign id
 
-        log(`[Post] Block number: ${start_receipt.blockNumber}`);
+        log();
+        log(`Start process:`, tabs = 3, sep = '');
+        log(`[Post-start] Block number: ${await web3.eth.getBlockNumber()}`);
 
         params.campaignId = campaignId;
 
