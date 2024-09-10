@@ -13,10 +13,10 @@ const generateToken = async (contract, params, index = 0, valid = true) => {
 
     const is_charity_test = getTestName() === "Charity";
 
-    const campaignId = params.campaignId;
-    const seed = params.seed;
-    const wallet = params.wallet;
-    const decode = params.decode;
+    const campaignId = params?.campaignId;
+    const seed = params?.seed;
+    const wallet = params?.wallet;
+    const decode = params?.decode;
 
     try {
 
@@ -90,21 +90,26 @@ const generateToken = async (contract, params, index = 0, valid = true) => {
 const alterToken = (token, params) => {
     if (!token) return null;
 
-    if (params.remove_signature) delete token.decoded.signature;
-    if (params.remove_campaignId) delete token.decoded.campaignId;
-    if (params.remove_tokenId) delete token.decoded.tokenId;
+    if (params?.remove_signature) delete token.decoded.signature;
+    if (params?.remove_campaignId) delete token.decoded.campaignId;
+    if (params?.remove_tokenId) delete token.decoded.tokenId;
 
-    log();
-    log(`Altered token:`);
-    logJson(token.decoded);
+    if(token?.decoded){
 
-    const altered = {
-        jwt: jwt.sign(token.decoded, process.env.REFRESH_TOKEN_SECRET || ""),
-        seed: token.seed,
-        salt: token.salt
+        log();
+        log(`Altered token:`);
+        logJson(token.decoded);
+
+        const altered = {
+            jwt: jwt.sign(token.decoded, process.env.REFRESH_TOKEN_SECRET || ""),
+            seed: token.seed,
+            salt: token.salt
+        }
+
+        return altered;
     }
 
-    return altered;
+    return null;
 }
 
 const decodeToken = (jwtToken) => {
@@ -119,37 +124,40 @@ const validateToken = async (contract, token) => {
 
     let campaignId, t15_token, signature;
 
-    
-    log();
-    log(`Token validation:`, tabs = 3, sep = '');
+    try{
+        log();
+        log(`Token validation:`, tabs = 3, sep = '');
 
-    log(`JWT token: ${token.jwt.slice(0, DEFAULT_SLICE) + "........." + token.jwt.slice(-DEFAULT_SLICE)}`);
+        log(`JWT token: ${token.jwt.slice(0, DEFAULT_SLICE) + "........." + token.jwt.slice(-DEFAULT_SLICE)}`);
 
-    const decoded = jwt.verify(token.jwt, process.env.REFRESH_TOKEN_SECRET || "");
+        const decoded = jwt.verify(token.jwt, process.env.REFRESH_TOKEN_SECRET || "");
 
-    log(`Decoded JWT:`);
-    logJson(decoded);
+        log(`Decoded JWT:`);
+        logJson(decoded);
 
-    campaignId = decoded?.campaignId;
-    const t1_token = decoded?.tokenId;
-    signature = decoded?.signature;
-    const salt = token.salt;
-    const seed = token.seed;
+        campaignId = decoded?.campaignId;
+        const t1_token = decoded?.tokenId;
+        signature = decoded?.signature;
+        const salt = token?.salt;
+        const seed = token?.seed;
 
-    log(`T1 token: ${t1_token}`);
-    log(`Token_seed: ${seed}`);
-    log(`Token_salt: ${salt}`);
+        log(`T1 token: ${t1_token}`);
+        log(`Token_seed: ${seed}`);
+        log(`Token_salt: ${salt}`);
 
-    t15_token = '0x' + crypto.createHash('sha256').update(t1_token + salt).digest('hex');
+        t15_token = '0x' + crypto.createHash('sha256').update(t1_token + salt).digest('hex');
 
-    log(`T15_token: ${t15_token}`);
+        log(`T15_token: ${t15_token}`);
 
-    log(`Signature:`);
-    if (signature) {
-        log(`r: ${signature.r}`, tabs = 4, sep = '*');
-        log(`s: ${signature.s}`, tabs = 4, sep = '*');
-        log(`v: ${signature.v}`, tabs = 4, sep = '*');
-    } else log(`Signature not found!`);
+        log(`Signature:`);
+        if (signature) {
+            log(`r: ${signature.r}`, tabs = 4, sep = '*');
+            log(`s: ${signature.s}`, tabs = 4, sep = '*');
+            log(`v: ${signature.v}`, tabs = 4, sep = '*');
+        } else log(`Signature not found!`);
+    } catch (e) {
+        log(`Token decoding failed!`);
+    }
 
     let is_token_valid = false;
 

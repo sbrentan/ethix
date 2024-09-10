@@ -21,17 +21,17 @@ const prepareStartParams = async (params = {}) => {
     const _rwallet = web3.eth.accounts.create();
 
     const _randomString = is_charity_test && web3.utils.randomHex(32);
-    const _campaignId = is_charity_test && (params.campaignId || web3.utils.keccak256(_randomString));
-    const _seed = params.seed || web3.utils.randomHex(32);
+    const _campaignId = is_charity_test && (params?.campaignId || web3.utils.keccak256(_randomString));
+    const _seed = params?.seed || web3.utils.randomHex(32);
     const _combinedHash = is_charity_test && encodePacked(_rwallet.address, _campaignId);
-    const private_key = is_charity_test && params.private_key || getPrivateKey();
+    const private_key = is_charity_test && params?.private_key || getPrivateKey();
     const _sigdata = is_charity_test && await web3.eth.accounts.sign(_combinedHash, private_key);
-    const _generateTokens = params.generateTokens || false;
-    const _amount = params.amount || DEFAULT_GENERATED_TOKENS;
-    const _decode = params.decode || false;
-    const _emulate = params.emulate || false;
-    const _value = params.value || DEFAULT_VALUE;
-    const _from = !is_charity_test && (params.from.address || web3.eth.accounts.create().address);
+    const _generateTokens = params?.generateTokens || false;
+    const _amount = params?.amount || DEFAULT_GENERATED_TOKENS;
+    const _decode = params?.decode || false;
+    const _emulate = params?.emulate || false;
+    const _value = params?.value || DEFAULT_VALUE;
+    const _from = !is_charity_test && (params?.from?.address || web3.eth.accounts.create().address);
 
     log();
     log(`Start params:`, tabs = 3, sep = '');

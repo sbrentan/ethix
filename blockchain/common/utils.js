@@ -55,7 +55,7 @@ const getTestName = () => {
     const lines = stack.split("\n");
 
     for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes("/Charity/")) {
+        if (lines[i].includes("Charity")) {
             return "Charity";
         }
     }

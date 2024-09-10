@@ -15,19 +15,19 @@ const {
 } = require('../../common/utils.js');
 
 const prepareCreationParams = async (params = {}) => {
-    const _title = params.title || DEFAULT_TITLE;
+    const _title = params?.title || DEFAULT_TITLE;
 
     const _block = await web3.eth.getBlock("latest");
-    const _startingDate = params.startingDate || Math.floor(_block.timestamp + (DEFAULT_STARTDATE_SHIFT * HOUR));
-    const _deadline = params.deadline || Math.floor(_startingDate + (DEFAULT_DEADLINE_SHIFT * HOUR));
+    const _startingDate = params?.startingDate || Math.floor(_block.timestamp + (DEFAULT_STARTDATE_SHIFT * HOUR));
+    const _deadline = params?.deadline || Math.floor(_startingDate + (DEFAULT_DEADLINE_SHIFT * HOUR));
 
-    const _tokenGoal = params.tokenGoal || DEFAULT_TOKEN_GOAL;
-    const _maxTokens = params.maxTokens || DEFAULT_MAX_TOKENS;
-    const _beneficiary = params.beneficiary.address || web3.eth.accounts.create().address;
+    const _tokenGoal = params?.tokenGoal || DEFAULT_TOKEN_GOAL;
+    const _maxTokens = params?.maxTokens || DEFAULT_MAX_TOKENS;
+    const _beneficiary = params?.beneficiary?.address || web3.eth.accounts.create().address;
 
     const _seed = web3.utils.randomHex(32);
     const _seedHash = web3.utils.keccak256(_seed);
-    const private_key = params.private_key || getPrivateKey();
+    const private_key = params?.private_key || getPrivateKey();
     const _sigdata = await web3.eth.accounts.sign(_seedHash, private_key);
 
     log();

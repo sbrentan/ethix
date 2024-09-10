@@ -13,9 +13,9 @@ const prepareEndParams = async (params = {}) => {
     const is_charity_test = getTestName() === "Charity";
 
     const _randomString = web3.utils.randomHex(32);
-    const _campaignId = params.campaignId || web3.utils.keccak256(_randomString);
-    const _from = !is_charity_test && (params.from.address || web3.eth.accounts.create().address);
-    const _increaseTime = params.increaseTime === false ? false : true;
+    const _campaignId = params?.campaignId || web3.utils.keccak256(_randomString);
+    const _from = !is_charity_test && (params?.from?.address || web3.eth.accounts.create().address);
+    const _increaseTime = params?.increaseTime === false ? false : true;
 
     log();
     log(`End params:`, tabs = 3, sep = '');
