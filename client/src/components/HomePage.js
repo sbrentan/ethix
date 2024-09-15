@@ -100,18 +100,18 @@ const HomePage = () => {
 											/>
 										),
 									},
-									{
-										children: (
-											<Text style={{ fontSize: 16 }}>
-												Waiting for approval
-											</Text>
-										),
-										dot: (
-											<ClockCircleOutlined
-												style={{ fontSize: 20 }}
-											/>
-										),
-									},
+									// {
+									// 	children: (
+									// 		<Text style={{ fontSize: 16 }}>
+									// 			Waiting for approval
+									// 		</Text>
+									// 	),
+									// 	dot: (
+									// 		<ClockCircleOutlined
+									// 			style={{ fontSize: 20 }}
+									// 		/>
+									// 	),
+									// },
 									{
 										children: (
 											<Text style={{ fontSize: 16 }}>
@@ -140,9 +140,11 @@ const HomePage = () => {
 								]}
 								style={{ marginTop: 20 }}
 							/>
-							<Button type="primary" shape="round" size="large">
-								Discover More
-							</Button>
+                            <Link to={"/donor/donorCampaigns"}>
+                                <Button type="primary" shape="round" size="large">
+                                    Start Now
+                                </Button>
+                            </Link>
 						</Space>
 						<Image src="https://www.wordstormpr.com.au/wp-content/uploads/2014/07/charity.png" width={350} preview={false} />
 					</Space>
