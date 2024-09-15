@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./Campaign.sol";
+import "hardhat/console.sol";
 
 contract Charity {
     // Charity contract roles:
@@ -15,12 +16,6 @@ contract Charity {
     // Charity events
     event OrganizationVerified();
     event OrganizationRevoked();
-
-    // Campaign events
-    event CampaignStarted(bytes32 campaignId); // useless since it's an input parameter of the startCampaign function
-    event CampaignCreated(bytes32 campaignId);
-    event RefundClaimed(uint256 amount);
-    event DonationClaimed(uint256 amount);
 
     // ====================================== STRUCTS ======================================
 
@@ -50,6 +45,9 @@ contract Charity {
     // ====================================== MODIFIERS ======================================
 
     modifier onlyOwner() {
+        /*console.log("msg.sender: ", msg.sender);
+        console.log("owner: ", owner);
+        console.log("msg.sender == owner: ", msg.sender == owner);*/
         require(msg.sender == owner, "Only the owner can perform this action");
         _;
     }
@@ -107,6 +105,7 @@ contract Charity {
         bytes32 _commitHash, // is the hash of the seed
         Campaign.Signature calldata _signature
     ) external onlyVerifiedBeneficiary(_beneficiary) {
+
         // generate a unique ID for the campaign
         bytes32 campaignId = _generateCampaignId(
             msg.sender,
@@ -117,6 +116,10 @@ contract Charity {
         // require that the campaignId doesn't already exist in the mapping
         require(!campaignExists(campaignId), "Campaign already exists");
 
+        /*console.log("creation starting date: ");
+        console.log(_startingDate);
+        console.log("creation block.timestamp: ");
+        console.log(block.timestamp);*/
         require(
             _startingDate < _deadline,
             "Starting date must be before the deadline"
@@ -139,6 +142,8 @@ contract Charity {
 
         // save the commit hash and the block number for future CRR `reveal` verification
         commits[campaignId] = Commit(_commitHash, block.number);
+        /*console.log("block number on creation: ");
+        console.log(block.number);*/
 
         // create the campaign, add it to the mapping and the list of campaigns IDs
         campaigns[campaignId] = new Campaign(
@@ -152,8 +157,6 @@ contract Charity {
             _maxTokensCount
         );
         campaignsIds.push(campaignId);
-
-        emit CampaignCreated(campaignId);
     }
 
     // fund and start an existing campaign
@@ -166,12 +169,19 @@ contract Charity {
     ) external payable onlyExistingCampaign(_campaignId) {
         Campaign campaign = campaigns[_campaignId];
 
+        /*console.log("block number on funding: ");
+        console.log(block.number);*/
+
+
         // require that a commit exists for the campaign
         require(
             commits[_campaignId].commitHash != 0,
             "Campaign has already been started"
         );
         Commit memory commitData = commits[_campaignId];
+
+        /*console.log("commit block number: ");
+        console.log(commitData.blockNumber);*/
 
         // require that the seed matches the commit
         require(
@@ -206,8 +216,6 @@ contract Charity {
             _campaignWallet,
             msg.sender
         );
-
-        emit CampaignStarted(_campaignId);
     }
 
     // returns the IDs of all campaigns
@@ -232,7 +240,6 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimRefund(msg.sender);
-        emit RefundClaimed(campaigns[_campaignId].getDetails().refunds);
     }
 
     // claim a donation for an ended campaign
@@ -240,7 +247,6 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimDonation(msg.sender);
-        emit DonationClaimed(campaigns[_campaignId].getDetails().donations);
     }
 
     // redeem a batch of tokens
@@ -263,6 +269,18 @@ contract Charity {
         }
 
         return campaigns[_campaignId].isTokenValid(_tokenId, _signature);
+    }
+
+    function getCampaignAddress(
+        bytes32 _campaignId
+    )
+        external
+        view
+        onlyExistingCampaign(_campaignId)
+        onlyOwner
+        returns (address)
+    {
+        return address(campaigns[_campaignId]);
     }
 
     function generateTokenHashes(
