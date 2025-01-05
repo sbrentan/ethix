@@ -13,9 +13,16 @@ contract Charity {
 
     // ====================================== EVENTS ======================================
 
-    // Charity events
+    // Organization events
     event OrganizationVerified();
     event OrganizationRevoked();
+
+    // Campaign events
+    event CampaignCreated(bytes32 campaignId);
+    event CampaignStarted(bytes32 campaignId);
+    event TokensRedeemed(uint256 count);
+    event RefundClaimed(uint256 amount);
+    event DonationClaimed(uint256 amount);
 
     // ====================================== STRUCTS ======================================
 
@@ -157,6 +164,8 @@ contract Charity {
             _maxTokensCount
         );
         campaignsIds.push(campaignId);
+        
+        emit CampaignCreated(campaignId);
     }
 
     // fund and start an existing campaign
@@ -216,6 +225,8 @@ contract Charity {
             _campaignWallet,
             msg.sender
         );
+
+        emit CampaignStarted(_campaignId);
     }
 
     // returns the IDs of all campaigns
@@ -240,6 +251,7 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimRefund(msg.sender);
+        emit RefundClaimed(campaigns[_campaignId].getDetails().refunds);
     }
 
     // claim a donation for an ended campaign
@@ -247,6 +259,7 @@ contract Charity {
         bytes32 _campaignId
     ) external onlyExistingCampaign(_campaignId) {
         campaigns[_campaignId].claimDonation(msg.sender);
+        emit DonationClaimed(campaigns[_campaignId].getDetails().donations);
     }
 
     // redeem a batch of tokens
@@ -256,6 +269,7 @@ contract Charity {
         Campaign.Signature[] calldata _signatures
     ) external onlyExistingCampaign(_campaignId) onlyOwner {
         campaigns[_campaignId].redeemTokensBatch(_tokens, _signatures);
+        emit TokensRedeemed(campaigns[_campaignId].getDetails().redeemedTokensCount);
     }
 
     // function to check if a token is valid
