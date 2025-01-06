@@ -13,7 +13,9 @@ const test_start_request_fails_if_is_not_from_owner = async (contract, accounts)
 
     const _signers = assertAccountsValidity(contract, accounts);
 
-    const _params = await prepareStartParams({ from: _signers.donor });
+    const _params = await prepareStartParams({ 
+        from: _signers.donor 
+    }).then(assertStartParamsValidity);
 
     _signers.owner = _signers.other;
     await assertCampaignStartFailure(_signers, _params);
@@ -32,9 +34,23 @@ const test_start_fails_if_is_not_from_donor = async (contract, accounts) => {
     await assertCampaignStartFailure(_signers, _params);
 }
 
+const test_start_fails_if_is_already_funded = async (contract, accounts) => {
+    log();
+    log(`[Test campaign start fails if it is already funded]`, tabs = 2, sep = '');
+
+    const _signers = assertAccountsValidity(contract, accounts);
+
+    let _params = await prepareStartParams({ 
+        from: _signers.donor
+    }).then(assertStartParamsValidity);
+
+    await assertCampaignStart(_signers, _params);
+    await assertCampaignStartFailure(_signers, _params);
+}  
+
 const test_campaign_start = async (contract, accounts) => {
     log();
-    log(`[Test campaign start]`, tabs = 2, sep = '');
+    log(`[Test successful campaign start]`, tabs = 2, sep = '');
 
     const _signers = assertAccountsValidity(contract, accounts);
 
@@ -45,23 +61,9 @@ const test_campaign_start = async (contract, accounts) => {
     await assertCampaignStart(_signers, _params);
 }
 
-const test_start_fails_if_is_already_started = async (contract, accounts) => {
-    log();
-    log(`[Test campaign start fails if is already started/funded]`, tabs = 2, sep = '');
-
-    const _signers = assertAccountsValidity(contract, accounts);
-
-    let _params = await prepareStartParams({ 
-        from: _signers.donor
-    }).then(assertStartParamsValidity);
-
-    await assertCampaignStart(_signers, _params);
-    await assertCampaignStartFailure(_signers, _params);
-}   
-
 module.exports = {
     test_start_request_fails_if_is_not_from_owner,
     test_start_fails_if_is_not_from_donor,
-    test_campaign_start,
-    test_start_fails_if_is_already_started
+    test_start_fails_if_is_already_funded,
+    test_campaign_start
 }

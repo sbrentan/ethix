@@ -9,12 +9,16 @@ const {
 	test_owner_is_correct
 } = require("./Campaign/tests/campaign-deployment.test.js");
 
+const {
+	test_campaign_constructor_parameter_assignments
+} = require("./Campaign/tests/campaign-creation.test.js");
+
 // Campaign start/funding test cases
 const {
 	test_start_request_fails_if_is_not_from_owner,
 	test_start_fails_if_is_not_from_donor,
-	test_campaign_start,
-	test_start_fails_if_is_already_started
+	test_start_fails_if_is_already_funded,
+	test_campaign_start
 } = require("./Campaign/tests/campaign-start.test.js");
 
 // Token redeeming test cases
@@ -83,6 +87,15 @@ describe("Campaign", function () {
 
 	});
 
+	describe("Creation", function () {
+
+		after(() => log());
+
+		// should get the proper assignment
+		it("T001 - Should get a proper assignment for initial creation parameters", () => test_campaign_constructor_parameter_assignments(campaign, accounts));
+
+	});
+
 	describe("Start and funding", function () {
 
 		after(() => log());
@@ -98,7 +111,7 @@ describe("Campaign", function () {
 		it("T003 - Should start the campaign", () => test_campaign_start(campaign, accounts));
 
 		// should revert if the campaign has been already funded
-		it("T004 - Should revert if the campaign has been already funded", () => test_start_fails_if_is_already_started(campaign, accounts));
+		it("T004 - Should revert if the campaign has been already funded", () => test_start_fails_if_is_already_funded(campaign, accounts));
 
 	});
 

@@ -1,34 +1,17 @@
 const { startCampaign } = require("../helpers/start-helper.js");
-const { decodeToken } = require("../helpers/token-helper.js");
 const { expect } = require("chai");
 
 const assertCampaignStart = async (signers, params) => {
     const start_tx_outcome = await startCampaign(signers, params);
-    await expect(start_tx_outcome.tx).to.emit(start_tx_outcome.contract, "CampaignStarted");
-    expect(start_tx_outcome.campaignId).to.match(/^0x[0-9a-fA-F]{64}$/);
+    expect(start_tx_outcome.tx).to.not.be.reverted;
     
-    if (start_tx_outcome.tokens) {
-        expect(start_tx_outcome.tokens).to.include.keys('valid', 'invalid');
-        expect(start_tx_outcome.tokens.valid).to.be.a("array");
-        
-        start_tx_outcome.tokens.valid.forEach(token => {
-            expect(token).to.have.property('jwt').that.is.a('string');
-            expect(decodeToken(token.jwt)).to.not.be.null;
-            expect(token).to.have.property('salt').that.matches(/^[0-9a-fA-F]{64}$/);
-            expect(token).to.have.property('seed').that.matches(/^[0-9a-fA-F]{64}$/);
-        });
+    const details = start_tx_outcome.details;
+    expect(details).to.be.an("object");
+    expect(details).to.have.property('initialDeposit').that.is.a("number").and.is.greaterThan(0);
+    expect(details).to.have.property('refunds').that.is.a("number").and.is.equal(details.initialDeposit);
+    expect(details).to.have.property('funded').that.is.a("boolean").and.is.true;
 
-        expect(start_tx_outcome.tokens.invalid).to.be.a("object");
-        expect(start_tx_outcome.tokens.invalid).to.have.property('jwt').that.is.a('string');
-        expect(decodeToken(start_tx_outcome.tokens.invalid.jwt)).to.not.be.null;
-        expect(start_tx_outcome.tokens.invalid).to.have.property('salt').that.matches(/^[0-9a-fA-F]{64}$/);
-        expect(start_tx_outcome.tokens.invalid).to.have.property('seed').that.matches(/^[0-9a-fA-F]{64}$/);
-    }
-
-    return {
-        campaignId: start_tx_outcome.campaignId,
-        tokens: start_tx_outcome.tokens
-    }
+    return details;
 }
 
 const assertCampaignStartFailure = async (signers, params) => {
