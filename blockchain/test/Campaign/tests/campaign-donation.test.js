@@ -5,7 +5,6 @@ const {
     assertCampaignStart,
     assertStartParamsValidity
 } = require("../assertions/start-assertions.js");
-const { assertTokenValidity } = require("../assertions/token-assertions.js");
 const {
     assertDonationClaim,
     assertDonationClaimFailure,
@@ -23,10 +22,9 @@ const test_donation_claim_request_fails_if_is_not_from_owner = async (contract, 
         from: _signers.donor
     }).then(assertStartParamsValidity);
 
-    const { campaignId } = await assertCampaignStart(_signers, _params);
+    await assertCampaignStart(_signers, _params);
 
     _params = await prepareEndParams({
-        campaignId: campaignId,
         from: _signers.beneficiary
     }).then(assertEndParamsValidity);
 
@@ -36,7 +34,7 @@ const test_donation_claim_request_fails_if_is_not_from_owner = async (contract, 
 
 const test_donation_claim_fails_if_is_not_from_beneficiary = async (contract, accounts) => {
     log();
-    log("[Test donation claim fails if is not from donor]", 1);
+    log("[Test donation claim fails if is not from beneficiary]", 1);
 
     const _signers = assertAccountsValidity(contract, accounts);
 
@@ -44,10 +42,9 @@ const test_donation_claim_fails_if_is_not_from_beneficiary = async (contract, ac
         from: _signers.donor 
     }).then(assertStartParamsValidity);
 
-    const { campaignId } = await assertCampaignStart(_signers, _params);
+    await assertCampaignStart(_signers, _params);
 
     _params = await prepareEndParams({
-        campaignId: campaignId,
         from: _signers.other
     }).then(assertEndParamsValidity);
 
@@ -64,10 +61,9 @@ const test_donation_claim_fails_if_campaign_is_not_ended = async (contract, acco
         from: _signers.donor 
     }).then(assertStartParamsValidity);
 
-    const { campaignId } = await assertCampaignStart(_signers, _params);
+    await assertCampaignStart(_signers, _params);
 
     _params = await prepareEndParams({
-        campaignId: campaignId,
         from: _signers.beneficiary,
         increaseTime: false
     }).then(assertEndParamsValidity);
@@ -85,10 +81,9 @@ const test_donation_claim_fails_if_is_already_claimed = async (contract, account
         from: _signers.donor 
     }).then(assertStartParamsValidity);
 
-    const { campaignId } = await assertCampaignStart(_signers, _params);
+    await assertCampaignStart(_signers, _params);
 
     _params = await prepareEndParams({
-        campaignId: campaignId,
         from: _signers.beneficiary
     }).then(assertEndParamsValidity);
     
@@ -104,10 +99,7 @@ const test_donation_claim_fails_if_campaign_is_not_funded = async (contract, acc
 
     const _signers = assertAccountsValidity(contract, accounts);
 
-    let _campaignId = (await contract.getDetails())[0];
-
     _params = await prepareEndParams({
-        campaignId: _campaignId,
         from: _signers.beneficiary
     }).then(assertEndParamsValidity);
 
@@ -121,16 +113,12 @@ const test_donation_claim_succeeds = async (contract, accounts) => {
     const _signers = assertAccountsValidity(contract, accounts);
 
     let _params = await prepareStartParams({ 
-        from: _signers.donor,
-        generateTokens: true 
+        from: _signers.donor
     }).then(assertStartParamsValidity);
 
-    const { campaignId, tokens } = await assertCampaignStart(_signers, _params);
-
-    await assertTokenValidity(_signers.owner.contract, tokens.valid[0]);
+    await assertCampaignStart(_signers, _params);
 
     _params = await prepareEndParams({
-        campaignId: campaignId,
         from: _signers.beneficiary
     }).then(assertEndParamsValidity);
     
