@@ -3,9 +3,11 @@ const { expect } = require("chai");
 
 const assertTokenValidity = async (contract, token) => {
     const validate_tx_outcome = await validateToken(contract, token);
-    await expect(validate_tx_outcome.tx).to.emit(validate_tx_outcome.contract, "TokensRedeemed");
-    expect(validate_tx_outcome.is_redeemable).to.be.true;
-    expect(validate_tx_outcome.redemeed_tokens).to.be.a("number").that.is.greaterThan(0);
+    expect(validate_tx_outcome.tx).to.not.be.reverted;
+    expect(validate_tx_outcome.is_redeemable).to.be.a("boolean").that.is.true;
+
+    expect(validate_tx_outcome.prev_tokens_count).to.be.a("number").that.is.greaterThanOrEqual(0);
+    expect(validate_tx_outcome.post_tokens_count).to.be.an("number").that.is.greaterThan(validate_tx_outcome.prev_tokens_count);
 }
 
 const assertTokenValidityFailure = async (contract, token) => {

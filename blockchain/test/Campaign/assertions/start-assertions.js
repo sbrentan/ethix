@@ -1,4 +1,5 @@
 const { startCampaign } = require("../helpers/start-helper.js");
+const { decodeToken } = require("../helpers/token-helper.js");
 const { expect } = require("chai");
 
 const assertCampaignStart = async (signers, params) => {
@@ -11,7 +12,29 @@ const assertCampaignStart = async (signers, params) => {
     expect(details).to.have.property('refunds').that.is.a("number").and.is.equal(details.initialDeposit);
     expect(details).to.have.property('funded').that.is.a("boolean").and.is.true;
 
-    return details;
+    const tokens = start_tx_outcome.tokens;
+    if (tokens) {
+        expect(tokens).to.include.keys('valid', 'invalid');
+        expect(tokens.valid).to.be.a("array");
+        
+        tokens.valid.forEach(token => {
+            expect(token).to.have.property('jwt').that.is.a('string');
+            expect(decodeToken(token.jwt)).to.not.be.null;
+            expect(token).to.have.property('salt').that.matches(/^[0-9a-fA-F]{64}$/);
+            expect(token).to.have.property('seed').that.matches(/^[0-9a-fA-F]{64}$/);
+        });
+
+        expect(tokens.invalid).to.be.a("object");
+        expect(tokens.invalid).to.have.property('jwt').that.is.a('string');
+        expect(decodeToken(tokens.invalid.jwt)).to.not.be.null;
+        expect(tokens.invalid).to.have.property('salt').that.matches(/^[0-9a-fA-F]{64}$/);
+        expect(tokens.invalid).to.have.property('seed').that.matches(/^[0-9a-fA-F]{64}$/);
+    }
+
+    return {
+        details: details,
+        tokens: tokens
+    }
 }
 
 const assertCampaignStartFailure = async (signers, params) => {

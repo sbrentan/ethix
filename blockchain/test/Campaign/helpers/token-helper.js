@@ -1,8 +1,8 @@
 require('dotenv').config();
+const { getCampaign } = require('./common-helper.js');
 const {
     log,
     logJson,
-    getTestName,
     encodePacked
 } = require('../../../common/utils.js');
 const { DEFAULT_SLICE } = require('../../../common/constants.js');
@@ -11,12 +11,10 @@ const jwt = require('jsonwebtoken');
 
 const generateToken = async (contract, params, index = 0, valid = true) => {
 
-    const is_charity_test = getTestName() === "Charity";
-
     const campaignId = params?.campaignId;
     const seed = params?.seed;
-    const wallet = params?.wallet;
-    const decode = params?.decode;
+    let wallet = params?.wallet;
+    const include_decoded = params?.decode;
 
     try {
 
@@ -35,25 +33,21 @@ const generateToken = async (contract, params, index = 0, valid = true) => {
         const t15_token = '0x' + crypto.createHash('sha256').update(t1_token + tokenSalt).digest('hex');
         log(`T15_token: ${t15_token}`);
 
-        const t2_token =
-            is_charity_test
-                ? (await contract.generateTokenHashes(campaignId, [t15_token]))[0]
-                : await contract.generateTokenHash(t15_token);
+        const t2_token = await contract.generateTokenHash(t15_token);
 
         log(`T2_token: ${t2_token}`);
 
         log(`Campaign Id: ${campaignId}`);
         log(`Wallet private key: ${wallet.privateKey}`);
 
-        !valid && log(`Changing wallet to generate invalid signature...`);
-        const invalid_wallet = !valid && web3.eth.accounts.create();
-        !valid && log(`Invalid wallet private key: ${invalid_wallet.privateKey}`);
+        if (!valid) {
+            log(`Changing wallet to generate invalid signature...`);
+            wallet = web3.eth.accounts.create();
+            log(`Invalid wallet private key: ${wallet.privateKey}`);
+        }
 
         const _combinedHash = encodePacked(t2_token, campaignId);
-        const t2_signature =
-            valid
-                ? web3.eth.accounts.sign(_combinedHash, wallet.privateKey)
-                : web3.eth.accounts.sign(_combinedHash, invalid_wallet.privateKey);
+        const t2_signature = web3.eth.accounts.sign(_combinedHash, wallet.privateKey)
 
         log(`Signature: ${t2_signature.signature.slice(0, DEFAULT_SLICE) + "........." + t2_signature.signature.slice(-DEFAULT_SLICE)}`);
 
@@ -77,7 +71,8 @@ const generateToken = async (contract, params, index = 0, valid = true) => {
         return_params.seed = tokenSeed;
         return_params.salt = tokenSalt;
 
-        decode && (return_params.decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET || ""));
+        if (include_decoded)
+            return_params.decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET || "");
 
         return return_params;
 
@@ -120,9 +115,7 @@ const decodeToken = (jwtToken) => {
 
 const validateToken = async (contract, token) => {
 
-    const is_charity_test = getTestName() === "Charity";
-
-    let campaignId, t15_token, signature;
+    let t15_token, signature;
 
     try{
         log();
@@ -135,7 +128,6 @@ const validateToken = async (contract, token) => {
         log(`Decoded JWT:`);
         logJson(decoded);
 
-        campaignId = decoded?.campaignId;
         const t1_token = decoded?.tokenId;
         signature = decoded?.signature;
         const salt = token?.salt;
@@ -161,15 +153,9 @@ const validateToken = async (contract, token) => {
 
     let is_token_valid = false;
 
-    const tokenValid = () => 
-        is_charity_test
-            ? contract.isTokenValid(campaignId, t15_token, signature)
-            : contract.isTokenValid(t15_token, signature);
+    const tokenValid = () => contract.isTokenValid(t15_token, signature);
 
-    const tokenRedeem = () =>
-        is_charity_test
-            ? contract.redeemTokensBatch(campaignId, [t15_token], signature ? [signature] : [])
-            : contract.redeemTokensBatch([t15_token], signature ? [signature] : []);
+    const tokenRedeem = () => contract.redeemTokensBatch([t15_token], signature ? [signature] : []);
 
     try {
         is_token_valid = await tokenValid();
@@ -179,24 +165,18 @@ const validateToken = async (contract, token) => {
     }
 
     try {
+        const prev_tokens_count = (await getCampaign(contract))["redeemedTokenCount"];
+
         const redeem_tx = await tokenRedeem();
-        const redeem_receipt = await redeem_tx.wait();
-        const count_data = Number(redeem_receipt?.logs[0]?.data);
 
-        log(`Total redeemed tokens: ${count_data}`);
+        const post_tokens_count = (await getCampaign(contract))["redeemedTokenCount"];
 
-        const campaign_address = is_charity_test && await contract.getCampaignAddress(campaignId);
-        const campaign = is_charity_test && await ethers.getContractAt("Campaign", campaign_address);
-
-        let return_params = {};
-        
-        return_params.tx = redeem_tx;
-        return_params.is_redeemable = true;
-        return_params.redemeed_tokens = count_data;
-
-        return_params.contract = is_charity_test ? campaign : contract;
-
-        return return_params;
+        return {
+            tx: redeem_tx,
+            is_redeemable: true,
+            prev_tokens_count: prev_tokens_count,
+            post_tokens_count: post_tokens_count
+        }
 
     } catch (e) {
         return {
