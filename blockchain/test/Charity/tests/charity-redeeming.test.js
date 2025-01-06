@@ -1,7 +1,5 @@
-const {
-    prepareCreationParams,
-    getCampaign
-} = require("../helpers/creation-helper.js");
+const { getCampaign } = require("../helpers/common-helper.js");
+const { prepareCreationParams } = require("../helpers/creation-helper.js");
 const { prepareStartParams } = require("../helpers/start-helper.js");
 const { assertAccountsValidity } = require("../assertions/deployment-assertions.js");
 const { assertOrganizationVerification } = require("../assertions/verification-assertions.js");
