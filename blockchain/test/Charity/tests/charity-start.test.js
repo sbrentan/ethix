@@ -11,7 +11,7 @@ const {
     assertCampaignStartFailure,
     assertStartParamsValidity 
 } = require("../assertions/start-assertions.js");
-const { log } = require("../../common/utils.js");
+const { log } = require("../../../common/utils.js");
 
 const test_not_existing_campaign = async (contract, accounts) => {
     

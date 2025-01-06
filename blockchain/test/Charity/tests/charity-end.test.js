@@ -19,7 +19,7 @@ const {
     assertDonationClaimFailure,
     assertEndParamsValidity
 } = require("../assertions/end-assertions.js");
-const { log } = require("../../common/utils.js");
+const { log } = require("../../../common/utils.js");
 
 const test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => {
     

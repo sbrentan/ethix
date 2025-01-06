@@ -18,7 +18,7 @@ const {
     assertTokenValidityFailure,
     assertTokenCountToBe
 } = require("../assertions/token-assertions.js");
-const { log } = require("../../common/utils.js");
+const { log } = require("../../../common/utils.js");
 
 const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
     

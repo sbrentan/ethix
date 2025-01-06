@@ -5,7 +5,7 @@ const {
     assertOrganizationRevocation,
     assertOrganizationRevocationFailure
 } = require("../assertions/verification-assertions.js");
-const { log } = require("../../common/utils.js");
+const { log } = require("../../../common/utils.js");
 
 const test_verification_fails_from_non_owner = async (contract, accounts) => {
     log();

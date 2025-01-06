@@ -4,8 +4,8 @@ const {
     logJson,
     getTestName,
     encodePacked
-} = require('../../common/utils.js');
-const { DEFAULT_SLICE } = require('../../common/constants.js');
+} = require('../../../common/utils.js');
+const { DEFAULT_SLICE } = require('../../../common/constants.js');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 

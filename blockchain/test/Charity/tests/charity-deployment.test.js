@@ -3,7 +3,7 @@ const {
     assertProperAddress,
     assertEqualAddress 
 } = require("../assertions/deployment-assertions.js");
-const { log } = require("../../common/utils.js");
+const { log } = require("../../../common/utils.js");
 
 const test_contract_is_deployed = async (contract) => {
     log();

@@ -11,8 +11,8 @@ const {
     assertDifferentCampaignIds,
     assertCampaignToBeInArray
 } = require("../assertions/creation-assertions.js");
-const { log } = require("../../common/utils.js");
-const { HOUR } = require('../../common/constants.js');
+const { log } = require("../../../common/utils.js");
+const { HOUR } = require('../../../common/constants.js');
 
 const test_beneficiary_is_not_verified = async (contract, accounts) => {
     
@@ -33,7 +33,7 @@ const test_campaign_id_is_different = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test campaign id is different]`, tabs = 2, sep = '');
+    log(`[Test different campaigns have different ids]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -56,7 +56,7 @@ const test_dates_are_properly_defined = async (contract, accounts) => {
     let _deadline = Math.floor(_block.timestamp - (24 * HOUR));
 
     log();
-    log(`[Test dates are properly defined]`, tabs = 2, sep = '');
+    log(`[Test dates should be properly defined]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -107,7 +107,7 @@ const test_creation_signature_is_correct = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
     
     log();
-    log(`[Test signature is incorrect => revert]`, tabs = 2, sep = '');
+    log(`[Test server signature is incorrect => revert]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
     
@@ -125,7 +125,7 @@ const test_campaign_creation = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test campaign creation]`, tabs = 2, sep = '');
+    log(`[Test successful campaign creation]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
     

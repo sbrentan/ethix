@@ -2,11 +2,11 @@ const {
     log,
     increaseTime,
     getTestName 
-} = require('../../common/utils.js');
+} = require('../../../common/utils.js');
 const {
     DEFAULT_STARTDATE_SHIFT,
     DEFAULT_DEADLINE_SHIFT
-} = require('../../common/constants.js');
+} = require('../../../common/constants.js');
 
 const prepareEndParams = async (params = {}) => {
 

@@ -5,14 +5,14 @@ const {
     getPrivateKey,
     encodePacked,
     increaseTime
-} = require("../../common/utils.js");
+} = require("../../../common/utils.js");
 const {
     DEFAULT_SLICE,
     DEFAULT_VALUE,
     DEFAULT_STARTDATE_SHIFT,
     DEFAULT_DEADLINE_SHIFT,
     DEFAULT_GENERATED_TOKENS
-} = require('../../common/constants.js');
+} = require('../../../common/constants.js');
 
 const prepareStartParams = async (params = {}) => {
 

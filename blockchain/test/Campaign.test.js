@@ -7,7 +7,7 @@ const { log } = require("../common/utils.js");
 const {
 	test_contract_is_deployed,
 	test_owner_is_correct
-} = require("./Campaign/campaign-deployment.test.js");
+} = require("./Campaign/tests/campaign-deployment.test.js");
 
 // Campaign start/funding test cases
 const {
@@ -15,7 +15,7 @@ const {
 	test_start_fails_if_is_not_from_donor,
 	test_campaign_start,
 	test_start_fails_if_is_already_started
-} = require("./Campaign/campaign-start.test.js");
+} = require("./Campaign/tests/campaign-start.test.js");
 
 // Token redeeming test cases
 const {
@@ -23,7 +23,7 @@ const {
 	test_token_redeem_fails_if_goal_already_reached,
 	test_redeeming_fails_with_invalid_token,
 	test_valid_token_is_redeemed
-} = require("./Campaign/campaign-redeeming.test.js");
+} = require("./Campaign/tests/campaign-redeeming.test.js");
 
 // Campaign end test cases
 const {
@@ -33,7 +33,7 @@ const {
 	test_refund_claim_fails_if_is_already_claimed,
 	test_refund_claim_fails_if_campaign_is_not_funded,
 	test_refund_claim_succeeds
-} = require("./Campaign/campaign-refund.test.js");
+} = require("./Campaign/tests/campaign-refund.test.js");
 
 const {
 	test_donation_claim_request_fails_if_is_not_from_owner,
@@ -42,7 +42,7 @@ const {
 	test_donation_claim_fails_if_is_already_claimed,
 	test_donation_claim_fails_if_campaign_is_not_funded,
 	test_donation_claim_succeeds
-} = require("./Campaign/campaign-donation.test.js");
+} = require("./Campaign/tests/campaign-donation.test.js");
 
 describe("Campaign", function () {
 

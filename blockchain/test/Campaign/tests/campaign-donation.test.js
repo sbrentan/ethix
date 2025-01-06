@@ -11,7 +11,7 @@ const {
     assertDonationClaimFailure,
     assertEndParamsValidity
 } = require("../assertions/end-assertions.js");
-const { log } = require("../../common/utils.js");
+const { log } = require("../../../common/utils.js");
 
 const test_donation_claim_request_fails_if_is_not_from_owner = async (contract, accounts) => {
     log();

@@ -9,8 +9,8 @@ const {
     assertTokenValidity,
     assertTokenValidityFailure
 } = require("../assertions/token-assertions.js");
-const { log } = require("../../common/utils.js");
-const { DEFAULT_TOKEN_GOAL } = require("../../common/constants.js");
+const { log } = require("../../../common/utils.js");
+const { DEFAULT_TOKEN_GOAL } = require("../../../common/constants.js");
 
 const test_token_redeem_fails_without_signature = async (contract, accounts) => {
     log();
