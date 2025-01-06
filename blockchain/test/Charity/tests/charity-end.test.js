@@ -26,7 +26,7 @@ const test_refund_claim_fails_if_not_from_donor = async (contract, accounts) => 
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test refund claim is not authorized => revert]`, tabs = 2, sep = '');
+    log(`[Test unauthorized refund claim is prevented]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -57,7 +57,7 @@ const test_refund_is_claimed = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test refund claim is performed]`, tabs = 2, sep = '');
+    log(`[Test successful refund claim]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -90,7 +90,7 @@ const test_donation_claim_fails_if_not_from_beneficiary = async (contract, accou
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test donation claim is not authorized => revert]`, tabs = 2, sep = '');
+    log(`[Test unauthorized donation claim is prevented`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -121,7 +121,7 @@ const test_donation_is_claimed = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test donation claim is performed]`, tabs = 2, sep = '');
+    log(`[Test successful donation claim]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 

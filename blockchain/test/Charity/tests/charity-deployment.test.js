@@ -7,7 +7,7 @@ const { log } = require("../../../common/utils.js");
 
 const test_contract_is_deployed = async (contract) => {
     log();
-    log(`[Test contract deployment]`, tabs = 2, sep = '');
+    log(`[Test successful contract deployment]`, tabs = 2, sep = '');
 
     const contract_address = await contract.getAddress();
     log(`Charity deployed to: ${contract_address}`);

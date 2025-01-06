@@ -31,7 +31,6 @@ const assertDonationClaimFailure = async (signers, params) => {
 const assertEndParamsValidity = (params) => {
     params?.campaignId && expect(params.campaignId).to.be.a("string").that.matches(/^0x[0-9a-fA-F]{64}$/);
     params?.increaseTime !== undefined && expect(params.increaseTime).to.be.a("boolean");
-    params?.from && expect(params.from).to.be.a("string").that.matches(/^0x[a-fA-F0-9]{40}$/);
 
     return params;
 }

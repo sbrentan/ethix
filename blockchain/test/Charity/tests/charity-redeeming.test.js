@@ -25,7 +25,7 @@ const test_redeeming_fails_with_invalid_token = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test token is not valid => revert]`, tabs = 2, sep = '');
+    log(`[Test invalid token is not redeemed]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 

@@ -36,9 +36,9 @@ const getPrivateKey = (index = 0) => {
     return _wallet.privateKey;
 }
 
-const encodePacked = (walletAddress, campaignAddress) => {
+const encodePacked = (first_address, second_address) => {
     // Remove '0x' prefix and concatenate
-    const concatenated = walletAddress.substring(2) + campaignAddress.substring(2);
+    const concatenated = first_address.substring(2) + second_address.substring(2);
     // Re-add '0x' and hash the packed data
     return web3.utils.keccak256("0x" + concatenated);
 }
@@ -50,25 +50,11 @@ const increaseTime = async (hours) => {
     await network_helpers.time.increase(hours * HOUR);
 }
 
-const getTestName = () => {
-    const stack = new Error().stack;
-    const lines = stack.split("\n");
-
-    for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes("Charity")) {
-            return "Charity";
-        }
-    }
-
-    return "Campaign";
-}
-
 module.exports = {
     log,
     logJson,
     formatDate,
     getPrivateKey,
     encodePacked,
-    increaseTime,
-    getTestName
+    increaseTime
 };

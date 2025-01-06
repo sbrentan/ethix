@@ -87,7 +87,11 @@ const createCampaign = async (signers, params) => {
         log(`[Post-creation] Block number: ${await web3.eth.getBlockNumber()}`);
         log(`Campaign ID: ${campaignId}`);
 
-        return { tx: create_tx, contract: donor_contract, campaignId: campaignId }
+        return { 
+            tx: create_tx, 
+            contract: donor_contract, 
+            campaignId: campaignId 
+        }
 
     } catch (e) {
         return { 

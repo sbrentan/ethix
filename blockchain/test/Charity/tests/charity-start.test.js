@@ -18,7 +18,7 @@ const test_not_existing_campaign = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test campaign is not created => revert]`, tabs = 2, sep = '');
+    log(`[Test not existing campaign prevent start]`, tabs = 2, sep = '');
     
     const _params = await prepareStartParams().then(assertStartParamsValidity);
     await assertCampaignStartFailure(_signers, _params);
@@ -29,7 +29,7 @@ const test_start_fails_if_seed_doesnt_match_commit_hash_seed = async (contract, 
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test seed doesn't match commit hash => revert]`, tabs = 2, sep = '');
+    log(`[Test invalid seed (i.e. commit hash) prevent start]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -40,8 +40,7 @@ const test_start_fails_if_seed_doesnt_match_commit_hash_seed = async (contract, 
     const _campaignId = await assertCampaignCreation(_signers, _params);
 
     _params = await prepareStartParams({
-        campaignId: _campaignId,
-        seed: web3.utils.randomHex(32)
+        campaignId: _campaignId
     }).then(assertStartParamsValidity);
 
     await assertCampaignStartFailure(_signers, _params);
@@ -51,7 +50,7 @@ const test_start_fails_if_block_number_is_incorrect = async (contract, accounts)
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test block number is incorrect => revert]`, tabs = 2, sep = '');
+    log(`[Test invalid block number prevent start]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -75,7 +74,7 @@ const test_start_fails_if_signature_is_incorrect = async (contract, accounts) =>
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test signature is not valid => revert]`, tabs = 2, sep = '');
+    log(`[Test invalid signature prevent start]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -100,7 +99,7 @@ const test_campaign_start = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test campaign start]`, tabs = 2, sep = '');
+    log(`[Test successful campaign start]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 

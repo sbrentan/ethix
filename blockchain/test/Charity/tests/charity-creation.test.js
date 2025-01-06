@@ -19,7 +19,7 @@ const test_beneficiary_is_not_verified = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test beneficiary is unverified => revert]`, tabs = 2, sep = '');
+    log(`[Test unverified beneficiary prevent creation]`, tabs = 2, sep = '');
 
     const _params = await prepareCreationParams({ 
         beneficiary: _signers.beneficiary 
@@ -61,7 +61,7 @@ const test_dates_are_properly_defined = async (contract, accounts) => {
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
     log();
-    log(`* [Case 1]: Starting date > deadline => revert`, tabs = 3, sep = '');
+    log(`* [Case 1]: Starting date > deadline prevent creation`, tabs = 3, sep = '');
     let _params = await prepareCreationParams({
         startingDate: _startingDate,
         deadline: _deadline,
@@ -74,7 +74,7 @@ const test_dates_are_properly_defined = async (contract, accounts) => {
     _deadline = Math.floor(_block.timestamp + (24 * HOUR));
 
     log();
-    log(`* [Case 2]: Starting date is in the past => revert`, tabs = 3, sep = '');
+    log(`* [Case 2]: Starting date is in the past cause no creation`, tabs = 3, sep = '');
     _params = await prepareCreationParams({
         startingDate: _startingDate,
         deadline: _deadline,
@@ -89,7 +89,7 @@ const test_token_goal_is_less_than_max_tokens = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
 
     log();
-    log(`[Test tokenGoal > maxTokens => revert]`, tabs = 2, sep = '');
+    log(`[Test tokenGoal > maxTokens prevent creation]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
 
@@ -107,7 +107,7 @@ const test_creation_signature_is_correct = async (contract, accounts) => {
     const _signers = await assertAccountsValidity(contract, accounts);
     
     log();
-    log(`[Test server signature is incorrect => revert]`, tabs = 2, sep = '');
+    log(`[Test invalid server signature prevent creation]`, tabs = 2, sep = '');
     
     await assertOrganizationVerification(_signers.owner, _signers.beneficiary);
     

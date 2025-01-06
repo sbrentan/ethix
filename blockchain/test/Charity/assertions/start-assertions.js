@@ -59,7 +59,6 @@ const assertStartParamsValidity = (params) => {
     params?.decode !== undefined && expect(params.decode).to.be.a("boolean");
     params?.emulate !== undefined && expect(params.emulate).to.be.a("boolean");
     params?.value && expect(params.value).to.be.a("number").that.is.greaterThan(0);
-    params?.from && expect(params.from).to.be.a("string").that.matches(/^0x[a-fA-F0-9]{40}$/);
 
     return params;
 }
