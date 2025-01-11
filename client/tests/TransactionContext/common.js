@@ -17,11 +17,15 @@ const { TransactionContext, TransactionsProvider } = require('../../src/context/
 const MOCKED_PARAMS = {
 	SEED_HASH: "0x" + "1".repeat(64),
 	SIGNATURE: { v: 2, r: "0x" + "3".repeat(64), s: "0x" + "4".repeat(64) },
-	CAMPAIGN_ID: "677aa31cdf9a000d612aca0f", // MongoDB ObjectId
+	SEED: "0x" + "5".repeat(64),
 	CAMPAIGN_ADDRESS: "0x" + "6".repeat(40), // Ethereum address
-	ORGANIZATION_ADDRESS: "0x" + "6".repeat(40),
+	TOKEN_ID: "0x" + "7".repeat(64),
+	ORGANIZATION_ADDRESS: "0x" + "8".repeat(40),
+	RANDOM_WALLET: "0x" + "9".repeat(40),
+	SIGNED_TOKENS: ["0x" + "a".repeat(64), "0x" + "b".repeat(64)],
+	CAMPAIGN_ID: "677aa31cdf9a000d612aca0f", // MongoDB ObjectId
 	REFUNDED_AMOUNT: 1000,
-	TOKEN_ID: "0x" + "7".repeat(64)
+	TARGET_ETH: 3.5,
 };
 
 // Component that uses useContext
@@ -95,6 +99,8 @@ function getMocks(connectedAccount, functionMocks) {
 		setCampaign: jest.fn(),
 		setOrganization: jest.fn(),
 		setWallet: jest.fn(),
+		generateCampaignTokens: jest.fn(() => ({ data: { signedTokens: MOCKED_PARAMS.SIGNED_TOKENS } })),
+		generateRandomWallet: jest.fn(() => ({ data: { address: MOCKED_PARAMS.RANDOM_WALLET, signature: MOCKED_PARAMS.SIGNATURE, campaign: { seed: MOCKED_PARAMS.SEED, target: MOCKED_PARAMS.TARGET_ETH} }})),
 		window: mockWindow,
 		wallet: { address: connectedAccount, is_logged: true },
 		...functionMocks
@@ -124,13 +130,15 @@ function getCharityContractMocks() {
 	const revokeOrganization = mockWithSend({ events: { OrganizationRevoked: { returnValues: { } } } });
 	const claimRefund = mockWithSend({ events: { RefundClaimed: { returnValues: { amount: MOCKED_PARAMS.REFUNDED_AMOUNT } } } });
 	const claimDonation = mockWithSend({ events: { DonationClaimed: { returnValues: { amount: MOCKED_PARAMS.REFUNDED_AMOUNT } } } });
+	const startCampaign = mockWithSend({ events: { CampaignStarted: { returnValues: { } } } });
 	let charityContractMock = {
 		methods: {
 			createCampaign: contractCreateCampaign.func,
 			verifyOrganization: verifyOrganization.func,
 			revokeOrganization: revokeOrganization.func,
 			claimRefund: claimRefund.func,
-			claimDonation: claimDonation.func
+			claimDonation: claimDonation.func,
+			startCampaign: startCampaign.func
 		}
 	};
 	
@@ -141,7 +149,8 @@ function getCharityContractMocks() {
 			verifyOrganization: verifyOrganization.mock,
 			revokeOrganization: revokeOrganization.mock,
 			claimRefund: claimRefund.mock,
-			claimDonation: claimDonation.mock
+			claimDonation: claimDonation.mock,
+			startCampaign: startCampaign.mock
 		}
 	};
 }

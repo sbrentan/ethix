@@ -71,6 +71,8 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
     if (mocks?.initCampaign) initCampaign = mocks.initCampaign;
     if (mocks?.claimToken) claimToken = mocks.claimToken;
+    if (mocks?.generateRandomWallet) generateRandomWallet = mocks.generateRandomWallet;
+    if (mocks?.generateCampaignTokens) generateCampaignTokens = mocks.generateCampaignTokens;
 
     /* ------------------------ FUNCTIONS ------------------------ */
 
@@ -139,7 +141,6 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         }
         return false;
     };
-    if (mocks?.verifyOrganization) verifyOrganization = mocks.verifyOrganization;
 
     let isOrganizationVerified = async (organizationAddress) => {
         var status;
@@ -179,7 +180,6 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         }
         return false;
     };
-    if (mocks?.revokeOrganization) revokeOrganization = mocks.revokeOrganization;
 
     let createCampaign = async (targetEur, title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver) => {
         try {
@@ -276,7 +276,6 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         }
         return false
     };
-    if (mocks?.createCampaign) createCampaign = mocks.createCampaign;
 
     let startCampaign = async ({campaignId, campaignAddress}) => {
         try {
@@ -329,8 +328,8 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
         }
+        return [];
     };
-    if (mocks?.startCampaign) startCampaign = mocks.startCampaign;
 
     const getCampaignsIds = async () => {
 
@@ -410,7 +409,6 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
         return refund;
     };
-    if (mocks?.claimRefund) claimRefund = mocks.claimRefund;
 
     let claimDonation = async (campaignId) => {
 
@@ -433,7 +431,6 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
         return donation;
     };
-    if (mocks?.claimDonation) claimDonation = mocks.claimDonation;
 
     let redeemToken = async (campaignId, tokenId, tokenSignature) => {
         try {

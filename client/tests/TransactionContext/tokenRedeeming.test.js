@@ -3,12 +3,10 @@ const { MOCKED_PARAMS, getCharityContractMocks, getMocks, functionCaller } = req
 describe('TransactionContext token redeeming', () => {
     const OTHER_ADDRESS = "0xc05B7bC6Bde92F8e6820fD47c7e23DFE01869886";
     let redeemTokenParams = [MOCKED_PARAMS.CAMPAIGN_ID, MOCKED_PARAMS.TOKEN_ID, MOCKED_PARAMS.SIGNATURE];
-    let charityContractMocks = {};
     let charityContractMock = null;
 
     beforeAll(() => {
         let temp = getCharityContractMocks();
-        charityContractMocks = temp.mocks;
         charityContractMock = temp.charityContract;
     });
 
@@ -34,7 +32,7 @@ describe('TransactionContext token redeeming', () => {
         expect(mocks.mocks.claimToken).toHaveBeenCalledWith(params);
     });
 
-    it('should fail to redeemToken with invalid parameters', async () => {
+    it('should fail to redeem a token with invalid parameters', async () => {
         const connectedAccount = OTHER_ADDRESS;
         const mocks = getMocks(connectedAccount, {
             charityContract: charityContractMock,
@@ -44,5 +42,30 @@ describe('TransactionContext token redeeming', () => {
         expect(result).toBe(false);
 
         expect(mocks.mocks.claimToken).not.toHaveBeenCalled();
+    });
+
+    it('should send a redeem token request to server even when not connected', async () => {
+        const connectedAccount = null;
+        const mocks = getMocks(connectedAccount, {
+            charityContract: charityContractMock,
+        });
+
+        let result = await functionCaller("redeemToken", redeemTokenParams, mocks.funcs);
+        expect(result).toBe(true);
+
+        expect(mocks.mocks.claimToken).toHaveBeenCalled();
+    });
+
+    it('should send a redeem token request to server even when metamask is not installed', async () => {
+        const connectedAccount = OTHER_ADDRESS;
+        const mocks = getMocks(connectedAccount, {
+            charityContract: charityContractMock,
+            window: { ethereum: null }
+        });
+
+        let result = await functionCaller("redeemToken", redeemTokenParams, mocks.funcs);
+        expect(result).toBe(true);
+
+        expect(mocks.mocks.claimToken).toHaveBeenCalled();
     });
 });
