@@ -17,7 +17,8 @@ const { TransactionContext, TransactionsProvider } = require('../../src/context/
 const MOCKED_PARAMS = {
 	SEED_HASH: "0x" + "1".repeat(64),
 	SIGNATURE: { v: 2, r: "0x" + "3".repeat(64), s: "0x" + "4".repeat(64) },
-	CAMPAIGN_ID: "0x" + "5".repeat(40),
+	CAMPAIGN_ID: "677aa31cdf9a000d612aca0f", // MongoDB ObjectId
+	CAMPAIGN_ADDRESS: "0x" + "6".repeat(40), // Ethereum address
 	ORGANIZATION_ADDRESS: "0x" + "6".repeat(40),
 	REFUNDED_AMOUNT: 1000,
 	TOKEN_ID: "0x" + "7".repeat(64)

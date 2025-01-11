@@ -3,7 +3,7 @@ const { MOCKED_PARAMS, getCharityContractMocks, getMocks, functionCaller,  mockF
 describe('TransactionContext money claiming', () => {
     describe('claimRefund tests', () => {
         const DONOR_ADDRESS = "0x8588f4d002C747C5E7B6274752B251402c77d858";
-        let claimRefundParams = [MOCKED_PARAMS.CAMPAIGN_ID]
+        let claimRefundParams = [MOCKED_PARAMS.CAMPAIGN_ADDRESS]
         let charityContractMocks = {};
         let charityContractMock = null;
 
@@ -88,7 +88,7 @@ describe('TransactionContext money claiming', () => {
 
     describe('claimDonation tests', () => {
         const BENEFICIARY_ADDRESS = "0x8588f4d002C747C5E7B6274752B251402c77d858";
-        let claimDonationParams = [MOCKED_PARAMS.CAMPAIGN_ID]
+        let claimDonationParams = [MOCKED_PARAMS.CAMPAIGN_ADDRESS]
         let charityContractMocks = {};
         let charityContractMock = null;
 
