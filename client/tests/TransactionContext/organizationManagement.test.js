@@ -32,6 +32,19 @@ describe('TransactionContext organization', () => {
             expect(mocks.mocks.setOrganization).toHaveBeenCalledWith({ address: ORGANIZATION_ADDRESS, is_verified: true });
         });
 
+        it('should fail if no parameters are provided', async () => {
+            const connectedAccount = MANAGER_ADDRESS;
+            const mocks = getMocks(connectedAccount, {
+                charityContract: charityContractMock
+            });
+
+            let result = await functionCaller("verifyOrganization", [], mocks.funcs);
+            expect(result).toBe(false);
+
+            expect(charityContractMocks.verifyOrganization).not.toHaveBeenCalled();
+            expect(mocks.mocks.setOrganization).not.toHaveBeenCalled();
+        });
+
         it('should fail if contract call fails', async () => {
             const connectedAccount = MANAGER_ADDRESS;
             let verifyOrganizationMock = mockFunction(() => ({ send: () => { throw new Error("Organization already verified") } }));
@@ -88,6 +101,19 @@ describe('TransactionContext organization', () => {
 
             expect(charityContractMocks.revokeOrganization).toHaveBeenCalledWith(ORGANIZATION_ADDRESS);
             expect(mocks.mocks.setOrganization).toHaveBeenCalledWith({ address: ORGANIZATION_ADDRESS, is_verified: false });
+        });
+
+        it('should fail if no parameters are provided', async () => {
+            const connectedAccount = MANAGER_ADDRESS;
+            const mocks = getMocks(connectedAccount, {
+                charityContract: charityContractMock
+            });
+
+            let result = await functionCaller("revokeOrganization", [], mocks.funcs);
+            expect(result).toBe(false);
+
+            expect(charityContractMocks.revokeOrganization).not.toHaveBeenCalled();
+            expect(mocks.mocks.setOrganization).not.toHaveBeenCalled();
         });
         
         it('should fail if contract call fails', async () => {

@@ -30,6 +30,19 @@ describe('TransactionContext money claiming', () => {
             expect(mocks.mocks.setCampaign).toHaveBeenCalledTimes(1);
         });
 
+        it('should fail if no parameters are provided', async () => {
+            const connectedAccount = DONOR_ADDRESS;
+            const mocks = getMocks(connectedAccount, {
+                charityContract: charityContractMock
+            });
+
+            let result = await functionCaller("claimRefund", [], mocks.funcs);
+            expect(result).toBe(0);
+
+            expect(charityContractMocks.claimRefund).not.toHaveBeenCalled();
+            expect(mocks.mocks.setCampaign).not.toHaveBeenCalled();
+        });
+
         it('should fail if contract call fails', async () => {
             const connectedAccount = DONOR_ADDRESS;
             let claimRefundMock = mockFunction(() => ({ send: () => { throw new Error("Refund already claimed") } }));
@@ -100,6 +113,19 @@ describe('TransactionContext money claiming', () => {
 
             expect(charityContractMocks.claimDonation).toHaveBeenCalledWith(...claimDonationParams);
             expect(mocks.mocks.setCampaign).toHaveBeenCalledTimes(1);
+        });
+
+        it('should fail if no parameters are provided', async () => {
+            const connectedAccount = BENEFICIARY_ADDRESS;
+            const mocks = getMocks(connectedAccount, {
+                charityContract: charityContractMock
+            });
+
+            let result = await functionCaller("claimDonation", [], mocks.funcs);
+            expect(result).toBe(0);
+
+            expect(charityContractMocks.claimDonation).not.toHaveBeenCalled();
+            expect(mocks.mocks.setCampaign).not.toHaveBeenCalled();
         });
 
         it('should fail if contract call fails', async () => {

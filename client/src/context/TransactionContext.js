@@ -70,6 +70,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
     let [claimToken] = useRedeemTokenMutation();
 
     if (mocks?.initCampaign) initCampaign = mocks.initCampaign;
+    if (mocks?.claimToken) claimToken = mocks.claimToken;
 
     /* ------------------------ FUNCTIONS ------------------------ */
 
@@ -120,11 +121,12 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         }
     };
 
-    const verifyOrganization = async (organizationAddress) => {
+    let verifyOrganization = async (organizationAddress) => {
         try {
 
             if (!ethereum) return alert("Please install MetaMask.");
             if (!wallet.address) return alert("Please connect your wallet.");
+            if (!organizationAddress) throw new Error("Organization address is required");
 
             await charityContract.methods.verifyOrganization(organizationAddress).send({ from: wallet.address });
 
@@ -137,6 +139,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         }
         return false;
     };
+    if (mocks?.verifyOrganization) verifyOrganization = mocks.verifyOrganization;
 
     let isOrganizationVerified = async (organizationAddress) => {
         var status;
@@ -158,11 +161,12 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
     };
     if (mocks?.isOrganizationVerified) isOrganizationVerified = mocks.isOrganizationVerified;
 
-    const revokeOrganization = async (organizationAddress) => {
+    let revokeOrganization = async (organizationAddress) => {
         try {
 
             if (!ethereum) return alert("Please install MetaMask.");
             if (!wallet.address) return alert("Please connect your wallet.");
+            if (!organizationAddress) throw new Error("Organization address is required");
 
             await charityContract.methods.revokeOrganization(organizationAddress).send({ from: wallet.address });
 
@@ -175,8 +179,9 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         }
         return false;
     };
+    if (mocks?.revokeOrganization) revokeOrganization = mocks.revokeOrganization;
 
-    const createCampaign = async (targetEur, title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver) => {
+    let createCampaign = async (targetEur, title, description, image, startingDate, deadline, targetEth, tokenAmount, totalTokens, donor, receiverId, receiver) => {
         try {
             
             if (!ethereum) return alert("Please install MetaMask.");
@@ -271,11 +276,14 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         }
         return false
     };
+    if (mocks?.createCampaign) createCampaign = mocks.createCampaign;
 
-    const startCampaign = async ({campaignId, campaignAddress}) => {
+    let startCampaign = async ({campaignId, campaignAddress}) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
             if (!wallet.address) return alert("Please connect your wallet.");
+            if (!campaignId) throw new Error("Campaign id is required");
+            if (!campaignAddress) throw new Error("Campaign address is required");
 
             const wallet_response = await generateRandomWallet({ campaignId });
 
@@ -322,6 +330,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             console.error(errorMessage);
         }
     };
+    if (mocks?.startCampaign) startCampaign = mocks.startCampaign;
 
     const getCampaignsIds = async () => {
 
@@ -380,13 +389,14 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
         return tokens;
     }
 
-    const claimRefund = async (campaignId) => {
+    let claimRefund = async (campaignId) => {
 
         var refund = 0;
 
         try {
             if (!ethereum) return alert("Please install MetaMask.");
             if (!wallet.address) return alert("Please connect your wallet.");
+            if (!campaignId) throw new Error("Campaign id is required");
 
             const result = await charityContract.methods.claimRefund(campaignId).send({ from: wallet.address });
             refund = result.events.RefundClaimed.returnValues.amount;
@@ -400,14 +410,16 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
         return refund;
     };
+    if (mocks?.claimRefund) claimRefund = mocks.claimRefund;
 
-    const claimDonation = async (campaignId) => {
+    let claimDonation = async (campaignId) => {
 
         var donation = 0;
 
         try {
             if (!ethereum) return alert("Please install MetaMask.");
             if (!wallet.address) return alert("Please connect your wallet.");
+            if (!campaignId) throw new Error("Campaign id is required");
 
             const result = await charityContract.methods.claimDonation(campaignId).send({ from: wallet.address });
             donation = result.events.DonationClaimed.returnValues.amount;
@@ -421,9 +433,15 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
         return donation;
     };
+    if (mocks?.claimDonation) claimDonation = mocks.claimDonation;
 
-    const redeemToken = async (campaignId, tokenId, tokenSignature) => {
+    let redeemToken = async (campaignId, tokenId, tokenSignature) => {
         try {
+
+            if (!campaignId) throw new Error("Campaign id is required");
+            if (!tokenId) throw new Error("Token id is required");
+            if (!tokenSignature) throw new Error("Token signature is required");
+
             const response = await claimToken({
                 campaignId: campaignId,
                 token: tokenId,
@@ -433,10 +451,12 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
 
             console.log(response?.data);
+            return true;
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
         }
+        return false;
     }
 
     /* ------------------------ USE EFFECT ------------------------ */

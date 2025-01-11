@@ -20,6 +20,7 @@ const MOCKED_PARAMS = {
 	CAMPAIGN_ID: "0x" + "5".repeat(40),
 	ORGANIZATION_ADDRESS: "0x" + "6".repeat(40),
 	REFUNDED_AMOUNT: 1000,
+	TOKEN_ID: "0x" + "7".repeat(64)
 };
 
 // Component that uses useContext
@@ -89,6 +90,7 @@ function getMocks(connectedAccount, functionMocks) {
 	let defaultMocks = {
 		isOrganizationVerified: jest.fn().mockResolvedValue(true),
 		initCampaign: jest.fn((params) => (params?.draft ? { data: {seedHash: MOCKED_PARAMS.SEED_HASH, signature: MOCKED_PARAMS.SIGNATURE }} : { data: { campaignId: MOCKED_PARAMS.CAMPAIGN_ID } })),
+		claimToken: jest.fn().mockResolvedValue({}),
 		setCampaign: jest.fn(),
 		setOrganization: jest.fn(),
 		setWallet: jest.fn(),
@@ -127,7 +129,7 @@ function getCharityContractMocks() {
 			verifyOrganization: verifyOrganization.func,
 			revokeOrganization: revokeOrganization.func,
 			claimRefund: claimRefund.func,
-			claimDonation: claimDonation.func,
+			claimDonation: claimDonation.func
 		}
 	};
 	
@@ -138,7 +140,7 @@ function getCharityContractMocks() {
 			verifyOrganization: verifyOrganization.mock,
 			revokeOrganization: revokeOrganization.mock,
 			claimRefund: claimRefund.mock,
-			claimDonation: claimDonation.mock,
+			claimDonation: claimDonation.mock
 		}
 	};
 }
