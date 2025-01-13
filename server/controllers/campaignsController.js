@@ -107,18 +107,18 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 
 	let donor = req.userId;
 
-	// Create and store new campaign
-	const campaign = await Campaign.create({ 
-		target, targetEur, title, image, description, startingDate, deadline, donor, receiver, tokensCount, maxTokensCount,
-		seed, blockNumber, campaignId: campaignAddress, createdBy: donor, batchRedeem: batchRedeem
-	});
-
-	if (campaign) {
-		// created
-		res.status(201).json({ message: `New campaign ${title} created`, campaignId: campaign._id });
-	} else {
-		res.status(500).json({ message: "Something went wrong!" });
+	let campaign;
+	try{
+		// Create and store new campaign
+		campaign = await Campaign.create({ 
+			target, targetEur, title, image, description, startingDate, deadline, donor, receiver, tokensCount, maxTokensCount,
+			seed, blockNumber, campaignId: campaignAddress, createdBy: donor, batchRedeem: batchRedeem
+		});
+	} catch (error) {
+		return res.status(500).json({ message: "Something went wrong!" });
 	}
+
+	res.status(201).json({ message: `New campaign ${title} created`, campaignId: campaign._id });
 });
 
 // @desc Generates a random wallet for a campaign
