@@ -56,7 +56,7 @@ const mock_user = new User({
 });
 
 const mock_campaign = new Campaign({
-    createdBy: mock_user,
+    createdBy: mock_user._id,
     campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
     target: 100,
     targetEur: 50,
@@ -67,13 +67,13 @@ const mock_campaign = new Campaign({
     description: 'Campaign Description',
     startingDate: '2025-01-10',
     deadline: '2025-12-31',
-    donor: mock_user,
+    donor: mock_user._id,
     receiver: 'Receiver ID',
     batchRedeem: 3,
     seed: MOCKED_PARAMS.SEED,
     blockNumber: MOCKED_PARAMS.BLOCK_NUMBER,
 })
-console.log(mock_campaign.startingDate)
+
 const MOCKED_MODELS = {
     Campaign: mock_campaign,
     User: mock_user,
@@ -121,13 +121,18 @@ const modelsPath = path.join(__dirname, '../models');
 const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith('.js'));
 modelFiles.forEach(file => {
     const modelName = path.basename(file, '.js');
+    const empty_object_result = {
+        exec: jest.fn(() => null),
+        lean: jest.fn(() => null),
+    }
     const db_object_result = {
         exec: jest.fn(() => MOCKED_MODELS[modelName]),
         lean: jest.fn(() => MOCKED_MODELS[modelName]),
     }
     db_mocks[modelName] = {
-        create: jest.fn(),
-        findById: jest.fn(() => (db_object_result)),
+        create: jest.fn(() => (db_object_result)),
+        findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
+        //findById: jest.fn(() => (db_object_result)),
         findOne: jest.fn(() => (db_object_result)),
         find: jest.fn(() => (db_object_result)),
         deleteOne: jest.fn(),

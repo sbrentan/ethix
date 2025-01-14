@@ -200,19 +200,77 @@ describe('Campaigns Controller', () => {
 				encodePacked(res._getJSONData().address, MOCKED_PARAMS.CAMPAIGN_ADDRESS),
 				process.env.WEB3_MANAGER_PRIVATE_KEY
 			);
+			expect(req.session.wallet.address).toEqual(res._getJSONData().address);
 
 			console.log(res._getJSONData())
 			let tempCampaign = MOCKED_MODELS.Campaign.toObject();
 			tempCampaign.startingDate = tempCampaign.startingDate.toISOString();
 			tempCampaign.deadline = tempCampaign.deadline.toISOString();
 			tempCampaign._id = tempCampaign._id.toString();
-			tempCampaign.createdBy._id = tempCampaign.createdBy._id.toString();
+			tempCampaign.createdBy = tempCampaign.createdBy.toString();
 			tempCampaign.donor = tempCampaign.donor.toString();
 			expect(res._getJSONData()).toEqual({
 				address: MOCKED_PARAMS.ADDRESS_ACCOUNTS['0x2'].address,
 				campaign: tempCampaign,
 				signature: MOCKED_PARAMS.SIGNATURE,
 			});
+		});
+
+		it('should return 400 if the campaign is not found', async () => {
+			req.params.id = '';
+
+			await generateRandomWallet(req, res);
+
+			expect(res.statusCode).toBe(400);
+			expect(res._getJSONData()).toEqual({ message: 'Campaign not found' });
+		});
+
+		it('should return 400 if the campaign is not associated to blockchain', async () => {
+			req.params.id = MOCKED_PARAMS.CAMPAIGN_ID;
+
+			const tempCampaign = MOCKED_MODELS.Campaign.toObject();
+			delete tempCampaign.campaignId;
+
+			db_mocks.Campaign.findById.mockImplementationOnce(() => ({
+				exec: jest.fn(() => tempCampaign)
+			}));
+
+			await generateRandomWallet(req, res);
+
+			expect(res.statusCode).toBe(400);
+			expect(res._getJSONData()).toEqual({ message: 'Campaign not associated to blockchain' });
+		});
+
+		it('should return 400 if the user is not authorized to generate a wallet for the campaign', async () => {
+			req.params.id = MOCKED_PARAMS.CAMPAIGN_ID;
+
+			const tempUser = MOCKED_MODELS.User.toObject();
+			tempUser._id = 'anotherUserId';
+
+			db_mocks.User.findOne.mockImplementationOnce(() => ({
+				exec: jest.fn(() => tempUser)
+			}));
+
+			await generateRandomWallet(req, res);
+
+			expect(res.statusCode).toBe(400);
+			expect(res._getJSONData()).toEqual({ message: 'User not authorized to generate wallet for this campaign' });
+		});
+
+		it('should return 400 if the seed is not found', async () => {
+			req.params.id = MOCKED_PARAMS.CAMPAIGN_ID;
+
+			const tempCampaign = MOCKED_MODELS.Campaign.toObject();
+			delete tempCampaign.seed;
+
+			db_mocks.Campaign.findById.mockImplementationOnce(() => ({
+				exec: jest.fn(() => tempCampaign)
+			}));
+
+			await generateRandomWallet(req, res);
+
+			expect(res.statusCode).toBe(400);
+			expect(res._getJSONData()).toEqual({ message: 'Seed not found' });
 		});
 	});
 });
