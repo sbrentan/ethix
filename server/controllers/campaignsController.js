@@ -110,7 +110,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	let campaign;
 	try{
 		// Create and store new campaign
-		campaign = await Campaign.create({ 
+		campaign = await Campaign.create({
 			target, targetEur, title, image, description, startingDate, deadline, donor, receiver, tokensCount, maxTokensCount,
 			seed, blockNumber, campaignId: campaignAddress, createdBy: donor, batchRedeem: batchRedeem
 		});

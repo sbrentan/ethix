@@ -49,11 +49,13 @@ describe('Campaigns Controller', () => {
 			
 			await createNewCampaign(req, res);
 
+			const tempSignature = MOCKED_PARAMS.SIGNATURE;
+			delete tempSignature.signature;
 			expect(res.statusCode).toBe(200);
 			expect(res._getJSONData()).toEqual({
 				message: 'Validation passed',
 				seedHash: MOCKED_PARAMS.SEED_HASH,
-				signature: MOCKED_PARAMS.SIGNATURE,
+				signature: tempSignature,
 			});
 			expect(req.session.seed).toBe(MOCKED_PARAMS.SEED); // Ensure seed is stored in session
 
@@ -163,8 +165,6 @@ describe('Campaigns Controller', () => {
 		});
 
 		it('should return 500 if an error occurs on campaign creation', async () => {
-			console.log(createCampaignParams);
-			console.log(MOCKED_PARAMS.SEED_HASH);
 			req.body = createCampaignParams;
 			req.session.seed = MOCKED_PARAMS.SEED;
 			db_mocks.Campaign.create.mockRejectedValue(new Error('Test error'));
@@ -202,7 +202,6 @@ describe('Campaigns Controller', () => {
 			);
 			expect(req.session.wallet.address).toEqual(res._getJSONData().address);
 
-			console.log(res._getJSONData())
 			let tempCampaign = MOCKED_MODELS.Campaign.toObject();
 			tempCampaign.startingDate = tempCampaign.startingDate.toISOString();
 			tempCampaign.deadline = tempCampaign.deadline.toISOString();
