@@ -25,9 +25,28 @@ const MOCKED_PARAMS = {
         },
 	}
 };
+function findRootDirWithConfig(startPath, configFileName) {
+    let currentPath = startPath;
+    let importPath = "";
 
-const Campaign = require('../models/Campaign');
-const User = require('../models/User');
+    while (currentPath !== path.parse(currentPath).root) {
+        const configFilePath = path.join(currentPath, configFileName);
+        if (fs.existsSync(configFilePath)) {
+            importPath = path.join(importPath, '..');
+            return importPath;
+            // return currentPath;
+        }
+        currentPath = path.dirname(currentPath);
+        importPath = path.join(importPath, '..');
+    }
+
+    return null;
+}
+
+const root_dirname = findRootDirWithConfig(process.cwd(), 'jest.config.js');
+process.chdir(root_dirname + '\\server');
+const Campaign = require(path.join(root_dirname, 'models/Campaign'));
+const User = require(path.join(root_dirname, 'models/User'));
 const mock_user = new User({
     username: 'mockUsername',
     address: 'mockAddress',
