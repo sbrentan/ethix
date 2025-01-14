@@ -7,6 +7,7 @@ const ethUtil = require('ethereumjs-util');
 const jwt = require('jsonwebtoken');
 const RedeemableToken = require("../models/RedeemableToken");
 const generateQRCodes = require("./utils/qrcode_generator");
+const fs = require('fs');
 
 const retrieveBlockchainError = (error) => {
     try{
@@ -132,12 +133,39 @@ const generateTokens = asyncHandler(async (req, res) => {
                 campaign.qrCodes = fileName;
                 await campaign.save();
                 console.log("QR codes generated in worker thread:", fileName);
+
+                // Load the saved PDF from the file system
+                const filePath = `qr_codes/${fileName}`;
+
+                // Create a readable stream from the PDF file
+                const pdfStream = fs.createReadStream(filePath);
+                const stat = fs.statSync(filePath);
+
+                // Set headers to indicate a PDF file download
+                res.setHeader('Content-Length', stat.size);
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `attachment; filename="qr_codes.pdf"`);
+
+                // Pipe the stream to the response
+                pdfStream.pipe(res);
+
+                // Handle the end of the stream
+                pdfStream.on('end', () => {
+                    console.log("PDF streamed successfully.");
+                    // Do not send any additional response here that might confuse the client
+                });
+
+                // Handle errors in the stream
+                pdfStream.on('error', (err) => {
+                    console.error("Error streaming PDF:", err);
+                    res.status(500).send("Error streaming the PDF file.");
+                });
             }).catch((error) => {
                 console.log("Error generating QR codes in worker thread:", error);
             });
+        } else {
+            res.json({ signedTokens: jwt_tokens });
         }
-
-        res.json({ signedTokens: jwt_tokens });
         
     } catch (error) {
         if(process.env.DEBUG) console.log('Error generating tokens:', error);
@@ -280,7 +308,58 @@ const recoverT15Token = async (campaignId, t1_token) => {
 }
 
 
+// @desc Redeem token
+// @route POST /tokens/redeem
+// @access Public
+const simulateTokenStream = asyncHandler(async (req, res) => {
+    const campaignId = req.params.id;
+    const campaign = await Campaign.findById(campaignId).exec();
+    if (!campaign) {
+        res.status(404);
+        throw new Error("Campaign not found");
+    }
+    try {
+        if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
+            if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread")
+            // Load the saved PDF from the file system
+            const filePath = `qr_codes/test.pdf`;
+
+            // Create a readable stream from the PDF file
+            const pdfStream = fs.createReadStream(filePath);
+            const stat = fs.statSync(filePath);
+
+            // Set headers to indicate a PDF file download
+            res.setHeader('Content-Length', stat.size);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="qr_codes.pdf"`);
+
+            // Pipe the stream to the response
+            pdfStream.pipe(res);
+
+            // Handle the end of the stream
+            pdfStream.on('end', () => {
+                console.log("PDF streamed successfully.");
+                // Do not send any additional response here that might confuse the client
+            });
+
+            // Handle errors in the stream
+            pdfStream.on('error', (err) => {
+                console.error("Error streaming PDF:", err);
+                res.status(500).send("Error streaming the PDF file.");
+            });
+        } else {
+            res.status(400).json({ message: "Only PDF is accepted" });
+        }
+        
+    } catch (error) {
+        if(process.env.DEBUG) console.log('Error generating tokens:', error);
+        res.status(400).json({ message: "Error generating tokens: " + error.message });
+    }
+});
+
+
 module.exports = {
     redeemToken,
-    generateTokens
+    generateTokens,
+    simulateTokenStream
 };

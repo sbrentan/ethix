@@ -252,7 +252,7 @@ export const TransactionsProvider = ({ children }) => {
         }
     };
 
-    const startCampaign = async ({campaignId, campaignAddress}) => {
+    const startCampaign = async ({campaignId, campaignAddress, token}) => {
         try {
             if (!ethereum) return alert("Please install MetaMask.");
 
@@ -283,18 +283,56 @@ export const TransactionsProvider = ({ children }) => {
                 from: wallet.address, 
                 value: web3.utils.toWei(String(target), 'ether')
             });
+
+            // Set up the base query with necessary headers (authorization token)
+            const headers = new Headers();
+            if (token) {
+                headers.set("authorization", `Bearer ${token}`);
+                headers.set("Access-Control-Request-Headers", "authorization");
+            }
+
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/campaigns/${campaignId}/tokens`, {
+                method: 'POST',
+                'credentials': 'include',
+                headers: headers,  // Include headers with authorization
+            });
+    
+            // Check if the response is successful (status code 200)
+            if (!response.ok) {
+                throw new Error(`Failed to download PDF, status: ${response.status}`);
+            }
+    
+            // Check the content type in the response headers to confirm it's a PDF
+            const contentType = response.headers.get('Content-Type');
+            if (!contentType || !contentType.includes('application/pdf')) {
+                throw new Error('Received file is not a PDF');
+            }
+    
+            // Check the Content-Length header to ensure the size is correct (optional)
+            const contentLength = response.headers.get('Content-Length');
+            if (!contentLength) {
+                console.warn('Content-Length header is missing.');
+            }
+    
+            // Create a Blob from the response data
+            const blob = await response.blob();
+
+            return blob
             
             const token_response = await generateCampaignTokens({ campaignId });
 
-            if (token_response?.error?.data?.message) throw new Error(token_response?.error?.data?.message);
+            console.log("Data from startCampaign:", token_response);  // Should be a blob URL like "blob:http://..."
+
+            // if (token_response?.error?.data?.message) throw new Error(token_response?.error?.data?.message);
 
             setCampaign((prevState) => ({ ...prevState, is_started: true }));
 
-            const signed_tokens = token_response?.data?.signedTokens;
+            // const signed_tokens = token_response?.data?.signedTokens;
 
-            console.log(signed_tokens);
+            // console.log(signed_tokens);
 
-            return signed_tokens
+            // return signed_tokens
+            return token_response
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
