@@ -18,7 +18,12 @@ const MOCKED_PARAMS = {
 	SEED: 'mockSeed',
 	SEED_HASH: 'mockSeedHash',
     BLOCK_NUMBER: 1,
-	SIGNATURE: { r: 'r', s: 's', v: 'v', signature: '0x1c657dc504c1180d7b8d3153d2b5f2ea0b2dddcf780dbdd7e9c94a2e7dfb7d0f25d36a635587d39a4f9e7edc29965c12a8e431b7b95ea0b4bdf325cf7ed6bc5c1c' },
+    SIGNATURE: { 
+        r: '0x1c657dc504c1180d7b8d3153d2b5f2ea0b2dddcf780dbdd7e9c94a2e7dfb7d0f', 
+        s: '0x25d36a635587d39a4f9e7edc29965c12a8e431b7b95ea0b4bdf325cf7ed6bc5c', 
+        v: '0x1b', 
+        signature: '0x1c657dc504c1180d7b8d3153d2b5f2ea0b2dddcf780dbdd7e9c94a2e7dfb7d0f25d36a635587d39a4f9e7edc29965c12a8e431b7b95ea0b4bdf325cf7ed6bc5c' 
+    },
     RANDOM_WALLET: '0x4',
 	ADDRESS_ACCOUNTS: {
 		'0x1': {
@@ -123,6 +128,8 @@ const MOCKED_MODELS = {
 Object.keys(MOCKED_MODELS).forEach(modelName => {
     const mock_model = MOCKED_MODELS[modelName];
     mock_model.save = jest.fn(() => mock_model);
+    if (modelName === 'RedeemableToken')
+        mock_model.deleteOne = jest.fn();
 });
 
 const mocks = {
@@ -180,45 +187,195 @@ if (process.env.NODE_ENV === 'test') {
         })),
     }));
 
-    // for each model in model folder create db_mocks as above
-    Object.keys(MOCKED_MODELS).forEach(modelName => {
-        const empty_object_result = {
+    // // for each model in model folder create db_mocks as above
+    // Object.keys(MOCKED_MODELS).forEach(modelName => {
+    //     const empty_object_result = {
+    //         exec: jest.fn(() => null),
+    //         lean: jest.fn(() => null),
+    //     }
+    //     const db_object_result = {
+    //         exec: jest.fn(() => MOCKED_MODELS[modelName]),
+    //         lean: jest.fn(() => MOCKED_MODELS[modelName]),
+    //     }
+    //     db_mocks[modelName] = {
+    //         create: jest.fn(() => (MOCKED_MODELS[modelName])),
+    //         findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
+    //         findOne: jest.fn(() => (db_object_result)),
+    //         find: jest.fn(() => (db_object_result)),
+    //         deleteOne: jest.fn(),
+    //         insertMany: jest.fn(),
+    //         countDocuments: jest.fn(),
+    //         findByIdAndUpdate: jest.fn(),
+    //     };
+    // });
+    // Object.keys(db_mocks).forEach(modelName => {
+    //     const mock_model = db_mocks[modelName];
+    //     jest.mock(`../models/${modelName}`, () => { 
+    //         return {
+    //             RedeemableToken: jest.fn().mockImplementation(() => null),
+    //             ...mock_model
+    //         }
+    //     });
+    // });
+
+    // db_mocks = {
+    //     User: Object.assign(
+    //         jest.fn().mockImplementation(() => ({
+    //             save: jest.fn(),
+    //         })),
+    //         {
+    //             create: jest.fn(() => (mock_user)),
+    //             findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
+    //             findOne: jest.fn(() => (db_object_result)),
+    //             find: jest.fn(() => (db_object_result)),
+    //             deleteOne: jest.fn(),
+    //             insertMany: jest.fn(),
+    //             countDocuments: jest.fn(),
+    //             findByIdAndUpdate: jest.fn(),
+    //         }
+    //     ),
+    //     Campaign: Object.assign(
+    //         jest.fn(),
+    //         {
+    //             create: jest.fn().mockResolvedValue({
+    //                 createdBy: mock_user._id,
+    //                 campaignId: MOCKED_PARAMS.CAMPAIGN_ADDRESS,
+    //                 target: 100,
+    //                 targetEur: 50,
+    //                 tokensCount: 10,
+    //                 maxTokensCount: MOCKED_PARAMS.MAX_TOKENS_COUNT,
+    //                 image: 'Image URL',
+    //                 title: 'Campaign Title',
+    //                 description: 'Campaign Description',
+    //                 startingDate: startingDate,
+    //                 deadline: deadline,
+    //                 donor: mock_user._id,
+    //                 receiver: 'Receiver ID',
+    //                 batchRedeem: 1,
+    //                 seed: MOCKED_PARAMS.SEED,
+    //                 blockNumber: MOCKED_PARAMS.BLOCK_NUMBER,
+    //             }),
+    //             findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
+    //             findOne: jest.fn(() => (db_object_result)),
+    //             find: jest.fn(() => (db_object_result)),
+    //             deleteOne: jest.fn(),
+    //             insertMany: jest.fn(),
+    //             countDocuments: jest.fn(),
+    //             findByIdAndUpdate: jest.fn(),
+    //         }
+    //     ),
+    //     TokenSalt: Object.assign(
+    //         jest.fn().mockImplementation(() => ({
+    //             save: jest.fn(),
+    //         })),
+    //         {
+    //             create: jest.fn(() => (MOCKED_MODELS.TokenSalt)),
+    //             findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
+    //             findOne: jest.fn(() => (db_object_result)),
+    //             find: jest.fn(() => (db_object_result)),
+    //             deleteOne: jest.fn(),
+    //             insertMany: jest.fn(),
+    //             countDocuments: jest.fn(),
+    //             findByIdAndUpdate: jest.fn(),
+    //         }
+    //     ),
+    // }
+
+    // const campaign_mock = db_mocks.Campaign;
+    // jest.mock(`../models/Campaign`, () => campaign_mock);
+
+    jest.mock('../models/Campaign', () => {
+        const mockCampaign = jest.fn().mockImplementation(() => {
+            return mock_campaign;
+        });
+        mockCampaign.create = jest.fn(() => mock_campaign);
+        mockCampaign.findById = jest.fn((id) => (id ? {
+            exec: jest.fn(() => mock_campaign),
+            lean: jest.fn(() => mock_campaign),
+        } : {
             exec: jest.fn(() => null),
             lean: jest.fn(() => null),
-        }
-        const db_object_result = {
-            exec: jest.fn(() => MOCKED_MODELS[modelName]),
-            lean: jest.fn(() => MOCKED_MODELS[modelName]),
-        }
-        db_mocks[modelName] = {
-            create: jest.fn(() => (MOCKED_MODELS[modelName])),
-            findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
-            findOne: jest.fn(() => (db_object_result)),
-            find: jest.fn(() => (db_object_result)),
-            deleteOne: jest.fn(),
-            insertMany: jest.fn(),
-            countDocuments: jest.fn(),
-            findByIdAndUpdate: jest.fn(),
-        };
+        }));
+        mockCampaign.findOne = jest.fn(() => ({}));
+        mockCampaign.find = jest.fn(() => ({
+            limit: jest.fn(() => ({
+                exec: jest.fn(() => []),
+            })),
+        }));
+        mockCampaign.deleteOne = jest.fn();
+        mockCampaign.insertMany = jest.fn();
+        mockCampaign.countDocuments = jest.fn(() => ({
+            exec: jest.fn(() => 0),
+        }));
+        mockCampaign.findByIdAndUpdate = jest.fn();
+        return mockCampaign;
     });
-    Object.keys(db_mocks).forEach(modelName => {
-        const mock_model = db_mocks[modelName];
-        jest.mock(`../models/${modelName}`, () => { 
-            return {
-                RedeemableToken: jest.fn().mockImplementation(() => null),
-                ...mock_model
-            }
+
+    jest.mock('../models/User', () => {
+        const mockUser = jest.fn().mockImplementation(() => {
+            return mock_user;
         });
+        mockUser.create = jest.fn(() => mock_user);
+        mockUser.findById = jest.fn();
+        mockUser.findOne = jest.fn(() => ({
+            exec: jest.fn(() => mock_user),
+        }));
+        mockUser.find = jest.fn(() => ({
+            exec: jest.fn(() => mock_user),
+        }));
+        mockUser.deleteOne = jest.fn();
+        mockUser.insertMany = jest.fn();
+        mockUser.countDocuments = jest.fn();
+        mockUser.findByIdAndUpdate = jest.fn();
+        return mockUser;
     });
+
+    jest.mock('../models/TokenSalt', () => {
+        const mockTokenSalt = jest.fn().mockImplementation(() => {
+            return mock_redeemable_token;
+        });
+        mockTokenSalt.create = jest.fn();
+        mockTokenSalt.findById = jest.fn();
+        mockTokenSalt.findOne = jest.fn(() => ({
+            exec: jest.fn(() => mock_token_salt),
+        }));
+        mockTokenSalt.find = jest.fn();
+        mockTokenSalt.deleteOne = jest.fn();
+        mockTokenSalt.insertMany = jest.fn();
+        mockTokenSalt.countDocuments = jest.fn(() => ({
+            exec: jest.fn(() => 0),
+        }));
+        return mockTokenSalt;
+    });
+
+    jest.mock('../models/RedeemableToken', () => {
+        const mockRedeemableToken = jest.fn().mockImplementation(() => {
+            return mock_redeemable_token;
+        });
+        mockRedeemableToken.create = jest.fn();
+        mockRedeemableToken.findById = jest.fn();
+        mockRedeemableToken.findOne = jest.fn(() => ({}));
+        mockRedeemableToken.find = jest.fn(() => ({
+            limit: jest.fn(() => ({
+                exec: jest.fn(() => [mock_redeemable_token]),
+            })),
+        }));
+        mockRedeemableToken.deleteOne = jest.fn();
+        mockRedeemableToken.insertMany = jest.fn();
+        mockRedeemableToken.countDocuments = jest.fn(() => ({
+            exec: jest.fn(() => 0),
+        }));
+        mockRedeemableToken.findByIdAndUpdate = jest.fn();
+        return mockRedeemableToken;
+    });
+
+    db_mocks = {
+        Campaign: require('../models/Campaign'),
+        User: require('../models/User'),
+        TokenSalt: require('../models/TokenSalt'),
+        RedeemableToken: require('../models/RedeemableToken'),
+    };
 }
-
-// jest.mock('../models/RedeemableToken', ()=> {
-//     return db_mocks.RedeemableToken;
-// });
-// const c = require('../models/RedeemableToken');
-// a = new c.CloudWatch();
-
-// console.log(a)
 
 module.exports = {
     mocks,

@@ -180,19 +180,21 @@ describe('Tokens Controller', () => {
             }
             const { v, r, s } = ethUtil.fromRpcSig(req.body.signature);
 
+            console.log(v, r, s)
+
             // db_mocks.TokenSalt.findOne.mockImplementationOnce(() => ({
             //     exec: jest.fn(() => ({ token: token }))
             // }));
 
-            db_mocks.TokenSalt.countDocuments.mockImplementationOnce(() => ({
-                exec: jest.fn(() => 0)
-            }));
+            // db_mocks.TokenSalt.countDocuments.mockImplementationOnce(() => ({
+            //     exec: jest.fn(() => 0)
+            // }));
 
-            db_mocks.RedeemableToken.find.mockImplementationOnce(() => ({
-                limit: jest.fn(() => ({
-                    exec: jest.fn(() => [MOCKED_MODELS.RedeemableToken])
-                }))
-            }));
+            // db_mocks.RedeemableToken.find.mockImplementationOnce(() => ({
+            //     limit: jest.fn(() => ({
+            //         exec: jest.fn(() => [MOCKED_MODELS.RedeemableToken])
+            //     }))
+            // }));
             
             const MANAGER_ACCOUNT = MOCKED_PARAMS.ADDRESS_ACCOUNTS['0x1'];
             await redeemToken(req, res);
@@ -208,7 +210,7 @@ describe('Tokens Controller', () => {
             expect(MOCKED_MODELS.RedeemableToken.save).toHaveBeenCalled();
             expect(MOCKED_MODELS.Campaign.save).toHaveBeenCalled();
 
-            expect(mocks.Contract_redeemTokensBatch).toHaveBeenCalledWith(MOCKED_PARAMS.CAMPAIGN_ADDRESS, [expect.anything()], [{v, r, s}]);
+            expect(mocks.Contract_redeemTokensBatch).toHaveBeenCalledWith(MOCKED_PARAMS.CAMPAIGN_ADDRESS, expect.anything(), [{r, s, v}]);
         });
 
     });
