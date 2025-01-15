@@ -3,6 +3,7 @@ const path = require('path');
 
 if (process.env.NODE_ENV === 'test') {
     process.env = {
+        NODE_ENV: 'test',
         WEB3_NETWORK_ADDRESS: 'http://fake:8545',
         WEB3_MANAGER_PRIVATE_KEY: '0x1',
         WEB3_CONTRACT_ADDRESS: '0x2',
@@ -124,71 +125,65 @@ const mocks = {
     })),
 };
 
-jest.mock('web3', () => ({
-	Web3: jest.fn().mockImplementation(() => ({
-		utils: {
-			randomHex: mocks.randomHex,
-			keccak256: mocks.keccak256,
-            toHex: mocks.toHex,
-		},
-		eth: {
-			accounts: {
-                create: mocks.accounts_create,
-				sign: mocks.sign,
-				privateKeyToAccount: mocks.privateKeyToAccount,
-				wallet: {
-					add: mocks.wallet_add
-				}
-			},
-			getBlockNumber: mocks.getBlockNumber,
-			Contract: jest.fn().mockImplementation(() => ({
-				methods: {
-                    generateTokenHashes: mocks.Contract_generateTokenHashes,
-				},
-			})),
-		},
-	})),
-}));
-
 let db_mocks = {};
-// for each model in model folder create db_mocks as above
-const modelsPath = path.join(__dirname, '../models');
-const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith('.js'));
-modelFiles.forEach(file => {
-    const modelName = path.basename(file, '.js');
-    const empty_object_result = {
-        exec: jest.fn(() => null),
-        lean: jest.fn(() => null),
-    }
-    const db_object_result = {
-        exec: jest.fn(() => MOCKED_MODELS[modelName]),
-        lean: jest.fn(() => MOCKED_MODELS[modelName]),
-    }
-    db_mocks[modelName] = {
-        create: jest.fn(() => (MOCKED_MODELS[modelName])),
-        findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
-        //findById: jest.fn(() => (db_object_result)),
-        findOne: jest.fn(() => (db_object_result)),
-        find: jest.fn(() => (db_object_result)),
-        deleteOne: jest.fn(),
-        save: jest.fn(),
-        insertMany: jest.fn(),
-        countDocuments: jest.fn(),
-        findByIdAndUpdate: jest.fn(),
-    };
-});
+if (process.env.NODE_ENV === 'test') {
+    jest.mock('web3', () => ({
+        Web3: jest.fn().mockImplementation(() => ({
+            utils: {
+                randomHex: mocks.randomHex,
+                keccak256: mocks.keccak256,
+                toHex: mocks.toHex,
+            },
+            eth: {
+                accounts: {
+                    create: mocks.accounts_create,
+                    sign: mocks.sign,
+                    privateKeyToAccount: mocks.privateKeyToAccount,
+                    wallet: {
+                        add: mocks.wallet_add
+                    }
+                },
+                getBlockNumber: mocks.getBlockNumber,
+                Contract: jest.fn().mockImplementation(() => ({
+                    methods: {
+                        generateTokenHashes: mocks.Contract_generateTokenHashes,
+                    },
+                })),
+            },
+        })),
+    }));
 
-Object.keys(db_mocks).forEach(modelName => {
-    const mock_model = db_mocks[modelName];
-    jest.mock(`../models/${modelName}`, () => (mock_model));
-});
+    // for each model in model folder create db_mocks as above
+    const modelsPath = path.join(__dirname, '../models');
+    const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith('.js'));
+    modelFiles.forEach(file => {
+        const modelName = path.basename(file, '.js');
+        const empty_object_result = {
+            exec: jest.fn(() => null),
+            lean: jest.fn(() => null),
+        }
+        const db_object_result = {
+            exec: jest.fn(() => MOCKED_MODELS[modelName]),
+            lean: jest.fn(() => MOCKED_MODELS[modelName]),
+        }
+        db_mocks[modelName] = {
+            create: jest.fn(() => (MOCKED_MODELS[modelName])),
+            findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
+            //findById: jest.fn(() => (db_object_result)),
+            findOne: jest.fn(() => (db_object_result)),
+            find: jest.fn(() => (db_object_result)),
+            deleteOne: jest.fn(),
+            save: jest.fn(),
+            insertMany: jest.fn(),
+            countDocuments: jest.fn(),
+            findByIdAndUpdate: jest.fn(),
+        };
+    });
 
-function get_custom_db_mocks(custom_mocks) {
-    custom_mocks = custom_mocks || {};
-    return {
-        ...db_mocks,
-        ...custom_mocks,
-    };
+    Object.keys(db_mocks).forEach(modelName => {
+        const mock_model = db_mocks[modelName];
+        jest.mock(`../models/${modelName}`, () => (mock_model));
+    });
 }
 
 

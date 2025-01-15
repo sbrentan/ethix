@@ -3,8 +3,8 @@ import { render, act } from '@testing-library/react';
 global.TextEncoder = require('util').TextEncoder;
 global.TextDecoder = require('util').TextDecoder;
 
-console.log(process.env.NODE_ENV);
-if (process.env.NODE_ENV == 'test') {
+let alertMock = mockFunction(() => {console.log("alert called")});
+if (process.env.NODE_ENV === 'test') {
 	process.env.REACT_APP_BACKEND_URL = 'http://localhost:5000';
 	// mock the fetch function used by startCampaign which retrieves the PDF blob
 	global.fetch = jest.fn(() =>
@@ -15,7 +15,6 @@ if (process.env.NODE_ENV == 'test') {
 		}),
 	);
 
-	let alertMock = mockFunction(() => {console.log("alert called")});
 	global.window.alert = alertMock.func;
 }
 import { store } from '../../src/app/store'
