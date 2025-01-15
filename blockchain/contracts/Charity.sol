@@ -285,18 +285,6 @@ contract Charity {
         return campaigns[_campaignId].isTokenValid(_tokenId, _signature);
     }
 
-    function getCampaignAddress(
-        bytes32 _campaignId
-    )
-        external
-        view
-        onlyExistingCampaign(_campaignId)
-        onlyOwner
-        returns (address)
-    {
-        return address(campaigns[_campaignId]);
-    }
-
     function generateTokenHashes(
         bytes32 _campaignId,
         bytes32[] calldata _tokensT1

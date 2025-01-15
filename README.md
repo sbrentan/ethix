@@ -50,6 +50,7 @@ For a smooth **local execution** of the application, be careful to set up the en
 HOST = "127.0.0.1" 
 PORT = "7545"
 MANAGER = "<the public address of the account used to deploy the contracts>"
+REFRESH_TOKEN_SECRET = "<your refresh token secret>"
 ```
 Remember to correctly update the `.env` file if  _Ganache_ was set up with different configurations from the default values
 

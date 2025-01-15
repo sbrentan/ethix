@@ -33,22 +33,23 @@ const retrieveBlockchainError = (error) => {
 // @access Donor
 const generateTokens = asyncHandler(async (req, res) => {
     const campaignId = req.params.id;
+    if (!campaignId)
+        return res.status(400).json({ message: "Campaign ID not provided" });
+
     const campaign = await Campaign.findById(campaignId).exec();
-    if (!campaign) {
-        res.status(404);
-        throw new Error("Campaign not found");
-    }
+    if (!campaign)
+        return res.status(404).json({ message: "Campaign not found" });
+    
     campaignAddress = campaign.campaignId;
-    if(!campaignAddress){
-        res.status(400);
-        throw new Error("Campaign not associated with a blockchain campaign");
-    }
+    if(!campaignAddress)
+        return res.status(400).json({ message: "Campaign not associated with a blockchain campaign"});
 
     const wallet = req.session.wallet;
-    if (!wallet) {
-        res.status(400);
-        throw new Error("Wallet not found");
-    }
+    if (!wallet)
+        return res.status(400).json({ message: "Wallet not found" });
+
+    if (!campaign.seed)
+        return res.status(400).json({ message: "Campaign seed not defined" });
 
     try{
         // Generate the seed(St) that is used to generate the tokens T1
@@ -57,11 +58,11 @@ const generateTokens = asyncHandler(async (req, res) => {
         if(process.env.DEBUG) console.log(campaign);
         // Generate the tokens T1
         const t1_tokens = Array.from({ length: campaign.maxTokensCount }, (_, i) => {
-            return web3.utils.toHex(crypto.createHash('sha256').update(tokenSeed + i).digest('hex'));
+            return web3.utils.toHex(crypto.createHash('sha256').update(tokenSeed + i).digest('hex'));  
         });
         if(process.env.DEBUG) console.log('t1_tokens', t1_tokens);
         
-        // generate randomlyh token indexes
+        // generate randomly token indexes
         const salts = Array.from({ length: campaign.maxTokensCount }, (_, i) => crypto.createHash('sha256').update(String(i + new Date().getTime())).digest('hex'));
         if(process.env.DEBUG) console.log('salts', salts);
 
@@ -120,11 +121,13 @@ const generateTokens = asyncHandler(async (req, res) => {
                         signature: token.signature,
                     },
                     secretKey,
-                    { expiresIn: expirationTime
+                    { expiresIn: expirationTime - Math.floor(Date.now() / 1000)
                 })
             }
         })
         if(process.env.DEBUG) console.log(jwt_tokens)
+
+        await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
 
         if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
             if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
@@ -168,8 +171,9 @@ const generateTokens = asyncHandler(async (req, res) => {
         }
         
     } catch (error) {
+        console.error('Error generating tokens:', error);
         if(process.env.DEBUG) console.log('Error generating tokens:', error);
-        res.status(400).json({ message: "Error generating tokens: " + error.message });
+        return res.status(400).json({ message: "Error generating tokens: " + error.message });
     }
 });
 
@@ -308,8 +312,8 @@ const recoverT15Token = async (campaignId, t1_token) => {
 }
 
 
-// @desc Redeem token
-// @route POST /tokens/redeem
+// @desc Simulate token stream
+// @route POST /campaign/:id/simulateTokens
 // @access Public
 const simulateTokenStream = asyncHandler(async (req, res) => {
     const campaignId = req.params.id;
