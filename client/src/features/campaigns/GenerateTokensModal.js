@@ -355,18 +355,14 @@ const GenerateTokensModal = ({
 			<br />
 			{tokensList.length === 0 && (
 				<Flex align="center" justify="center" style={{ marginTop: 20 }}>
-					{isExpired(campaign.startingDate) ? (
-						<Button
-							size="large"
-							type="primary"
-							shape="round"
-							onClick={() => handleStart()}
-						>
-							FUND the CAMPAIGN
-						</Button>
-					) : (
-						<Text strong>Waiting for the Campaign to start</Text>
-					)}
+                    <Button
+                        size="large"
+                        type="primary"
+                        shape="round"
+                        onClick={() => handleStart()}
+                    >
+                        FUND the CAMPAIGN
+                    </Button>
 				</Flex>
 			)}
 			{tokensList.length > 0 && (
