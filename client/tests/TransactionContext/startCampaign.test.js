@@ -28,13 +28,12 @@ describe('TransactionContext createCampaign tests', () => {
 		});
 
 		let result = await functionCaller("startCampaign", startCampaignParams, mocks.funcs);
-		expect(result).toBe(MOCKED_PARAMS.SIGNED_TOKENS);
+		expect(result).toMatch(/^blob:.+/);
+		
 
 		expect(mocks.mocks.generateRandomWallet).toHaveBeenCalled();
 		expect(start_mock.mock).toHaveBeenCalled();
 		expect(send_mock.mock).toHaveBeenCalled();
-		expect(mocks.mocks.setCampaign).toHaveBeenCalled();
-		expect(mocks.mocks.generateCampaignTokens).toHaveBeenCalled();
 
 		let contractMethodParams = [
 			MOCKED_PARAMS.CAMPAIGN_ADDRESS,
@@ -65,7 +64,7 @@ describe('TransactionContext createCampaign tests', () => {
 		});
 
 		let result = await functionCaller("startCampaign", startCampaignParams, mocks.funcs);
-		expect(result).toEqual([]);
+		expect(result).toEqual(null);
 
 		expect(mocks.mocks.generateRandomWallet).toHaveBeenCalled();
 		expect(startCampaignMock.mock).toHaveBeenCalled();
@@ -82,7 +81,7 @@ describe('TransactionContext createCampaign tests', () => {
 
 		let result = await functionCaller("startCampaign", startCampaignParams, mocks.funcs);
 		console.log(result)
-		expect(result).toEqual([]);
+		expect(result).toEqual(null);
 
 		expect(mocks.mocks.generateRandomWallet).toHaveBeenCalled();
 		expect(mocks.mocks.generateCampaignTokens).not.toHaveBeenCalled();
@@ -96,7 +95,7 @@ describe('TransactionContext createCampaign tests', () => {
 		});
 
 		let result = await functionCaller("startCampaign", [{}], mocks.funcs);
-		expect(result).toEqual([]);
+		expect(result).toEqual(null);
 
 		expect(mocks.mocks.generateRandomWallet).not.toHaveBeenCalled();
 		expect(mocks.mocks.generateCampaignTokens).not.toHaveBeenCalled();

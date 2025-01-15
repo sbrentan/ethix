@@ -111,7 +111,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
             await ethereum.request({ method: "eth_accounts" })
                 .then(async (accounts) => {
-                    console.log(accounts)
+                    // console.log(accounts)
                     if (accounts.length > 0) {
                         setWallet({ address: accounts[0], is_logged: true });
                     } else throw new Error("No wallet accounts found");
@@ -150,7 +150,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
             await charityContract.methods.isOrganizationVerified(organizationAddress).call({ from: wallet.address })
                 .then((response) => {
-                    console.log(response);
+                    // console.log(response);
                     status = response;
                 });
             return status;
@@ -217,8 +217,8 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             const _seedHash = draft_response?.data?.seedHash;
             const _signature = draft_response?.data?.signature;
 
-            console.log(_seedHash);
-            console.log(_signature);
+            // console.log(_seedHash);
+            // console.log(_signature);
 
             if (!_seedHash) throw new Error("No seed hash found");
             if (!_signature) throw new Error("No signature found");
@@ -239,11 +239,11 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
                 }
             ).send({ from: wallet.address });
 
-            console.log("Campaign created");
+            // console.log("Campaign created");
 
             const campaignAddress = campaign.events.CampaignCreated.returnValues.campaignId;
             setCampaign((prevState) => ({ ...prevState, address: campaignAddress }));
-            console.log(campaignAddress);
+            // console.log(campaignAddress);
 
             const response = await initCampaign({
                 targetEur: targetEur,
@@ -267,7 +267,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             if (!campaignId) throw new Error("No campaign id found");
 
             setCampaign((prevState) => ({ ...prevState, id: campaignId, is_created: true }));
-            console.log(campaignId);
+            // console.log(campaignId);
             if (campaignId) return true
 
         } catch (error) {
@@ -345,28 +345,13 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             // Create a Blob from the response data
             const blob = await response.blob();
 
-            return blob
-            
-            const token_response = await generateCampaignTokens({ campaignId });
-
-            console.log("Data from startCampaign:", token_response);  // Should be a blob URL like "blob:http://..."
-
-            // if (token_response?.error?.data?.message) throw new Error(token_response?.error?.data?.message);
-
-            setCampaign((prevState) => ({ ...prevState, is_started: true }));
-
-            // const signed_tokens = token_response?.data?.signedTokens;
-
-            // console.log(signed_tokens);
-
-            // return signed_tokens
-            return token_response
+            return blob;
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
             console.error(errorMessage);
         }
-        return [];
+        return null;
     };
 
     const getCampaignsIds = async () => {
@@ -378,7 +363,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             if (!wallet.address) return alert("Please connect your wallet.");
 
             campaignsIds = await charityContract.methods.getCampaignsIds().call({ from: wallet.address });
-            console.log(campaignsIds);
+            // console.log(campaignsIds);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -397,7 +382,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             if (!wallet.address) return alert("Please connect your wallet.");
 
             campaign = await charityContract.methods.getCampaign(campaignId).call({ from: wallet.address });
-            console.log(campaign);
+            // console.log(campaign);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -416,7 +401,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
             if (!wallet.address) return alert("Please connect your wallet.");
 
             tokens = await charityContract.methods.getCampaignTokens(campaignId).call({ from: wallet.address });
-            console.log(tokens);
+            // console.log(tokens);
 
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);
@@ -437,7 +422,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
             const result = await charityContract.methods.claimRefund(campaignId).send({ from: wallet.address });
             refund = result.events.RefundClaimed.returnValues.amount;
-            console.log(refund)
+            // console.log(refund)
             setCampaign((prevState) => ({ ...prevState, is_refunded: true }));
 
         } catch (error) {
@@ -459,7 +444,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
             const result = await charityContract.methods.claimDonation(campaignId).send({ from: wallet.address });
             donation = result.events.DonationClaimed.returnValues.amount;
-            console.log(donation)
+            // console.log(donation)
             setCampaign((prevState) => ({ ...prevState, is_donated: true }));
 
         } catch (error) {
@@ -485,7 +470,7 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
 
             if (response?.error?.data?.message) throw new Error(response?.error?.data?.message);
 
-            console.log(response?.data);
+            // console.log(response?.data);
             return true;
         } catch (error) {
             let errorMessage = error.data ? error.data.message : (error.message || error);

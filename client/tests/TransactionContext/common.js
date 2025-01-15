@@ -9,6 +9,14 @@ process.env.REACT_APP_BACKEND_URL = 'http://localhost:5000';
 global.TextEncoder = require('util').TextEncoder;
 global.TextDecoder = require('util').TextDecoder;
 
+global.fetch = jest.fn(() =>
+	Promise.resolve({
+		ok: true, status: 200,
+		headers: { get: () => 'application/pdf' },
+		blob: () => "blob:https://localhost:3000/1234"
+	}),
+);
+
 let alertMock = mockFunction(() => {console.log("alert called")});
 global.window.alert = alertMock.func;
 
