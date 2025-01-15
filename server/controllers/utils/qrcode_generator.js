@@ -29,6 +29,7 @@ if (isMainThread) {
     const generationWorker = async (campaignId, jwt_tokens) => {
         const pdf = new jsPDF();
         const qrCodeData = [];
+        const qrCodeTexts = [];
 
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
@@ -41,18 +42,37 @@ if (isMainThread) {
             console.log("tokens length: ", jwt_tokens.length);
             for (const token of jwt_tokens) {
                 // Generate QR code as data URL using the qrcode library
-                const url = process.env.FRONTEND_URL + "/redeem/" + token.token;
+                const url = process.env.FRONTEND_URL + "redeem/" + token.token;
                 const imageData = await QRCode.toDataURL(url);
                 qrCodeData.push(imageData);
+                qrCodeTexts.push(url);
             }
 
             qrCodeData.forEach((image, index) => {
 				pdf.addImage(image, "JPEG", x, y, qrSize, qrSize);
+            
+                // Add text below the QR code
+                pdf.setFontSize(12); // Optional: Set font size
+                pdf.text(qrCodeTexts[index], x, y + qrSize + 10); // Adjust Y to place text below the image
 
 				if (index != qrCodeData.length - 1){
 					pdf.addPage();
                 }
             });
+            
+            // qrCodeData.forEach((image, index) => {
+            //     // Add the QR code image
+            //     pdf.addImage(image, "JPEG", x, y, qrSize, qrSize);
+            
+            //     // Add text below the QR code
+            //     pdf.setFontSize(12); // Optional: Set font size
+            //     pdf.text(QR Code ${index + 1}, x, y + qrSize + 10); // Adjust Y to place text below the image
+            
+            //     // Add a new page if not the last QR code
+            //     if (index !== qrCodeData.length - 1) {
+            //         pdf.addPage();
+            //     }
+            // });
 
             const fileName = String(campaignId) + '_qr_codes.pdf';
             pdf.save("qr_codes/" + fileName);

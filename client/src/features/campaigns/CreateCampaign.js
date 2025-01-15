@@ -104,7 +104,7 @@ function range(start, end) {
               ]}
             >
               <InputNumber
-              onChange={(e) => setTargetEth(e/ethPrice)}
+              onChange={(e) => setTargetEth(ethPrice ? e/ethPrice : e*0.00031)}
                 placeholder={"Insert money amount"}
                 autoComplete="off"
                 style={{

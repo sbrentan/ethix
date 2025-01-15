@@ -1,14 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const { findById } = require('../models/Campaign');
 
-process.env = {
-    WEB3_NETWORK_ADDRESS: 'http://fake:8545',
-    WEB3_MANAGER_PRIVATE_KEY: '0x1',
-    WEB3_CONTRACT_ADDRESS: '0x2',
-    QR_CODE_GENERATION_ON_SERVER: 'false',
-    REFRESH_TOKEN_SECRET: 'secret',
-};
+if (process.env.NODE_ENV === 'test') {
+    process.env = {
+        WEB3_NETWORK_ADDRESS: 'http://fake:8545',
+        WEB3_MANAGER_PRIVATE_KEY: '0x1',
+        WEB3_CONTRACT_ADDRESS: '0x2',
+        QR_CODE_GENERATION_ON_SERVER: 'false',
+        REFRESH_TOKEN_SECRET: 'secret',
+    };
+}
 
 const MOCKED_PARAMS = {
     CAMPAIGN_ADDRESS: '0x3',

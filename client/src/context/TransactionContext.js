@@ -482,8 +482,8 @@ export const TransactionsProvider = ({ children, mocks = {} }) => {
     /* ------------------------ USE EFFECT ------------------------ */
 
     useEffect(() => {
-        if (!wallet.address) checkIfWalletIsConnect();
         if (ethereum) {
+            if (!wallet.address) checkIfWalletIsConnect();
             ethereum.on('accountsChanged', checkIfWalletIsConnect);
             return () => ethereum.removeListener('accountsChanged', checkIfWalletIsConnect);
         }

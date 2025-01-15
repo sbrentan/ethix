@@ -1,24 +1,27 @@
 import { render, act } from '@testing-library/react';
-import { store } from '../../src/app/store'
-import { Provider } from 'react-redux'
-
-import React, { useContext, useImperativeHandle, } from 'react';
-
-process.env.REACT_APP_BACKEND_URL = 'http://localhost:5000';
 
 global.TextEncoder = require('util').TextEncoder;
 global.TextDecoder = require('util').TextDecoder;
 
-global.fetch = jest.fn(() =>
-	Promise.resolve({
-		ok: true, status: 200,
-		headers: { get: () => 'application/pdf' },
-		blob: () => "blob:https://localhost:3000/1234"
-	}),
-);
+console.log(process.env.NODE_ENV);
+if (process.env.NODE_ENV == 'test') {
+	process.env.REACT_APP_BACKEND_URL = 'http://localhost:5000';
+	// mock the fetch function used by startCampaign which retrieves the PDF blob
+	global.fetch = jest.fn(() =>
+		Promise.resolve({
+			ok: true, status: 200,
+			headers: { get: () => 'application/pdf' },
+			blob: () => "blob:https://localhost:3000/1234"
+		}),
+	);
 
-let alertMock = mockFunction(() => {console.log("alert called")});
-global.window.alert = alertMock.func;
+	let alertMock = mockFunction(() => {console.log("alert called")});
+	global.window.alert = alertMock.func;
+}
+import { store } from '../../src/app/store'
+import { Provider } from 'react-redux'
+
+import React, { useContext, useImperativeHandle, } from 'react';
 
 const { TransactionContext, TransactionsProvider } = require('../../src/context/TransactionContext');
 
