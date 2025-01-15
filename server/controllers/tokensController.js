@@ -127,7 +127,8 @@ const generateTokens = asyncHandler(async (req, res) => {
         })
         if(process.env.DEBUG) console.log(jwt_tokens)
 
-        await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
+        const db_res = await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
+        console.log('db_res', db_res);
 
         if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
             if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
@@ -241,6 +242,7 @@ const redeemToken = asyncHandler(async (req, res) => {
 
             // Check if the batch of tokens is complete
             campaign.redeemableTokens += 1;
+            console.log("redeemableTokens", RedeemableToken);
             newtoken = new RedeemableToken({
                 campaignId: campaignId,
                 token: t15_token,

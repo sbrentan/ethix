@@ -1,5 +1,6 @@
 const { MOCKED_PARAMS, mocks, db_mocks, MOCKED_MODELS } = require('./common.js');
-const { generateTokens } = require('../controllers/tokensController.js');
+const { generateTokens, redeemToken } = require('../controllers/tokensController.js');
+const ethUtil = require('ethereumjs-util');
 const httpMocks = require('node-mocks-http');
 const jwt = require('jsonwebtoken');
 
@@ -157,5 +158,58 @@ describe('Tokens Controller', () => {
 
             MOCKED_PARAMS.T2_TOKENS = initial_t2_tokens;
         });
+            
+    });
+
+    describe("redeemToken", () => {
+
+        let req, res;
+        
+        beforeEach(() => {
+			jest.clearAllMocks();
+			req = httpMocks.createRequest();
+			res = httpMocks.createResponse();
+        });
+
+        it('should correctly redeem a valid token', async () => {
+            req.params = { token: 'valid_token' };
+            req.body = {
+                token: 'valid_token',
+                campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
+                signature: MOCKED_PARAMS.SIGNATURE.signature
+            }
+            const { v, r, s } = ethUtil.fromRpcSig(req.body.signature);
+
+            // db_mocks.TokenSalt.findOne.mockImplementationOnce(() => ({
+            //     exec: jest.fn(() => ({ token: token }))
+            // }));
+
+            db_mocks.TokenSalt.countDocuments.mockImplementationOnce(() => ({
+                exec: jest.fn(() => 0)
+            }));
+
+            db_mocks.RedeemableToken.find.mockImplementationOnce(() => ({
+                limit: jest.fn(() => ({
+                    exec: jest.fn(() => [MOCKED_MODELS.RedeemableToken])
+                }))
+            }));
+            
+            const MANAGER_ACCOUNT = MOCKED_PARAMS.ADDRESS_ACCOUNTS['0x1'];
+            await redeemToken(req, res);
+            // expect(res.statusCode).toBe(200);
+            // expect(res._getJSONData()).toEqual({ message: 'Token redeemed' });
+
+            expect(mocks.Contract_isTokenValid).toHaveBeenCalledWith(MOCKED_PARAMS.CAMPAIGN_ADDRESS, expect.anything(), {v, r, s});
+            expect(mocks.Contract_isTokenValid_call).toHaveBeenCalledWith({ from: MANAGER_ACCOUNT.address })
+
+            expect(MOCKED_MODELS.TokenSalt.save).toHaveBeenCalled();
+            expect(db_mocks.TokenSalt.countDocuments).toHaveBeenCalledWith({ campaignId: MOCKED_PARAMS.CAMPAIGN_ID, redeemed: true });
+
+            expect(MOCKED_MODELS.RedeemableToken.save).toHaveBeenCalled();
+            expect(MOCKED_MODELS.Campaign.save).toHaveBeenCalled();
+
+            expect(mocks.Contract_redeemTokensBatch).toHaveBeenCalledWith(MOCKED_PARAMS.CAMPAIGN_ADDRESS, [expect.anything()], [{v, r, s}]);
+        });
+
     });
 });

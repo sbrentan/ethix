@@ -3,6 +3,7 @@ const path = require('path');
 
 if (process.env.NODE_ENV === 'test') {
     process.env = {
+        DEBUG: true,
         NODE_ENV: 'test',
         WEB3_NETWORK_ADDRESS: 'http://fake:8545',
         WEB3_MANAGER_PRIVATE_KEY: '0x1',
@@ -17,7 +18,7 @@ const MOCKED_PARAMS = {
 	SEED: 'mockSeed',
 	SEED_HASH: 'mockSeedHash',
     BLOCK_NUMBER: 1,
-	SIGNATURE: { r: 'r', s: 's', v: 'v', signature: '0xrsv' },
+	SIGNATURE: { r: 'r', s: 's', v: 'v', signature: '0x1c657dc504c1180d7b8d3153d2b5f2ea0b2dddcf780dbdd7e9c94a2e7dfb7d0f25d36a635587d39a4f9e7edc29965c12a8e431b7b95ea0b4bdf325cf7ed6bc5c1c' },
     RANDOM_WALLET: '0x4',
 	ADDRESS_ACCOUNTS: {
 		'0x1': {
@@ -54,15 +55,17 @@ function findRootDirWithConfig(startPath, configFileName) {
         currentPath = path.dirname(currentPath);
         importPath = path.join(importPath, '..');
     }
-
     return null;
 }
 
 const root_dirname = findRootDirWithConfig(process.cwd(), 'jest.config.js');
 process.chdir(root_dirname + '\\server');
-const Campaign = require(path.join(root_dirname, 'models/Campaign'));
-const User = require(path.join(root_dirname, 'models/User'));
-const TokenSalt = require(path.join(root_dirname, 'models/TokenSalt'));
+const Campaign = require(path.join(root_dirname, 'models/Campaign.js'));
+const User = require(path.join(root_dirname, 'models/User.js'));
+const TokenSalt = require(path.join(root_dirname, 'models/TokenSalt.js'));
+const RedeemableToken = require(path.join(root_dirname, 'models/RedeemableToken.js'));
+console.log(RedeemableToken)
+console.log(TokenSalt)
 const mock_user = new User({
     username: 'mockUsername',
     address: 'mockAddress',
@@ -91,7 +94,7 @@ const mock_campaign = new Campaign({
     deadline: deadline,
     donor: mock_user._id,
     receiver: 'Receiver ID',
-    batchRedeem: 3,
+    batchRedeem: 1,
     seed: MOCKED_PARAMS.SEED,
     blockNumber: MOCKED_PARAMS.BLOCK_NUMBER,
 });
@@ -104,16 +107,29 @@ const mock_token_salt = new TokenSalt({
     redeemed: false,
 });
 
+const mock_redeemable_token = new RedeemableToken({
+    campaignId: mock_campaign._id,
+    token: 'mockToken15',
+    signature: MOCKED_PARAMS.SIGNATURE.signature,
+});
+
 const MOCKED_MODELS = {
     Campaign: mock_campaign,
     User: mock_user,
-    TokenSalt: mock_token_salt
+    TokenSalt: mock_token_salt,
+    RedeemableToken: mock_redeemable_token
 };
+// for each mocked model, mock the save function
+Object.keys(MOCKED_MODELS).forEach(modelName => {
+    const mock_model = MOCKED_MODELS[modelName];
+    mock_model.save = jest.fn(() => mock_model);
+});
 
 const mocks = {
 	randomHex: jest.fn(() => MOCKED_PARAMS.SEED),
 	keccak256: jest.fn(() => MOCKED_PARAMS.SEED_HASH),
     toHex: jest.fn((value) => (`0x${value.toString().toLowerCase().replace(/^0x/i, '')}`)),
+    toWei: jest.fn((value, unit) => (value * 10 ** 18)),
 	sign: jest.fn(() => MOCKED_PARAMS.SIGNATURE),
 	privateKeyToAccount: jest.fn((private_key) => MOCKED_PARAMS.ADDRESS_ACCOUNTS[private_key]),
 	wallet_add: jest.fn(),
@@ -122,6 +138,14 @@ const mocks = {
     Contract_generateTokenHashes_call: jest.fn(() => (MOCKED_PARAMS.T2_TOKENS)),
 	Contract_generateTokenHashes: jest.fn(() => ({
         call: mocks.Contract_generateTokenHashes_call,
+    })),
+    Contract_isTokenValid_call: jest.fn(() => (true)),
+    Contract_isTokenValid: jest.fn(() => ({
+        call: mocks.Contract_isTokenValid_call,
+    })),
+    Contract_redeemTokensBatch_call: jest.fn(() => ({ gas: 1000000 })),
+    Contract_redeemTokensBatch: jest.fn(() => ({
+        send: mocks.Contract_redeemTokensBatch_call,
     })),
 };
 
@@ -133,6 +157,7 @@ if (process.env.NODE_ENV === 'test') {
                 randomHex: mocks.randomHex,
                 keccak256: mocks.keccak256,
                 toHex: mocks.toHex,
+                toWei: mocks.toWei
             },
             eth: {
                 accounts: {
@@ -147,6 +172,8 @@ if (process.env.NODE_ENV === 'test') {
                 Contract: jest.fn().mockImplementation(() => ({
                     methods: {
                         generateTokenHashes: mocks.Contract_generateTokenHashes,
+                        isTokenValid: mocks.Contract_isTokenValid,
+                        redeemTokensBatch: mocks.Contract_redeemTokensBatch
                     },
                 })),
             },
@@ -154,10 +181,7 @@ if (process.env.NODE_ENV === 'test') {
     }));
 
     // for each model in model folder create db_mocks as above
-    const modelsPath = path.join(__dirname, '../models');
-    const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith('.js'));
-    modelFiles.forEach(file => {
-        const modelName = path.basename(file, '.js');
+    Object.keys(MOCKED_MODELS).forEach(modelName => {
         const empty_object_result = {
             exec: jest.fn(() => null),
             lean: jest.fn(() => null),
@@ -169,23 +193,32 @@ if (process.env.NODE_ENV === 'test') {
         db_mocks[modelName] = {
             create: jest.fn(() => (MOCKED_MODELS[modelName])),
             findById: jest.fn((id) => (id ? db_object_result : empty_object_result)),
-            //findById: jest.fn(() => (db_object_result)),
             findOne: jest.fn(() => (db_object_result)),
             find: jest.fn(() => (db_object_result)),
             deleteOne: jest.fn(),
-            save: jest.fn(),
             insertMany: jest.fn(),
             countDocuments: jest.fn(),
             findByIdAndUpdate: jest.fn(),
         };
     });
-
     Object.keys(db_mocks).forEach(modelName => {
         const mock_model = db_mocks[modelName];
-        jest.mock(`../models/${modelName}`, () => (mock_model));
+        jest.mock(`../models/${modelName}`, () => { 
+            return {
+                RedeemableToken: jest.fn().mockImplementation(() => null),
+                ...mock_model
+            }
+        });
     });
 }
 
+// jest.mock('../models/RedeemableToken', ()=> {
+//     return db_mocks.RedeemableToken;
+// });
+// const c = require('../models/RedeemableToken');
+// a = new c.CloudWatch();
+
+// console.log(a)
 
 module.exports = {
     mocks,
