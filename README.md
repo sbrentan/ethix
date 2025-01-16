@@ -140,9 +140,32 @@ npm run start
 
 This will launch the application and you can access it in your web browser.
 
-## Notes
+### Notes
 
 The backend will run on `localhost:3500` while the front end on `localhost:3000`
+
+## Unit testing
+
+Unit tests have been written for the blockchain contracts and backend/frontend application.
+
+### Solidity contracts
+
+The solidity contracts unit tests have been developed through the usage of the hardhat framework, which is capable of simulating the network and contracts execution.
+
+To run the tests it is enough to enter the `blockchain` folder and run `npm run test`
+
+### Backend and Frontend 
+
+The unit tests for both the backend and frontend application have been developed using the `jest` framework.
+
+The implemented unit tests mainly relates to the contracts functions and general application flow.
+
+> WARNING:
+> 
+> To run both the backend and frontend unit tests, the deployment of the contracts (using `npm run deploy` inside the blockchain folder) is necessary, as both require the contracts ABI to work.
+
+After the contracts have been deployed, to run the tests you just need to run `npm run test`.
+
 
 ## Application usage
 
