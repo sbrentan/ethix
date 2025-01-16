@@ -108,8 +108,11 @@ Please make sure to enter the respective directories (`blockchain`, `server` and
 npm run deploy
 ```
 3. Once the contract is deployed, its address can be found in the terminal or in the _Ganache_ `contracts` section.
-4. Copy the contract address inside the `client` and `server` .env files.
-
+4. Copy the contract address inside the `client` and `server` .env files
+   
+   > Remember to also set the other addresses and keys correctly in the env files
+   > 
+   > In the environment file for the server application, you can use the same address for both the relayer and the manager account (just for demo purposes). This account is the same that deployed the contracts. 
 
 ### Backend:
 
