@@ -80,7 +80,7 @@ describe('Campaigns Controller', () => {
 			expect(mocks.keccak256).toHaveBeenCalled();
 			expect(mocks.sign).not.toHaveBeenCalled();
 			expect(db_mocks.Campaign.create).toHaveBeenCalledWith({
-				batchRedeem: createCampaignParams.batchRedeem,
+				batchRedeem: createCampaignParams.tokensCount,
 				blockNumber: MOCKED_PARAMS.BLOCK_NUMBER,
 				campaignId: createCampaignParams.campaignAddress,
 				createdBy: req.userId,
@@ -136,7 +136,7 @@ describe('Campaigns Controller', () => {
 
 		it('should update batchRedeem to tokensCount if batchRedeem is lower than tokensCount on campaign creation', async () => {
 			req.body = structuredClone(createCampaignParams);
-			req.body.batchRedeem = createCampaignParams.tokensCount - 1;
+			req.body.batchRedeem = createCampaignParams.tokensCount + 1;
 			req.session.seed = MOCKED_PARAMS.SEED;
 
 			await createNewCampaign(req, res);
