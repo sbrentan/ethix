@@ -98,7 +98,7 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	if(!batchRedeem) {
 		batchRedeem = process.env.DEFAULT_BATCH_REDEEM || 1;
 	}
-	if(batchRedeem < tokensCount) {
+	if(batchRedeem > tokensCount) {
 		batchRedeem = tokensCount;
 	}
 
