@@ -8,6 +8,7 @@ import {
 	Modal,
 	Row,
 	Space,
+	Spin,
 	Typography,
 } from "antd";
 import { format } from "date-fns";
@@ -17,6 +18,11 @@ import ExcelJS from "exceljs";
 import { useEthPrice } from "use-eth-price";
 import QRCode from "qrcode";
 import jsPDF from "jspdf";
+import useAuth from "../../hooks/useAuth";
+import { useDispatch } from "react-redux";
+import { hideLoading, showLoading } from "../../app/loadingSlice";
+import Loader from "../../components/Loader";
+import { LoadingOutlined } from "@ant-design/icons";
 
 const { Text, Title } = Typography;
 
@@ -41,9 +47,14 @@ const GenerateTokensModal = ({
 }) => {
 	const [tokensList, setTokensList] = useState([]);
     const [canClose, setCanClose] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
+    const [downloaded, setDownloaded] = useState(false)
 
 	const { startCampaign } = useContext(TransactionContext);
     const { ethPrice, loading, errorEth } = useEthPrice("eur");
+
+    const { token } = useAuth()
+    const dispatch = useDispatch();
 	
 	const exportToExcel = () => {
 		if (!Array.isArray(tokensList) || !tokensList.length) {
@@ -178,16 +189,55 @@ const GenerateTokensModal = ({
 
 	};
 
+    const simulateStreamToken = async () => {
+        // Set up the base query with necessary headers (authorization token)
+        const headers = new Headers();
+        if (token) {
+            headers.set("authorization", `Bearer ${token}`);
+            headers.set("Access-Control-Request-Headers", "authorization");
+        }
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/campaigns/${campaign.id}/simulatetokens`, {
+            method: 'POST',
+            'credentials': 'include',
+            headers: headers,  // Include headers with authorization
+        });
+
+        // Check if the response is successful (status code 200)
+        if (!response.ok) {
+            throw new Error(`Failed to download PDF, status: ${response.status}`);
+        }
+
+        // Check the content type in the response headers to confirm it's a PDF
+        const contentType = response.headers.get('Content-Type');
+        if (!contentType || !contentType.includes('application/pdf')) {
+            throw new Error('Received file is not a PDF');
+        }
+
+        // Check the Content-Length header to ensure the size is correct (optional)
+        const contentLength = response.headers.get('Content-Length');
+        if (!contentLength) {
+            console.warn('Content-Length header is missing.');
+        }
+
+        // Create a Blob from the response data
+        const blob = await response.blob();
+
+        return blob
+    }
+
 	const handleStart = async () => {
 		console.log(campaign);
-		const returnedTokens = await startCampaign({
+		const blob = await startCampaign({
 			campaignId: campaign.id,
 			campaignAddress: campaign.campaignId,
-		});
-		if (
-			!returnedTokens ||
-			!Array.isArray(returnedTokens) ||
-			returnedTokens.length < 1
+            token: token,
+		})
+        // const blob = await simulateStreamToken()
+
+        console.log("Data from startCampaign:", blob);  // Should be a blob URL like "blob:http://..."
+        if (
+			!blob
 		) {
 			messageApi.open({
 				key: "error",
@@ -196,15 +246,58 @@ const GenerateTokensModal = ({
 				duration: 5,
 			});
 		} else {
-			setTokensList(returnedTokens);
-            setCanClose(false)
+            console.log(!blob)
+            const fileUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = fileUrl;
+            link.download = 'qr_codes.pdf'; // Suggested file name
+            link.style.display = "none";
+
+            // Add the anchor element to the document body
+            document.body.appendChild(link);
+
+            // Trigger the download
+            link.click();
+
+           // Remove the anchor element from the document body
+            document.body.removeChild(link);
+
+            // Clean up the temporary URL after the download
+            window.URL.revokeObjectURL(blob);
+            
 			messageApi.open({
 				key: "success",
 				type: "success",
 				content: "Campaign Started and Codes Generated!",
 				duration: 5,
 			});
+            setDownloaded(true)
 		}
+        
+        setIsLoading(false)
+
+
+		// if (
+		// 	!returnedTokens ||
+		// 	!Array.isArray(returnedTokens) ||
+		// 	returnedTokens.length < 1
+		// ) {
+		// 	messageApi.open({
+		// 		key: "error",
+		// 		type: "error",
+		// 		content: "Something went wrong!",
+		// 		duration: 5,
+		// 	});
+		// } else {
+		// 	setTokensList(returnedTokens);
+        //     setCanClose(false)
+		// 	messageApi.open({
+		// 		key: "success",
+		// 		type: "success",
+		// 		content: "Campaign Started and Codes Generated!",
+		// 		duration: 5,
+		// 	});
+		// }
 	};
 
     let targetEuro = null;
@@ -215,217 +308,232 @@ const GenerateTokensModal = ({
 	}
 
 	return (
-		<Modal
-			onCancel={() => {
-				if (canClose) {
-					setShowModal(false);
-					setSelectedCampaign(null);
-                    setTokensList([])
-                    refetch()
-				} else {
-					messageApi.open({
-						key: "warning",
-						type: "warning",
-						content: "Please, download the tokens list first!",
-						duration: 5,
-					});
-				}
-			}}
-			maskClosable={false}
-			open={showModal}
-			width={1000}
-			centered
-			style={{ marginTop: "50px", marginBottom: "50px" }}
-			title={<Title level={4}>Campaign Details</Title>}
-			cancelText={"Close"}
-			okButtonProps={{ style: { display: "none" } }}
-		>
-			<Row>
-				<Col span={12}>
-					<Text strong>Title:</Text>
-				</Col>
-				<Col span={12}>
-					<Text>{campaign.title}</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Description:</Text>
-				</Col>
-				<Col span={12}>
-					<Text>{campaign.description}</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Donor:</Text>
-				</Col>
-				<Col span={12}>
-					<Text strong>{campaign.donorPublicName ? campaign.donorPublicName : campaign.donor}</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Beneficiary:</Text>
-				</Col>
-				<Col span={12}>
-					<Text strong>{campaign.receiverPublicName ? campaign.receiverPublicName : campaign.receiver}</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Starting Date:</Text>
-				</Col>
-				<Col span={12}>
-					<Text>
-						{format(
-							new Date(campaign.startingDate),
-							"dd/MM/yyyy HH:mm"
-						)}
-					</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Deadline:</Text>
-				</Col>
-				<Col span={12}>
-					<Text>
-						{format(
-							new Date(campaign.deadline),
-							"dd/MM/yyyy HH:mm"
-						)}
-					</Text>
-				</Col>
-			</Row>
-            <br/>
-			<Row>
-				<Col span={12}>
-					<Text strong>Number of Redeemable Codes:</Text>
-				</Col>
-				<Col span={12}>
-					<Text>
-						{campaign.tokensCount}
-					</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Value of a Code:</Text>
-				</Col>
-				<Col span={12}>
-					<Text>
-						{valueOfToken}
-					</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Total Value Campaing (EUR):</Text>
-				</Col>
-				<Col span={12}>
-					<Text>
-						{targetEuro}
-					</Text>
-				</Col>
-			</Row>
-			<Row>
-				<Col span={12}>
-					<Text strong>Total Value Campaing (ETH):</Text>
-				</Col>
-				<Col span={12}>
-					<Text>
-						{campaign.target}
-					</Text>
-				</Col>
-			</Row>
-			
-			<Divider />
-			<Title level={4}>Generating Codes Details</Title>
-			<Text style={{ fontSize: 16 }}>
-				If you haven't started the campaign yet, press FUND to finance
-				the campaign and <Text strong>start the donations</Text>.<br />
-				You will receive unique codes to download and distribute within
-				your products. It will{" "}
-				<Text strong type="danger">
-					not be possible to re-download the codes
-				</Text>{" "}
-				so preserve them carefully
-			</Text>
-			<br />
-			{tokensList.length === 0 && (
-				<Flex align="center" justify="center" style={{ marginTop: 20 }}>
-					{isExpired(campaign.startingDate) ? (
-						<Button
-							size="large"
-							type="primary"
-							shape="round"
-							onClick={() => handleStart()}
-						>
-							FUND the CAMPAIGN
-						</Button>
-					) : (
-						<Text strong>Waiting for the Campaign to start</Text>
-					)}
-				</Flex>
-			)}
-			{tokensList.length > 0 && (
-				<Space
-					direction="vertical"
-					style={{ width: "100%", marginTop: 20 }}
-				>
-					<List
-						style={{
-							width: "100%",
-							overflowX: "auto",
-							whiteSpace: "nowrap",
-						}}
-						size="small"
-						bordered
-						dataSource={tokensList}
-						renderItem={(item) => (
-							<div
-								style={{
-									marginRight: 10,
-								}}
-							>
-								<List.Item>{item.token.toString()}</List.Item>
-							</div>
-						)}
-						pagination={{ pageSize: 5 }}
-					/>
-					<Flex
-						align="center"
-						justify="center"
-						style={{ marginTop: 20 }}
-                        gap="middle"
-					>
-						<br />
-						<Button
-							size="large"
-							type="primary"
-							shape="round"
-							onClick={() => {
-								exportToExcel();
-							}}
-						>
-							Download Tokens (.xlsx)
-						</Button>
-						<br></br>
-						<Button
-							size="large"
-							type="primary"
-							shape="round"
-							onClick={() => {
-								exportToPdf();
-							}}
-						>
-							Download QR Codes (.pdf)
-						</Button>
-					</Flex>
-				</Space>
-			)}
-		</Modal>
+        <>  
+            <Modal
+                onCancel={() => {
+                    if (canClose) {
+                        setShowModal(false);
+                        setSelectedCampaign(null);
+                        setTokensList([])
+                        refetch()
+                    } else {
+                        messageApi.open({
+                            key: "warning",
+                            type: "warning",
+                            content: "Please, download the tokens list first!",
+                            duration: 5,
+                        });
+                    }
+                }}
+                maskClosable={false}
+                open={showModal}
+                width={1000}
+                centered
+                style={{ marginTop: "50px", marginBottom: "50px" }}
+                title={<Title level={4}>Campaign Details</Title>}
+                cancelText={"Close"}
+                okButtonProps={{ style: { display: "none" } }}
+            >
+                {isLoading && <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: 'white' }} spin />} fullscreen />}
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Title:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>{campaign.title}</Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Description:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>{campaign.description}</Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Donor:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text strong>{campaign.donorPublicName ? campaign.donorPublicName : campaign.donor}</Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Beneficiary:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text strong>{campaign.receiverPublicName ? campaign.receiverPublicName : campaign.receiver}</Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Starting Date:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>
+                            {format(
+                                new Date(campaign.startingDate),
+                                "dd/MM/yyyy HH:mm"
+                            )}
+                        </Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Deadline:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>
+                            {format(
+                                new Date(campaign.deadline),
+                                "dd/MM/yyyy HH:mm"
+                            )}
+                        </Text>
+                    </Col>
+                </Row>
+                <br/>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Number of Redeemable Codes:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>
+                            {campaign.tokensCount}
+                        </Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Value of a Code:</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>
+                            {valueOfToken}
+                        </Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Total Value Campaign (EUR):</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>
+                            {targetEuro}
+                        </Text>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={12}>
+                        <Text strong>Total Value Campaing (ETH):</Text>
+                    </Col>
+                    <Col span={12}>
+                        <Text>
+                            {campaign.target}
+                        </Text>
+                    </Col>
+                </Row>
+                
+                <Divider />
+                <Title level={4}>Generating Codes Details</Title>
+                <Text style={{ fontSize: 16 }}>
+                    If you haven't started the campaign yet, press FUND to finance
+                    the campaign and <Text strong>start the donations</Text>.<br />
+                    You will receive unique codes to download and distribute within
+                    your products. It will{" "}
+                    <Text strong type="danger">
+                        not be possible to re-download the codes
+                    </Text>{" "}
+                    so preserve them carefully.
+                </Text>
+                <br />
+                {tokensList.length === 0 && (
+                    <Flex align="center" justify="center" style={{ marginTop: 20 }}>
+                        {(campaign?.blockchain_data && !campaign.blockchain_data.funded && !downloaded) ? (
+                            <Button
+                                size="large"
+                                type="primary"
+                                shape="round"
+                                onClick={() => {
+                                    setIsLoading(true)
+                                    handleStart()
+                                }}
+                            >
+                                FUND the CAMPAIGN
+                            </Button>
+                        ) : (
+                            <Space direction="vertical" align="middle">
+                            <Button
+                                size="large"
+                                type="primary"
+                                shape="round"
+                                disabled={true}
+                            >
+                                CAMPAIGN FUNDED - You can close the windows!
+                            </Button>
+                            </Space>
+                        )}
+                    </Flex>
+                )}
+                {tokensList.length > 0 && (
+                    <Space
+                        direction="vertical"
+                        style={{ width: "100%", marginTop: 20 }}
+                    >
+                        <List
+                            style={{
+                                width: "100%",
+                                overflowX: "auto",
+                                whiteSpace: "nowrap",
+                            }}
+                            size="small"
+                            bordered
+                            dataSource={tokensList}
+                            renderItem={(item) => (
+                                <div
+                                    style={{
+                                        marginRight: 10,
+                                    }}
+                                >
+                                    <List.Item>{item.token.toString()}</List.Item>
+                                </div>
+                            )}
+                            pagination={{ pageSize: 5 }}
+                        />
+                        <Flex
+                            align="center"
+                            justify="center"
+                            style={{ marginTop: 20 }}
+                            gap="middle"
+                        >
+                            <br />
+                            <Button
+                                size="large"
+                                type="primary"
+                                shape="round"
+                                onClick={() => {
+                                    exportToExcel();
+                                }}
+                            >
+                                Download Tokens (.xlsx)
+                            </Button>
+                            <br></br>
+                            <Button
+                                size="large"
+                                type="primary"
+                                shape="round"
+                                onClick={() => {
+                                    exportToPdf();
+                                }}
+                            >
+                                Download QR Codes (.pdf)
+                            </Button>
+                        </Flex>
+                    </Space>
+                )}
+            </Modal>
+        </>
 	);
 };
 

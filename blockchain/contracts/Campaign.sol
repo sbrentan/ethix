@@ -1,8 +1,10 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+// (c) 2025 Ethix. Licensed under the MIT License.
 
 pragma solidity ^0.8.0;
 
 contract Campaign {
+
     // ====================================== STRUCTS ======================================
 
     struct TokenBlock {
@@ -162,11 +164,6 @@ contract Campaign {
         // set the campaign as funded
         campaignDetails.funded = true;
     }
-
-    function setWalletAddress(address _walletAddress) external onlyOwner {
-        walletAddress = _walletAddress;
-    }
-
 
     function getDetails() external view returns (CampaignDetails memory) {
         return campaignDetails;

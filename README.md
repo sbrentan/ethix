@@ -13,6 +13,11 @@ The team members for the group project are:
 
 The root folder also contains the report pdf file.
 
+# License
+This project is licensed under the [MIT License](https://mit-license.org/).
+
+Feel free to use, modify, and distribute it in accordance with the license terms.
+
 # Project Setup Instructions
 
 To get started with the project, please follow the steps below:
@@ -31,7 +36,7 @@ Make sure you have Node.js installed on your machine. You can download it from t
 The _Truffle_ and _Ganache_ tools have been used to manage and test an _Ethereum network_, and are therefore required.
 _Truffle_ can be easily installed with:
 ```sh
-npm install truffle
+npm install -g truffle
 ```
 While _Ganache_ can be easily downloaded from the official website: [Ganache](https://archive.trufflesuite.com/ganache/)
 
@@ -50,6 +55,7 @@ For a smooth **local execution** of the application, be careful to set up the en
 HOST = "127.0.0.1" 
 PORT = "7545"
 MANAGER = "<the public address of the account used to deploy the contracts>"
+REFRESH_TOKEN_SECRET = "your_refresh_token_secret"
 ```
 Remember to correctly update the `.env` file if  _Ganache_ was set up with different configurations from the default values
 
@@ -64,9 +70,9 @@ REACT_APP_BACKEND_URL = "http://localhost:3500"
 ```sh
 NODE_ENV = 'development' 
 DATABASE_URI = 'mongodb+srv://charity-chain:QU0LYteeRT2nGo9b@charitychain.odwkuxl.mongodb.net/?retryWrites=true&w=majority&appName=CharityChain'
-ACCESS_TOKEN_SECRET = '<your access token secret>' 
-REFRESH_TOKEN_SECRET = '<your refresh token secret>'
-SESSION_SECRET = '<your session secret>'
+ACCESS_TOKEN_SECRET = 'your_access_token_secret' 
+REFRESH_TOKEN_SECRET = 'your_refresh_token_secret'
+SESSION_SECRET = 'your_session_secret'
 
 # Testing
 DATABASE_TEST_URI = 'mongodb+srv://charity-chain:QU0LYteeRT2nGo9b@charitychain.odwkuxl.mongodb.net/?retryWrites=true&w=majority&appName=CharityChain'
@@ -82,9 +88,10 @@ WEB3_CONTRACT_ADDRESS = '<the Charity contract address, obtainable after the dep
 WEB3_NETWORK_ADDRESS = 'http://127.0.0.1:7545'
 
 # Settings
-DEFAULT_BATCH_REDEEM = 3
+DEFAULT_BATCH_REDEEM = 1
 DEFAULT_BATCH_HASH_GENERATION = 100
 DEBUG = true
+QR_CODE_GENERATION_ON_SERVER = true
 ```
 
 ## Application running
@@ -101,8 +108,11 @@ Please make sure to enter the respective directories (`blockchain`, `server` and
 npm run deploy
 ```
 3. Once the contract is deployed, its address can be found in the terminal or in the _Ganache_ `contracts` section.
-4. Copy the contract address inside the `client` and `server` .env files.
-
+4. Copy the contract address inside the `client` and `server` .env files
+   
+   > Remember to also set the other addresses and keys correctly in the env files
+   > 
+   > In the environment file for the server application, you can use the same address for both the relayer and the manager account (just for demo purposes). This account is the same that deployed the contracts. 
 
 ### Backend:
 
@@ -133,9 +143,32 @@ npm run start
 
 This will launch the application and you can access it in your web browser.
 
-## Notes
+### Notes
 
 The backend will run on `localhost:3500` while the front end on `localhost:3000`
+
+## Unit testing
+
+Unit tests have been written for the blockchain contracts and backend/frontend application.
+
+### Solidity contracts
+
+The solidity contracts unit tests have been developed through the usage of the hardhat framework, which is capable of simulating the network and contracts execution.
+
+To run the tests it is enough to enter the `blockchain` folder and run `npm run test`
+
+### Backend and Frontend 
+
+The unit tests for both the backend and frontend application have been developed using the `jest` framework.
+
+The implemented unit tests mainly relates to the contracts functions and general application flow.
+
+> WARNING:
+> 
+> To run both the backend and frontend unit tests, the deployment of the contracts (using `npm run deploy` inside the blockchain folder) is necessary, as both require the contracts ABI to work.
+
+After the contracts have been deployed, to run the tests you just need to run `npm run test`.
+
 
 ## Application usage
 
@@ -144,7 +177,7 @@ In order to utilise the application, a MetaMask connection to the site is requir
 #### Registration and Beneficiary verification
 1. Sign up and create an account for both the donor and the beneficiary.
 
-    > When doing so, remember that the connected wallet will be saved as the user wallet address, and thus will be used for validation and when refunding money. Be sure to register with two different wallets if you want to test the correct contract functioning and validation.
+    > When doing so, remember that the connected wallet will be saved as the user wallet address, and thus will be used for validation and when refunding money. Be sure to register with two different wallets if you want to test the correct contract functioning and validation. All the extensive information required on sign up are meant to be used by the admin to perform the verification process. While we put them in the demo, when testing the application usage you can put fake values as they are not checked (except of course the information about email and password which are used to perform the login)
 2. Sign in with the admin account.
 
     > In the database provided there is already an admin account with email: `admin@admin.admin` and password: `Password1`. Feel free to use that account, the wallet connected however **must be** the one that deployed the contract.
@@ -160,16 +193,16 @@ In order to utilise the application, a MetaMask connection to the site is requir
 #### Campaign funding
 3. The funding process for a campaign must be done when a block is mined after the campaign creation. During local testing, this operation must be performed manually. To do this, you need to execute a transaction on the blockchain, for example by logging again as an admin and then verifying the same beneficiary as before.
 
-    > This operation is needed because the funding process leverages the Commit-Reveal Randomness approach to generated a secure blockchain-level seed, and for this reason it needs to execute a second call with a different network block number.
+    > This operation is needed because the funding process leverages the Commit-Reveal Randomness approach to generate a secure blockchain-level seed, and for this reason it needs to execute a second call with a different network block number.
 
-4. To fund a campaign, navigate to the dashbord and press "Start". After the transaction is performed, the token values can be seen once and raw downloaded as an .xlsx file or stored as QR Codes in a .pdf file.
+4. To fund a campaign, navigate to the dashbord and press "Start". After the transaction is performed, the token values can be downloaded in form of QR Codes in a PDF file.
 
-    > If the start button is still disabled even after executing a blockchain transaction, try reloading the page. For simplicity and testing purposes, remember to download the `Excel` file in order to make easy the token redeeming.
+    > If the start button is still disabled even after executing a blockchain transaction, try reloading the page. For simplicity and testing purposes, the link to the redeem token is added in the PDF file attached to each QR Code.
 
 #### Token redeeming
 5. Now, in the "Redeem" page of the application, the tokens can be entered and redeemed if valid.
 
-    > Use the tokens which were previously downloaded as an Excel file. Remember that the campaign must be live, this may require doing again a blockchian transaction to enable it after the starting date passes.
+    > Use the tokens which were previously downloaded. Remember that the campaign must be live, this may require doing again a blockchian transaction to enable it after the starting date passes.
 
 #### Donation and refunds claiming
 6. Once a campaign ends, both `Donor` and `Beneficiary` can access their respective dashboard and respectively claim the refunds and the donations for the campaign based on the number of redeemed tokens.

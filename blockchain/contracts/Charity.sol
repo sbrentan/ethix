@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+// (c) 2025 Ethix. Licensed under the MIT License.
 
 pragma solidity ^0.8.0;
 
@@ -12,13 +13,14 @@ contract Charity {
 
     // ====================================== EVENTS ======================================
 
-    // Charity events
+    // Organization events
     event OrganizationVerified();
     event OrganizationRevoked();
 
     // Campaign events
-    event CampaignStarted(bytes32 campaignId); // useless since it's an input parameter of the startCampaign function
     event CampaignCreated(bytes32 campaignId);
+    event CampaignStarted(bytes32 campaignId);
+    event TokensRedeemed(uint256 count);
     event RefundClaimed(uint256 amount);
     event DonationClaimed(uint256 amount);
 
@@ -107,6 +109,7 @@ contract Charity {
         bytes32 _commitHash, // is the hash of the seed
         Campaign.Signature calldata _signature
     ) external onlyVerifiedBeneficiary(_beneficiary) {
+
         // generate a unique ID for the campaign
         bytes32 campaignId = _generateCampaignId(
             msg.sender,
@@ -152,7 +155,7 @@ contract Charity {
             _maxTokensCount
         );
         campaignsIds.push(campaignId);
-
+        
         emit CampaignCreated(campaignId);
     }
 
@@ -250,6 +253,7 @@ contract Charity {
         Campaign.Signature[] calldata _signatures
     ) external onlyExistingCampaign(_campaignId) onlyOwner {
         campaigns[_campaignId].redeemTokensBatch(_tokens, _signatures);
+        emit TokensRedeemed(campaigns[_campaignId].getDetails().redeemedTokensCount);
     }
 
     // function to check if a token is valid

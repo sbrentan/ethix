@@ -7,6 +7,7 @@ const ethUtil = require('ethereumjs-util');
 const jwt = require('jsonwebtoken');
 const RedeemableToken = require("../models/RedeemableToken");
 const generateQRCodes = require("./utils/qrcode_generator");
+const fs = require('fs');
 
 const retrieveBlockchainError = (error) => {
     try{
@@ -32,22 +33,23 @@ const retrieveBlockchainError = (error) => {
 // @access Donor
 const generateTokens = asyncHandler(async (req, res) => {
     const campaignId = req.params.id;
+    if (!campaignId)
+        return res.status(400).json({ message: "Campaign ID not provided" });
+
     const campaign = await Campaign.findById(campaignId).exec();
-    if (!campaign) {
-        res.status(404);
-        throw new Error("Campaign not found");
-    }
+    if (!campaign)
+        return res.status(404).json({ message: "Campaign not found" });
+    
     campaignAddress = campaign.campaignId;
-    if(!campaignAddress){
-        res.status(400);
-        throw new Error("Campaign not associated with a blockchain campaign");
-    }
+    if(!campaignAddress)
+        return res.status(400).json({ message: "Campaign not associated with a blockchain campaign"});
 
     const wallet = req.session.wallet;
-    if (!wallet) {
-        res.status(400);
-        throw new Error("Wallet not found");
-    }
+    if (!wallet)
+        return res.status(400).json({ message: "Wallet not found" });
+
+    if (!campaign.seed)
+        return res.status(400).json({ message: "Campaign seed not defined" });
 
     try{
         // Generate the seed(St) that is used to generate the tokens T1
@@ -56,11 +58,11 @@ const generateTokens = asyncHandler(async (req, res) => {
         if(process.env.DEBUG) console.log(campaign);
         // Generate the tokens T1
         const t1_tokens = Array.from({ length: campaign.maxTokensCount }, (_, i) => {
-            return web3.utils.toHex(crypto.createHash('sha256').update(tokenSeed + i).digest('hex'));
+            return web3.utils.toHex(crypto.createHash('sha256').update(tokenSeed + i).digest('hex'));  
         });
         if(process.env.DEBUG) console.log('t1_tokens', t1_tokens);
         
-        // generate randomlyh token indexes
+        // generate randomly token indexes
         const salts = Array.from({ length: campaign.maxTokensCount }, (_, i) => crypto.createHash('sha256').update(String(i + new Date().getTime())).digest('hex'));
         if(process.env.DEBUG) console.log('salts', salts);
 
@@ -119,11 +121,13 @@ const generateTokens = asyncHandler(async (req, res) => {
                         signature: token.signature,
                     },
                     secretKey,
-                    { expiresIn: expirationTime
+                    { expiresIn: expirationTime - Math.floor(Date.now() / 1000)
                 })
             }
         })
         if(process.env.DEBUG) console.log(jwt_tokens)
+
+        await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
 
         if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
             if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
@@ -131,17 +135,49 @@ const generateTokens = asyncHandler(async (req, res) => {
             generateQRCodes(campaignId, jwt_tokens).then(async (fileName) => {
                 campaign.qrCodes = fileName;
                 await campaign.save();
-                console.log("QR codes generated in worker thread:", fileName);
-            }).catch((error) => {
-                console.log("Error generating QR codes in worker thread:", error);
-            });
-        }
+                // console.log("QR codes generated in worker thread:", fileName);
 
-        res.json({ signedTokens: jwt_tokens });
+                // Load the saved PDF from the file system
+                const filePath = `qr_codes/${fileName}`;
+
+                // Create a readable stream from the PDF file
+                const pdfStream = fs.createReadStream(filePath);
+                const stat = fs.statSync(filePath);
+
+                // Set headers to indicate a PDF file download
+                res.setHeader('Content-Length', stat.size);
+                res.setHeader('Content-Type', 'application/pdf');
+                res.setHeader('Content-Disposition', `attachment; filename="qr_codes.pdf"`);
+
+                // Pipe the stream to the response
+                pdfStream.pipe(res);
+
+                // Handle the end of the stream
+                pdfStream.on('end', () => {
+                    if(process.env.DEBUG) console.log("PDF streamed successfully.");
+                    // Delete the pdf file after streaming it
+                    fs.unlink(filePath, (err) => {
+                        if (err) console.error("Error deleting QR code PDF:", err);
+                        if(process.env.DEBUG) console.log("QR code PDF deleted successfully.");
+                    });
+                });
+
+                // Handle errors in the stream
+                pdfStream.on('error', (err) => {
+                    if(process.env.DEBUG) console.error("Error streaming PDF:", err);
+                    res.status(500).send("Error streaming the PDF file.");
+                });
+            }).catch((error) => {
+                if(process.env.DEBUG) console.log("Error generating QR codes in worker thread:", error);
+            });
+        } else {
+            res.json({ signedTokens: jwt_tokens });
+        }
         
     } catch (error) {
+        console.error('Error generating tokens:', error);
         if(process.env.DEBUG) console.log('Error generating tokens:', error);
-        res.status(400).json({ message: "Error generating tokens: " + error.message });
+        return res.status(400).json({ message: "Error generating tokens: " + error.message });
     }
 });
 
@@ -194,12 +230,12 @@ const redeemToken = asyncHandler(async (req, res) => {
         const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).call({ from: WEB3_MANAGER_ACCOUNT.address });
         if(process.env.DEBUG) console.log("isTokenValid", isTokenValid);
         if (!isTokenValid) {
-            return res.status(400).json({ message: "Token not valid" });
+            return res.status(400).json({ message: "Error redeeming token: Token not valid" });
         }
 
         // get total redeemed token salt for the campaign
         const totalRedeemedTokenSalt = await TokenSalt.countDocuments({ campaignId: campaignId, redeemed: true }).exec();
-        
+        if(process.env.DEBUG) console.log("Redeemed tokens so far", totalRedeemedTokenSalt);
         if (tokenSalt){
             tokenSalt.redeemed = true;
             await tokenSalt.save();
@@ -209,11 +245,13 @@ const redeemToken = asyncHandler(async (req, res) => {
 
             // Check if the batch of tokens is complete
             campaign.redeemableTokens += 1;
+            if(process.env.DEBUG) console.log("redeemableTokens", RedeemableToken);
             newtoken = new RedeemableToken({
                 campaignId: campaignId,
                 token: t15_token,
                 signature: signature
             });
+            if(process.env.DEBUG) console.log("newtoken", newtoken);  
 
             await newtoken.save();
             await campaign.save();
@@ -227,6 +265,7 @@ const redeemToken = asyncHandler(async (req, res) => {
                     const { v, r, s } = ethUtil.fromRpcSig(token.signature);
                     return {r: r, s: s, v: v}
                 });
+                // console.log(RSVSignatures);
                 const receipt = await WEB3_CONTRACT.methods.redeemTokensBatch(campaignAddress, tokens, RSVSignatures).send({
                     gasPrice: web3.utils.toWei('2', 'gwei'),
                     from: WEB3_MANAGER_ACCOUNT.address
@@ -237,6 +276,7 @@ const redeemToken = asyncHandler(async (req, res) => {
                     // delete token
                     await token.deleteOne();
                 }
+                if(process.env.DEBUG) console.log("Redeemable tokens deleted");
 
                 // reset redeemable tokens
                 campaign.redeemableTokens = await RedeemableToken.countDocuments({ campaignId: campaignId }).exec();
@@ -252,8 +292,8 @@ const redeemToken = asyncHandler(async (req, res) => {
 
             res.json({ message: "Token redeemed" });
         } else {
-            console.log("Target has been reached, no more tokens can be redeemed");
-            res.json("Token redeemed, but target has already been reached");
+            if(process.env.DEBUG) console.log("Target has been reached, no more tokens can be redeemed");
+            res.json({ message: "Token redeemed, but target has already been reached"});
         }
     } catch (error) {
         if(process.env.DEBUG) console.log('Error redeeming token:', error);
@@ -280,7 +320,58 @@ const recoverT15Token = async (campaignId, t1_token) => {
 }
 
 
+// @desc Simulate token stream
+// @route POST /campaign/:id/simulateTokens
+// @access Public
+const simulateTokenStream = asyncHandler(async (req, res) => {
+    const campaignId = req.params.id;
+    const campaign = await Campaign.findById(campaignId).exec();
+    if (!campaign) {
+        res.status(404);
+        throw new Error("Campaign not found");
+    }
+    try {
+        if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
+            if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread")
+            // Load the saved PDF from the file system
+            const filePath = `qr_codes/test.pdf`;
+
+            // Create a readable stream from the PDF file
+            const pdfStream = fs.createReadStream(filePath);
+            const stat = fs.statSync(filePath);
+
+            // Set headers to indicate a PDF file download
+            res.setHeader('Content-Length', stat.size);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="qr_codes.pdf"`);
+
+            // Pipe the stream to the response
+            pdfStream.pipe(res);
+
+            // Handle the end of the stream
+            pdfStream.on('end', () => {
+                if(process.env.DEBUG) console.log("PDF streamed successfully.");
+                // Do not send any additional response here that might confuse the client
+            });
+
+            // Handle errors in the stream
+            pdfStream.on('error', (err) => {
+                console.error("Error streaming PDF:", err);
+                res.status(500).send("Error streaming the PDF file.");
+            });
+        } else {
+            res.status(400).json({ message: "Only PDF is accepted" });
+        }
+        
+    } catch (error) {
+        if(process.env.DEBUG) console.log('Error generating tokens:', error);
+        res.status(400).json({ message: "Error generating tokens: " + error.message });
+    }
+});
+
+
 module.exports = {
     redeemToken,
-    generateTokens
+    generateTokens,
+    simulateTokenStream
 };

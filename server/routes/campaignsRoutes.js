@@ -48,6 +48,11 @@ router
 		verifyRoles(ROLES_LIST.donor),
 		tokensController.generateTokens
 	);
+router
+	.route("/:id/simulatetokens")
+	.post(
+		tokensController.simulateTokenStream
+	);
 
 router
 	.route("/:id/wallet/random")
