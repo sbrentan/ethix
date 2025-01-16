@@ -68,7 +68,10 @@ const DashboardOrganization = ({ role }) => {
 		isError,
 		error,
 		refetch,
-	} = useGetCampaignsQuery("campaignsList", {});
+	} = useGetCampaignsQuery("campaignsList", {
+        pollingInterval: 5000,
+        skipPollingIfUnfocused: true,
+    });
 
     const {
 		data: normalizedPublicProfiles,

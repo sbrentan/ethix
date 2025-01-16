@@ -137,7 +137,7 @@ const ClaimModal = ({
 		targetEuro = (campaign.targetEur);
         valueOfToken = ((campaign.target / campaign.tokensCount)* ethPrice).toFixed(2);
 	}
-    if (campaign.blockchain_data) {
+    if (campaign.blockchain_data && campaign.blockchain_data.tokensCount && campaign.blockchain_data.redeemedTokensCount) {
         codesNotRedeemed = campaign.blockchain_data.tokensCount - campaign.blockchain_data.redeemedTokensCount
     }
 

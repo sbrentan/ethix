@@ -49,11 +49,13 @@ if (isMainThread) {
             }
 
             qrCodeData.forEach((image, index) => {
-				pdf.addImage(image, "JPEG", x, y, qrSize, qrSize);
+				pdf.addImage(image, "JPEG", x - 10, y, qrSize, qrSize);
             
                 // Add text below the QR code
+                const wrappedText = pdf.splitTextToSize(qrCodeTexts[index], 180); // 180 is the max width in mm
                 pdf.setFontSize(12); // Optional: Set font size
-                pdf.text(qrCodeTexts[index], x, y + qrSize + 10); // Adjust Y to place text below the image
+                pdf.textWithLink('Redeem', x, y + qrSize + 10, { url: qrCodeTexts[index] });
+                pdf.text(wrappedText, x - (qrSize/2), y + qrSize + 20); // Adjust Y to place text below the image
 
 				if (index != qrCodeData.length - 1){
 					pdf.addPage();
