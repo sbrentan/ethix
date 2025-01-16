@@ -174,7 +174,7 @@ In order to utilise the application, a MetaMask connection to the site is requir
 #### Registration and Beneficiary verification
 1. Sign up and create an account for both the donor and the beneficiary.
 
-    > When doing so, remember that the connected wallet will be saved as the user wallet address, and thus will be used for validation and when refunding money. Be sure to register with two different wallets if you want to test the correct contract functioning and validation.
+    > When doing so, remember that the connected wallet will be saved as the user wallet address, and thus will be used for validation and when refunding money. Be sure to register with two different wallets if you want to test the correct contract functioning and validation. All the extensive information required on sign up are meant to be used by the admin to perform the verification process. While we put them in the demo, when testing the application usage you can put fake values as they are not checked (except of course the information about email and password which are used to perform the login)
 2. Sign in with the admin account.
 
     > In the database provided there is already an admin account with email: `admin@admin.admin` and password: `Password1`. Feel free to use that account, the wallet connected however **must be** the one that deployed the contract.
@@ -190,16 +190,16 @@ In order to utilise the application, a MetaMask connection to the site is requir
 #### Campaign funding
 3. The funding process for a campaign must be done when a block is mined after the campaign creation. During local testing, this operation must be performed manually. To do this, you need to execute a transaction on the blockchain, for example by logging again as an admin and then verifying the same beneficiary as before.
 
-    > This operation is needed because the funding process leverages the Commit-Reveal Randomness approach to generated a secure blockchain-level seed, and for this reason it needs to execute a second call with a different network block number.
+    > This operation is needed because the funding process leverages the Commit-Reveal Randomness approach to generate a secure blockchain-level seed, and for this reason it needs to execute a second call with a different network block number.
 
-4. To fund a campaign, navigate to the dashbord and press "Start". After the transaction is performed, the token values can be seen once and raw downloaded as an .xlsx file or stored as QR Codes in a .pdf file.
+4. To fund a campaign, navigate to the dashbord and press "Start". After the transaction is performed, the token values can be downloaded in form of QR Codes in a PDF file.
 
-    > If the start button is still disabled even after executing a blockchain transaction, try reloading the page. For simplicity and testing purposes, remember to download the `Excel` file in order to make easy the token redeeming.
+    > If the start button is still disabled even after executing a blockchain transaction, try reloading the page. For simplicity and testing purposes, the link to the redeem token is added in the PDF file attached to each QR Code.
 
 #### Token redeeming
 5. Now, in the "Redeem" page of the application, the tokens can be entered and redeemed if valid.
 
-    > Use the tokens which were previously downloaded as an Excel file. Remember that the campaign must be live, this may require doing again a blockchian transaction to enable it after the starting date passes.
+    > Use the tokens which were previously downloaded. Remember that the campaign must be live, this may require doing again a blockchian transaction to enable it after the starting date passes.
 
 #### Donation and refunds claiming
 6. Once a campaign ends, both `Donor` and `Beneficiary` can access their respective dashboard and respectively claim the refunds and the donations for the campaign based on the number of redeemed tokens.
