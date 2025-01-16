@@ -36,7 +36,7 @@ Make sure you have Node.js installed on your machine. You can download it from t
 The _Truffle_ and _Ganache_ tools have been used to manage and test an _Ethereum network_, and are therefore required.
 _Truffle_ can be easily installed with:
 ```sh
-npm install truffle
+npm install -g truffle
 ```
 While _Ganache_ can be easily downloaded from the official website: [Ganache](https://archive.trufflesuite.com/ganache/)
 
