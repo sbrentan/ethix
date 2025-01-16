@@ -127,7 +127,8 @@ const generateTokens = asyncHandler(async (req, res) => {
         })
         if(process.env.DEBUG) console.log(jwt_tokens)
 
-        await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
+        const db_res = await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
+        console.log('db_res', db_res);
 
         if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
             if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
@@ -231,7 +232,6 @@ const redeemToken = asyncHandler(async (req, res) => {
 
         // get total redeemed token salt for the campaign
         const totalRedeemedTokenSalt = await TokenSalt.countDocuments({ campaignId: campaignId, redeemed: true }).exec();
-        
         if (tokenSalt){
             tokenSalt.redeemed = true;
             await tokenSalt.save();
@@ -241,11 +241,13 @@ const redeemToken = asyncHandler(async (req, res) => {
 
             // Check if the batch of tokens is complete
             campaign.redeemableTokens += 1;
+            console.log("redeemableTokens", RedeemableToken);
             newtoken = new RedeemableToken({
                 campaignId: campaignId,
                 token: t15_token,
                 signature: signature
             });
+            console.log("newtoken", newtoken);  
 
             await newtoken.save();
             await campaign.save();
@@ -259,6 +261,7 @@ const redeemToken = asyncHandler(async (req, res) => {
                     const { v, r, s } = ethUtil.fromRpcSig(token.signature);
                     return {r: r, s: s, v: v}
                 });
+                console.log(RSVSignatures);
                 const receipt = await WEB3_CONTRACT.methods.redeemTokensBatch(campaignAddress, tokens, RSVSignatures).send({
                     gasPrice: web3.utils.toWei('2', 'gwei'),
                     from: WEB3_MANAGER_ACCOUNT.address
@@ -269,6 +272,7 @@ const redeemToken = asyncHandler(async (req, res) => {
                     // delete token
                     await token.deleteOne();
                 }
+                console.log("Redeemable tokens deleted");
 
                 // reset redeemable tokens
                 campaign.redeemableTokens = await RedeemableToken.countDocuments({ campaignId: campaignId }).exec();

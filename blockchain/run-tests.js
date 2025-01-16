@@ -22,12 +22,13 @@ if (findTestsResult === '') {
 try{
     //check if on windows
     if(process.platform === 'win32') {
+        const grep_txt = findTestsResult === "__all_tests__" ? "" : `--grep "${findTestsResult}"`;
         if (debug_msg !== '')
-            execSync(`(set DEBUG=true && npx hardhat test --grep "${findTestsResult}")`, { stdio: 'inherit' });
+            execSync(`(set DEBUG=true && npx hardhat test ${grep_txt})`, { stdio: 'inherit' });
         else
-            execSync(`npx hardhat test --grep "${findTestsResult}"`, { stdio: 'inherit' });
+            execSync(`npx hardhat test ${grep_txt}`, { stdio: 'inherit' });
     } else {
-        execSync(`${debug_msg}npx hardhat test --grep "${findTestsResult}"`, { stdio: 'inherit' });
+        execSync(`${debug_msg}npx hardhat test ${grep_txt}`, { stdio: 'inherit' });
     }
 } catch (error) {
     process.exit(1);

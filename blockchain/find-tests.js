@@ -120,7 +120,8 @@ function findTests(searchPattern) {
 }
 
 if (process.argv.length < 3) {
-  process.stderr.write('!!! Please provide a search pattern as an argument !!!');
+    process.stderr.write('! No argument provided, running all tests !\n');
+    console.log("__all_tests__");
 } else {
 
     let real_params = process.argv.slice(2);
