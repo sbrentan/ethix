@@ -1,4 +1,5 @@
-//SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+// (c) 2025 Ethix. Licensed under the MIT License.
 
 pragma solidity ^0.8.0;
 

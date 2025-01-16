@@ -13,6 +13,11 @@ The team members for the group project are:
 
 The root folder also contains the report pdf file.
 
+# License
+This project is licensed under the [MIT License](https://mit-license.org/).
+
+Feel free to use, modify, and distribute it in accordance with the license terms.
+
 # Project Setup Instructions
 
 To get started with the project, please follow the steps below:
