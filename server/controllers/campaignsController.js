@@ -110,13 +110,10 @@ const createNewCampaign = asyncHandler(async (req, res) => {
 	let campaign;
 	try{
 		// Create and store new campaign
-		console.log("creating campaign")
-		console.log(Campaign)
 		campaign = await Campaign.create({
 			target, targetEur, title, image, description, startingDate, deadline, donor, receiver, tokensCount, maxTokensCount,
 			seed, blockNumber, campaignId: campaignAddress, createdBy: donor, batchRedeem: batchRedeem
 		});
-		console.log("campaign created")
 	} catch (error) {
 		return res.status(500).json({ message: "Something went wrong!" });
 	}
@@ -140,7 +137,6 @@ const generateRandomWallet = asyncHandler(async (req, res) => {
 	}
 
 	logged_user = await User.findOne({username: req.user}).exec();
-	console.log(campaign, logged_user)
 	if(!campaign.createdBy.equals(logged_user._id)) {
 		return res.status(400).json({ message: "User not authorized to generate wallet for this campaign" });
 	}

@@ -127,8 +127,7 @@ const generateTokens = asyncHandler(async (req, res) => {
         })
         if(process.env.DEBUG) console.log(jwt_tokens)
 
-        const db_res = await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
-        console.log('db_res', db_res);
+        await Campaign.findByIdAndUpdate(campaign._id, { seed: undefined });
 
         if(process.env.QR_CODE_GENERATION_ON_SERVER === 'true') {
             if(process.env.DEBUG) console.log("Starting qr code generation to pdf in worker thread");
@@ -136,7 +135,7 @@ const generateTokens = asyncHandler(async (req, res) => {
             generateQRCodes(campaignId, jwt_tokens).then(async (fileName) => {
                 campaign.qrCodes = fileName;
                 await campaign.save();
-                console.log("QR codes generated in worker thread:", fileName);
+                // console.log("QR codes generated in worker thread:", fileName);
 
                 // Load the saved PDF from the file system
                 const filePath = `qr_codes/${fileName}`;
@@ -155,17 +154,21 @@ const generateTokens = asyncHandler(async (req, res) => {
 
                 // Handle the end of the stream
                 pdfStream.on('end', () => {
-                    console.log("PDF streamed successfully.");
-                    // Do not send any additional response here that might confuse the client
+                    if(process.env.DEBUG) console.log("PDF streamed successfully.");
+                    // Delete the pdf file after streaming it
+                    fs.unlink(filePath, (err) => {
+                        if (err) console.error("Error deleting QR code PDF:", err);
+                        if(process.env.DEBUG) console.log("QR code PDF deleted successfully.");
+                    });
                 });
 
                 // Handle errors in the stream
                 pdfStream.on('error', (err) => {
-                    console.error("Error streaming PDF:", err);
+                    if(process.env.DEBUG) console.error("Error streaming PDF:", err);
                     res.status(500).send("Error streaming the PDF file.");
                 });
             }).catch((error) => {
-                console.log("Error generating QR codes in worker thread:", error);
+                if(process.env.DEBUG) console.log("Error generating QR codes in worker thread:", error);
             });
         } else {
             res.json({ signedTokens: jwt_tokens });
@@ -262,7 +265,7 @@ const redeemToken = asyncHandler(async (req, res) => {
                     const { v, r, s } = ethUtil.fromRpcSig(token.signature);
                     return {r: r, s: s, v: v}
                 });
-                console.log(RSVSignatures);
+                // console.log(RSVSignatures);
                 const receipt = await WEB3_CONTRACT.methods.redeemTokensBatch(campaignAddress, tokens, RSVSignatures).send({
                     gasPrice: web3.utils.toWei('2', 'gwei'),
                     from: WEB3_MANAGER_ACCOUNT.address
@@ -289,7 +292,7 @@ const redeemToken = asyncHandler(async (req, res) => {
 
             res.json({ message: "Token redeemed" });
         } else {
-            console.log("Target has been reached, no more tokens can be redeemed");
+            if(process.env.DEBUG) console.log("Target has been reached, no more tokens can be redeemed");
             res.json({ message: "Token redeemed, but target has already been reached"});
         }
     } catch (error) {
@@ -347,7 +350,7 @@ const simulateTokenStream = asyncHandler(async (req, res) => {
 
             // Handle the end of the stream
             pdfStream.on('end', () => {
-                console.log("PDF streamed successfully.");
+                if(process.env.DEBUG) console.log("PDF streamed successfully.");
                 // Do not send any additional response here that might confuse the client
             });
 

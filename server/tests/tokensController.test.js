@@ -310,7 +310,6 @@ describe('Tokens Controller', () => {
                 limit: jest.fn(() => ({
                     exec: jest.fn(() => {
                         const redeemableTokens = Array(MOCKED_MODELS.Campaign.batchRedeem).fill(MOCKED_MODELS.RedeemableToken);
-                        console.log("len", redeemableTokens.length);
                         return redeemableTokens;
                     })
                 }))

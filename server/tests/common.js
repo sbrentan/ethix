@@ -3,7 +3,6 @@ const path = require('path');
 
 if (process.env.NODE_ENV === 'test') {
     process.env = {
-        DEBUG: true,
         NODE_ENV: 'test',
         WEB3_NETWORK_ADDRESS: 'http://fake:8545',
         WEB3_MANAGER_PRIVATE_KEY: '0x1',
@@ -69,8 +68,6 @@ const Campaign = require(path.join(root_dirname, 'models/Campaign.js'));
 const User = require(path.join(root_dirname, 'models/User.js'));
 const TokenSalt = require(path.join(root_dirname, 'models/TokenSalt.js'));
 const RedeemableToken = require(path.join(root_dirname, 'models/RedeemableToken.js'));
-console.log(RedeemableToken)
-console.log(TokenSalt)
 const mock_user = new User({
     username: 'mockUsername',
     address: 'mockAddress',
