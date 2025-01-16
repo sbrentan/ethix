@@ -55,7 +55,7 @@ For a smooth **local execution** of the application, be careful to set up the en
 HOST = "127.0.0.1" 
 PORT = "7545"
 MANAGER = "<the public address of the account used to deploy the contracts>"
-REFRESH_TOKEN_SECRET = "<your refresh token secret>"
+REFRESH_TOKEN_SECRET = "your_refresh_token_secret"
 ```
 Remember to correctly update the `.env` file if  _Ganache_ was set up with different configurations from the default values
 
@@ -70,9 +70,9 @@ REACT_APP_BACKEND_URL = "http://localhost:3500"
 ```sh
 NODE_ENV = 'development' 
 DATABASE_URI = 'mongodb+srv://charity-chain:QU0LYteeRT2nGo9b@charitychain.odwkuxl.mongodb.net/?retryWrites=true&w=majority&appName=CharityChain'
-ACCESS_TOKEN_SECRET = '<your access token secret>' 
-REFRESH_TOKEN_SECRET = '<your refresh token secret>'
-SESSION_SECRET = '<your session secret>'
+ACCESS_TOKEN_SECRET = 'your_access_token_secret' 
+REFRESH_TOKEN_SECRET = 'your_refresh_token_secret'
+SESSION_SECRET = 'your_session_secret'
 
 # Testing
 DATABASE_TEST_URI = 'mongodb+srv://charity-chain:QU0LYteeRT2nGo9b@charitychain.odwkuxl.mongodb.net/?retryWrites=true&w=majority&appName=CharityChain'
@@ -88,7 +88,7 @@ WEB3_CONTRACT_ADDRESS = '<the Charity contract address, obtainable after the dep
 WEB3_NETWORK_ADDRESS = 'http://127.0.0.1:7545'
 
 # Settings
-DEFAULT_BATCH_REDEEM = 3
+DEFAULT_BATCH_REDEEM = 1
 DEFAULT_BATCH_HASH_GENERATION = 100
 DEBUG = true
 QR_CODE_GENERATION_ON_SERVER = true
