@@ -3,7 +3,6 @@ import { setCredentials } from '../../features/auth/authSlice'
 
 const getBeURL = () => {
     const URL = process.env.REACT_APP_BACKEND_URL
-    if (!URL) throw new Error("No Backend URL found")
     return URL
 }
 

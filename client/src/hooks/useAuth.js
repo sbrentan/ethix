@@ -41,7 +41,7 @@ const useAuth = () => {
         const status = getStatus(role)
         
 
-        return { userId, username, role, status, isUser, isDonor, isBeneficiary, isAdmin, verified }
+        return { userId, username, role, status, isUser, isDonor, isBeneficiary, isAdmin, verified, token }
     }, [token])
 
     return authState

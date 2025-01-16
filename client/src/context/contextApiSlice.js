@@ -10,7 +10,10 @@ export const api = apiSlice.injectEndpoints({
                 url: '/campaigns',
                 method: 'POST',
                 body: { ...params }
-            })
+            }),
+            invalidatesTags: (result, error, arg) => [
+                { type: 'Campaign', id: 'LIST' }
+            ]
         }),
         generateRandomWallet: builder.mutation({
             query: params => ({
