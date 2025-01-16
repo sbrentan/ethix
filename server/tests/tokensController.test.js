@@ -169,37 +169,23 @@ describe('Tokens Controller', () => {
 			jest.clearAllMocks();
 			req = httpMocks.createRequest();
 			res = httpMocks.createResponse();
+            MOCKED_MODELS.TokenSalt.redeemed = false;
+            MOCKED_MODELS.Campaign.redeemableTokens = 0;
+            MOCKED_MODELS.Campaign.batchRedeem = 1;
         });
 
         it('should correctly redeem a valid token', async () => {
-            req.params = { token: 'valid_token' };
             req.body = {
                 token: 'valid_token',
                 campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
                 signature: MOCKED_PARAMS.SIGNATURE.signature
             }
             const { v, r, s } = ethUtil.fromRpcSig(req.body.signature);
-
-            console.log(v, r, s)
-
-            // db_mocks.TokenSalt.findOne.mockImplementationOnce(() => ({
-            //     exec: jest.fn(() => ({ token: token }))
-            // }));
-
-            // db_mocks.TokenSalt.countDocuments.mockImplementationOnce(() => ({
-            //     exec: jest.fn(() => 0)
-            // }));
-
-            // db_mocks.RedeemableToken.find.mockImplementationOnce(() => ({
-            //     limit: jest.fn(() => ({
-            //         exec: jest.fn(() => [MOCKED_MODELS.RedeemableToken])
-            //     }))
-            // }));
             
             const MANAGER_ACCOUNT = MOCKED_PARAMS.ADDRESS_ACCOUNTS['0x1'];
             await redeemToken(req, res);
-            // expect(res.statusCode).toBe(200);
-            // expect(res._getJSONData()).toEqual({ message: 'Token redeemed' });
+            expect(res.statusCode).toBe(200);
+            expect(res._getJSONData()).toEqual({ message: 'Token redeemed' });
 
             expect(mocks.Contract_isTokenValid).toHaveBeenCalledWith(MOCKED_PARAMS.CAMPAIGN_ADDRESS, expect.anything(), {v, r, s});
             expect(mocks.Contract_isTokenValid_call).toHaveBeenCalledWith({ from: MANAGER_ACCOUNT.address })
@@ -207,11 +193,152 @@ describe('Tokens Controller', () => {
             expect(MOCKED_MODELS.TokenSalt.save).toHaveBeenCalled();
             expect(db_mocks.TokenSalt.countDocuments).toHaveBeenCalledWith({ campaignId: MOCKED_PARAMS.CAMPAIGN_ID, redeemed: true });
 
+            expect(db_mocks.RedeemableToken).toHaveBeenCalled();
             expect(MOCKED_MODELS.RedeemableToken.save).toHaveBeenCalled();
             expect(MOCKED_MODELS.Campaign.save).toHaveBeenCalled();
 
             expect(mocks.Contract_redeemTokensBatch).toHaveBeenCalledWith(MOCKED_PARAMS.CAMPAIGN_ADDRESS, expect.anything(), [{r, s, v}]);
+
+            expect(MOCKED_MODELS.RedeemableToken.deleteOne).toHaveBeenCalledTimes(1);
         });
 
+        it('should return 400 if the token is not valid [server token validation failed]', async () => {
+            req.body = {
+                token: 'invalid_server_token',
+                campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
+                signature: MOCKED_PARAMS.SIGNATURE.signature
+            }
+
+            db_mocks.TokenSalt.findOne.mockImplementationOnce(() => ({
+                exec: jest.fn(() => null)
+            }));
+            
+            await redeemToken(req, res);
+            expect(res.statusCode).toBe(400);
+            expect(res._getJSONData()).toEqual({ message: 'Error redeeming token: Token not valid' });
+
+            expect(mocks.Contract_isTokenValid).not.toHaveBeenCalled();
+        });
+
+        it('should return 400 if the token is not valid [contract token validation failed]', async () => {
+            req.body = {
+                token: 'invalid_contract_token',
+                campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
+                signature: MOCKED_PARAMS.SIGNATURE.signature
+            }
+
+            mocks.Contract_isTokenValid.mockImplementationOnce(() => ({
+                call: jest.fn(() => { return false; })
+            }));
+
+            await redeemToken(req, res);
+            expect(res.statusCode).toBe(400);
+            expect(res._getJSONData()).toEqual({ message: 'Error redeeming token: Token not valid' });
+
+            expect(mocks.Contract_isTokenValid).toHaveBeenCalled();
+
+            expect(MOCKED_MODELS.TokenSalt.save).not.toHaveBeenCalled();
+        });
+
+        it('should return 400 if the token is already redeemed', async () => {
+            req.body = {
+                token: 'redeemed_token',
+                campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
+                signature: MOCKED_PARAMS.SIGNATURE.signature
+            }
+
+            MOCKED_MODELS.TokenSalt.redeemed = true
+
+            await redeemToken(req, res);
+            expect(res.statusCode).toBe(400);
+            expect(res._getJSONData()).toEqual({ message: 'Error redeeming token: Token already redeemed' });
+
+            expect(mocks.Contract_isTokenValid).not.toHaveBeenCalled();
+        });
+
+        it('should return 200 if the token is valid on server but the target has already been reached', async () => {
+            req.body = {
+                token: 'valid_token',
+                campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
+                signature: MOCKED_PARAMS.SIGNATURE.signature
+            }
+
+            db_mocks.TokenSalt.countDocuments.mockImplementationOnce(() => ({
+                exec: jest.fn(() => MOCKED_MODELS.Campaign.tokensCount)
+            }));
+
+            await redeemToken(req, res);
+            expect(res.statusCode).toBe(200);
+            expect(res._getJSONData()).toEqual({ message: 'Token redeemed, but target has already been reached' });
+
+            expect(mocks.Contract_isTokenValid).toHaveBeenCalled();
+            expect(db_mocks.RedeemableToken).not.toHaveBeenCalled();
+            expect(MOCKED_MODELS.RedeemableToken.save).not.toHaveBeenCalled();
+            expect(MOCKED_MODELS.Campaign.save).not.toHaveBeenCalled();
+        });
+
+        it('should return 200 if the token is valid but it is scheduled to be redeemed in batch mode', async () => {
+            req.body = {
+                token: 'valid_token',
+                campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
+                signature: MOCKED_PARAMS.SIGNATURE.signature
+            }
+
+            MOCKED_MODELS.Campaign.batchRedeem = 10;
+
+            await redeemToken(req, res);
+            expect(res.statusCode).toBe(200);
+            expect(res._getJSONData()).toEqual({ message: 'Token redeemed' });
+
+            expect(mocks.Contract_isTokenValid).toHaveBeenCalled();
+            expect(db_mocks.RedeemableToken).toHaveBeenCalled();
+            expect(MOCKED_MODELS.RedeemableToken.save).toHaveBeenCalled();
+            expect(MOCKED_MODELS.Campaign.save).toHaveBeenCalled();
+            expect(mocks.Contract_redeemTokensBatch).not.toHaveBeenCalled();
+        });
+
+        it('should correctly batch redeem a group of redeemed tokens', async () => {
+            req.body = {
+                token: 'valid_token',
+                campaignId: MOCKED_PARAMS.CAMPAIGN_ID,
+                signature: MOCKED_PARAMS.SIGNATURE.signature
+            }
+            const { v, r, s } = ethUtil.fromRpcSig(MOCKED_MODELS.RedeemableToken.signature);
+            MOCKED_MODELS.Campaign.batchRedeem = 3;
+
+            db_mocks.RedeemableToken.find.mockImplementationOnce(() => ({
+                limit: jest.fn(() => ({
+                    exec: jest.fn(() => {
+                        const redeemableTokens = Array(MOCKED_MODELS.Campaign.batchRedeem).fill(MOCKED_MODELS.RedeemableToken);
+                        console.log("len", redeemableTokens.length);
+                        return redeemableTokens;
+                    })
+                }))
+            }));
+            
+            MOCKED_MODELS.Campaign.redeemableTokens = MOCKED_MODELS.Campaign.batchRedeem - 1;
+
+            db_mocks.RedeemableToken.countDocuments.mockImplementationOnce(() => ({
+                exec: jest.fn(() => 0)
+            }));
+
+            await redeemToken(req, res);
+            expect(res.statusCode).toBe(200);
+            expect(res._getJSONData()).toEqual({ message: 'Token redeemed' });
+
+            expect(mocks.Contract_isTokenValid).toHaveBeenCalled();
+            expect(db_mocks.RedeemableToken).toHaveBeenCalled();
+            expect(MOCKED_MODELS.RedeemableToken.save).toHaveBeenCalled();
+            expect(MOCKED_MODELS.Campaign.save).toHaveBeenCalled();
+            expect(mocks.Contract_redeemTokensBatch).toHaveBeenCalledWith(
+                MOCKED_PARAMS.CAMPAIGN_ADDRESS, Array(MOCKED_MODELS.Campaign.batchRedeem).fill(MOCKED_MODELS.RedeemableToken.token), 
+                Array(MOCKED_MODELS.Campaign.batchRedeem).fill({r, s, v})
+            );
+
+            expect(MOCKED_MODELS.RedeemableToken.deleteOne).toHaveBeenCalledTimes(MOCKED_MODELS.Campaign.batchRedeem);
+
+            expect(db_mocks.RedeemableToken.countDocuments).toHaveBeenCalled();
+            expect(MOCKED_MODELS.Campaign.redeemableTokens).toBe(0);
+        });
     });
 });

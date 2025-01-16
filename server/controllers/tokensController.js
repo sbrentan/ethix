@@ -227,11 +227,12 @@ const redeemToken = asyncHandler(async (req, res) => {
         const isTokenValid = await WEB3_CONTRACT.methods.isTokenValid(campaignAddress, t15_token, {r: r, s: s, v: v}).call({ from: WEB3_MANAGER_ACCOUNT.address });
         if(process.env.DEBUG) console.log("isTokenValid", isTokenValid);
         if (!isTokenValid) {
-            return res.status(400).json({ message: "Token not valid" });
+            return res.status(400).json({ message: "Error redeeming token: Token not valid" });
         }
 
         // get total redeemed token salt for the campaign
         const totalRedeemedTokenSalt = await TokenSalt.countDocuments({ campaignId: campaignId, redeemed: true }).exec();
+        if(process.env.DEBUG) console.log("Redeemed tokens so far", totalRedeemedTokenSalt);
         if (tokenSalt){
             tokenSalt.redeemed = true;
             await tokenSalt.save();
@@ -241,13 +242,13 @@ const redeemToken = asyncHandler(async (req, res) => {
 
             // Check if the batch of tokens is complete
             campaign.redeemableTokens += 1;
-            console.log("redeemableTokens", RedeemableToken);
+            if(process.env.DEBUG) console.log("redeemableTokens", RedeemableToken);
             newtoken = new RedeemableToken({
                 campaignId: campaignId,
                 token: t15_token,
                 signature: signature
             });
-            console.log("newtoken", newtoken);  
+            if(process.env.DEBUG) console.log("newtoken", newtoken);  
 
             await newtoken.save();
             await campaign.save();
@@ -272,7 +273,7 @@ const redeemToken = asyncHandler(async (req, res) => {
                     // delete token
                     await token.deleteOne();
                 }
-                console.log("Redeemable tokens deleted");
+                if(process.env.DEBUG) console.log("Redeemable tokens deleted");
 
                 // reset redeemable tokens
                 campaign.redeemableTokens = await RedeemableToken.countDocuments({ campaignId: campaignId }).exec();
@@ -289,7 +290,7 @@ const redeemToken = asyncHandler(async (req, res) => {
             res.json({ message: "Token redeemed" });
         } else {
             console.log("Target has been reached, no more tokens can be redeemed");
-            res.json("Token redeemed, but target has already been reached");
+            res.json({ message: "Token redeemed, but target has already been reached"});
         }
     } catch (error) {
         if(process.env.DEBUG) console.log('Error redeeming token:', error);
