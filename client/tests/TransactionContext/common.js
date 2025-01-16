@@ -3,7 +3,7 @@ import { render, act } from '@testing-library/react';
 global.TextEncoder = require('util').TextEncoder;
 global.TextDecoder = require('util').TextDecoder;
 
-let alertMock = mockFunction(() => {console.log("alert called")});
+let alertMock = mockFunction(() => {});
 if (process.env.NODE_ENV === 'test') {
 	process.env.REACT_APP_BACKEND_URL = 'http://localhost:5000';
 	// mock the fetch function used by startCampaign which retrieves the PDF blob
@@ -77,7 +77,6 @@ function mockFunction(function_to_mock) {
 		mock: mock,
 		func: (...params) => {
 			mock(...params);
-			console.log("mock called with params: ", params);
 			return function_to_mock(...params);
 		}
 	};
