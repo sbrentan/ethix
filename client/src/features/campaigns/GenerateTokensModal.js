@@ -416,7 +416,7 @@ const GenerateTokensModal = ({
                 </Row>
                 <Row>
                     <Col span={12}>
-                        <Text strong>Total Value Campaing (EUR):</Text>
+                        <Text strong>Total Value Campaign (EUR):</Text>
                     </Col>
                     <Col span={12}>
                         <Text>
