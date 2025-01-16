@@ -57,7 +57,10 @@ const CampaignsGrid = () => {
 		isSuccess,
 		isError,
 		error,
-	} = useGetCampaignsQuery("campaignsList", {});
+	} = useGetCampaignsQuery("campaignsList", {
+        pollingInterval: 5000,
+        skipPollingIfUnfocused: true,
+    });
 
 	// When campaigns or the filter change it perform a filters evaluation
 	// Filtered result is the ID lists of the filtered campaigns
