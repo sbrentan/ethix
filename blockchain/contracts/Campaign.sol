@@ -195,8 +195,8 @@ contract Campaign {
 
         // transfer the refunds to the donor
         campaignDetails.refunds = _refunds;
-        campaignDetails.donor.transfer(_refunds);
         campaignDetails.refundClaimed = true;
+        campaignDetails.donor.transfer(_refunds);
     }
 
 
@@ -220,8 +220,8 @@ contract Campaign {
 
         // transfer the balance to the beneficiary
         campaignDetails.donations = _donations;
-        campaignDetails.beneficiary.transfer(_donations);
         campaignDetails.donationClaimed = true;
+        campaignDetails.beneficiary.transfer(_donations);
     }
 
     function redeemTokensBatch(
