@@ -63,7 +63,10 @@ function findRootDirWithConfig(startPath, configFileName) {
 }
 
 const root_dirname = findRootDirWithConfig(process.cwd(), 'jest.config.js');
-process.chdir(root_dirname + '\\server');
+if(process.platform === "win32")
+    process.chdir(root_dirname + '\\server');
+else
+    process.chdir(root_dirname + '/server');
 const Campaign = require(path.join(root_dirname, 'models/Campaign.js'));
 const User = require(path.join(root_dirname, 'models/User.js'));
 const TokenSalt = require(path.join(root_dirname, 'models/TokenSalt.js'));
