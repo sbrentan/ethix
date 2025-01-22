@@ -24,7 +24,8 @@ const CreateCampaign = ({ setSuccessCreation }) => {
     // for antd message
 	const [messageApi, contextHolder] = message.useMessage();
 
-  const { ethPrice, loading, errorEth } = useEthPrice("eur");
+  // const { ethPrice, loading, errorEth } = useEthPrice("eur");
+  const ethPrice = 3145;
 
   //const [formDisabled, setformDisabled] = useState(true);
 

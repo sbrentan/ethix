@@ -57,7 +57,8 @@ const DashboardOrganization = ({ role }) => {
 
 	// for antd message
 	const [messageApi, contextHolder] = message.useMessage();
-	const { ethPrice, loading, errorEth } = useEthPrice("eur");
+	// const { ethPrice, loading, errorEth } = useEthPrice("eur");
+	const ethPrice = 3145;
     const dispatch = useDispatch()
 
 	const {

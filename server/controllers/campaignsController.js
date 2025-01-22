@@ -13,6 +13,16 @@ const getAllCampaigns = asyncHandler(async (req, res) => {
 	}
 	const new_campaigns = await _injectBlockchainCampaign(campaigns);
 
+	for (let i = 0; i < new_campaigns.length; i++) {
+		campaign = new_campaigns[i];
+		for (let key in campaign.blockchain_data) {
+			// if is big int
+			if (typeof campaign.blockchain_data[key] === 'bigint') {
+				campaign.blockchain_data[key] = Number(campaign.blockchain_data[key]);
+			}
+		}
+	}
+
 	res.json(new_campaigns);
 });
 

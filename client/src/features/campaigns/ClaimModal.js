@@ -24,7 +24,8 @@ const ClaimModal = ({
     refetch
 }) => {
 	const [campaignBlock, setCampaignBlock] = useState(null);
-	const { ethPrice, loading, errorEth } = useEthPrice("eur");
+	// const { ethPrice, loading, errorEth } = useEthPrice("eur");
+	const ethPrice = 3145;
 
 	//  ------ THIS BLOCK CAN BE REMOVED IF THE DATA OF THE CAMPAIGN FROM THE DB ARE INTEGRATED WITH THE DATA FROM BLOCKCAHIN ----//
 	// ------- you will still need to swap all campaignBlock with campaign in the return to display the data ---------------------//
