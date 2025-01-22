@@ -497,7 +497,7 @@ const DashboardOrganization = ({ role }) => {
                                 <br />
                                 <Row>
                                     <Col span={12}>
-                                        <Text strong>Codes Not Redeemd:</Text>
+                                        <Text strong>Codes Not Redeemed:</Text>
                                     </Col>
                                     <Col span={12}>
                                         <Text>

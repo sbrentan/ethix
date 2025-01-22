@@ -53,29 +53,24 @@ const PublicProfile = () => {
 
 	return (
 		<div style={{ margin: 30 }}>
-			<Row gutter={10}>
-				<Col span={16}>
-					<Card>
-						<Image
-							src={
-								publicProfile.publicImage
-									? publicProfile.publicImage
-									: "error"
-							}
-							width={"100%"}
-							heigth={"100%"}
-							preview={
-								publicProfile.publicImage?.image ? true : false
-							}
-						/>
-					</Card>
-				</Col>
-				<Col span={8}>
-					<Space
-						size={10}
-						direction="vertical"
-						style={{ display: "flex", height: "100%" }}
-					>
+			<Flex justify="center">
+				<Row gutter={10} justify="center" style={{ maxWidth: "1000px" }}>
+					<Col span={24}>
+						<Card>
+							<Flex justify="center">
+								<Image
+									src={
+										publicProfile.publicImage
+											? publicProfile.publicImage
+											: "error"
+									}
+									style={{ maxWidth: "400px" }}
+									preview={
+										publicProfile.publicImage?.image ? true : false
+									}
+								/>
+							</Flex>
+						</Card>
 						<Card>
 							<Title>{publicProfile.publicName}</Title>
 							<Divider />
@@ -87,9 +82,9 @@ const PublicProfile = () => {
 								name={publicProfile.publicName}
 							/>
 						</Card>
-					</Space>
-				</Col>
-			</Row>
+					</Col>
+				</Row>
+			</Flex>
 		</div>
 	);
 };

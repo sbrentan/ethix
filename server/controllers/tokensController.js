@@ -208,6 +208,13 @@ const redeemToken = asyncHandler(async (req, res) => {
     }
     const campaignAddress = campaign.campaignId;
 
+    // if campaign is live, return error
+    if (campaign.startingDate > new Date()) {
+        return res.status(400).json({ message: "Campaign has not started yet" });
+    } else if (campaign.deadline < new Date()) {
+        return res.status(400).json({ message: "Campaign has ended" });
+    }
+
     // check if the token salt is present in db
     if(process.env.DEBUG) console.log('campaignId', campaignId);
     if(process.env.DEBUG) console.log('token', token);

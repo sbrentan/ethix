@@ -137,7 +137,7 @@ const ClaimModal = ({
 		targetEuro = (campaign.targetEur);
         valueOfToken = ((campaign.target / campaign.tokensCount)* ethPrice).toFixed(2);
 	}
-    if (campaign.blockchain_data && campaign.blockchain_data.tokensCount && campaign.blockchain_data.redeemedTokensCount) {
+    if (campaign.blockchain_data) {
         codesNotRedeemed = campaign.blockchain_data.tokensCount - campaign.blockchain_data.redeemedTokensCount
     }
 
@@ -261,7 +261,7 @@ const ClaimModal = ({
 							<br />
 							<Row>
 								<Col span={12}>
-									<Text strong>Codes Not Redeemd:</Text>
+									<Text strong>Codes Not Redeemed:</Text>
 								</Col>
 								<Col span={12}>
 									<Text>
@@ -329,11 +329,11 @@ const ClaimModal = ({
 									}
 									onClick={() => onClickClaimDonation()}
 								>
-									Claim Dontations
+									Claim Donations
 								</Button>
 								{campaign.blockchain_data.redeemedTokensCount === 0 && (
 									<Text type="danger">
-										Unfortunately no donations has been made
+										Unfortunately no donations have been made
 									</Text>
 								)}
 							</Space>
