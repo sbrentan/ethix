@@ -61,7 +61,8 @@ const Campaign = () => {
 		useGetPublicProfileByUserQuery({ userId: campaign?.receiver });
 	const { data: profileDonor, profileDonorLoading } =
 		useGetPublicProfileByUserQuery({ userId: campaign?.donor });
-	const { ethPrice, loading, errorEth } = useEthPrice("eur");
+	// const { ethPrice, loading, errorEth } = useEthPrice("eur");
+	const ethPrice = 3145;
 
 	const { setCampaign } = useContext(TransactionContext);
     // Loading Overlay

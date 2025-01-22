@@ -51,7 +51,8 @@ const GenerateTokensModal = ({
     const [downloaded, setDownloaded] = useState(false)
 
 	const { startCampaign } = useContext(TransactionContext);
-    const { ethPrice, loading, errorEth } = useEthPrice("eur");
+    // const { ethPrice, loading, errorEth } = useEthPrice("eur");
+    const ethPrice = 3145;
 
     const { token } = useAuth()
     const dispatch = useDispatch();
