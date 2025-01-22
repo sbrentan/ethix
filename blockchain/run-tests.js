@@ -21,8 +21,8 @@ if (findTestsResult === '') {
 // Run `npx hardhat test` with the result from `find_tests.js`
 try{
     //check if on windows
+    const grep_txt = findTestsResult === "__all_tests__" ? "" : `--grep "${findTestsResult}"`;
     if(process.platform === 'win32') {
-        const grep_txt = findTestsResult === "__all_tests__" ? "" : `--grep "${findTestsResult}"`;
         if (debug_msg !== '')
             execSync(`(set DEBUG=true && npx hardhat test ${grep_txt})`, { stdio: 'inherit' });
         else
